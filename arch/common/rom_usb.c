@@ -9,7 +9,7 @@
  *    notice, this list of conditions and the following disclaimer.
  *  * Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the 
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -19,7 +19,7 @@
  * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
  * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
  * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
@@ -28,7 +28,7 @@
 
 #include <aboot/aboot.h>
 #include <aboot/io.h>
-#include <omap4/omap4_rom.h>
+#include <common/omap_rom.h>
 
 
 int usb_open(struct usb *usb)
@@ -37,15 +37,15 @@ int usb_open(struct usb *usb)
 	int (*rom_get_per_device)(struct per_handle **rh);
 	struct per_handle *boot;
 	int n;
-        u32 base;
+	u32 base;
 
 	memset(usb, 0, sizeof(*usb));
 
 
-        if (get_omap_rev() >= OMAP_4460_ES1_DOT_0)
-                base = PUBLIC_API_BASE_4460;
-        else
-                base = PUBLIC_API_BASE_4430;
+	if (get_omap_rev() >= OMAP_4460_ES1_DOT_0)
+		base = PUBLIC_API_BASE_4460;
+	else
+		base = PUBLIC_API_BASE_4430;
 
 	rom_get_per_driver = API(base + PUBLIC_GET_DRIVER_PER_OFFSET);
 	rom_get_per_device = API(base + PUBLIC_GET_DEVICE_PER_OFFSET);

@@ -116,7 +116,7 @@ struct per_usb_config {
 	u32 value;
 };
 
-#define API(n) ( (void*) (*((u32 *) (n))) )
+#define API(n) ((void *) (*((u32 *) (n))))
 /* ROM API End */
 
 struct usb {
