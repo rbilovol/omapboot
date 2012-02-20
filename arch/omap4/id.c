@@ -32,6 +32,8 @@
 #include <aboot/io.h>
 
 #define CONTORL_ID_CODE (0x4A002204)
+#define CONTROL_STATUS	(0x4A0022C4)
+#define DEVICETYPE_MASK	(0x7 << 8)
 
 struct omap_id {
 	omap_rev    rev_num;
@@ -63,4 +65,13 @@ omap_rev get_omap_rev(void)
 	}
 
 	return OMAP_REV_INVALID;
+}
+
+omap_type get_omap_type(void)
+{
+	unsigned int value;
+
+	value = readl(CONTROL_STATUS);
+	value &= DEVICETYPE_MASK;
+	return value >> 8;
 }

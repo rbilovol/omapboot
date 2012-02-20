@@ -34,7 +34,6 @@
 
 #define WITH_MEMORY_TEST	0
 #define WITH_FLASH_BOOT		0
-#define WITH_SIGNATURE_CHECK	1
 
 #if WITH_MEMORY_TEST
 void memtest(void *x, unsigned count) {
@@ -66,7 +65,6 @@ struct usb usb;
 
 unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 
-#if WITH_SIGNATURE_CHECK
 unsigned call_trusted(unsigned appid, unsigned procid, unsigned flag, void *args);
 
 int verify(void *data, unsigned len, void *signature, unsigned rights) {
@@ -84,7 +82,6 @@ int verify(void *data, unsigned len, void *signature, unsigned rights) {
 	args.rights = rights;
 	return call_trusted(12, 0, 0, &args);
 }
-#endif
 
 #if WITH_FLASH_BOOT
 int load_image(unsigned device, unsigned start, unsigned count, void *data)
@@ -217,24 +214,27 @@ void aboot(unsigned *info)
 	if (n) {
 		serial_puts("*** IO ERROR ***\n");
 	} else {
-#if WITH_SIGNATURE_CHECK
-		void *data = (void*) (CONFIG_ADDR_DOWNLOAD);
-		void *sign = (void*) (CONFIG_ADDR_DOWNLOAD + len - 280);
-		if ((len < 281) || (len > (32*1024*1024)))
-			goto fail_verify;
-		len -= 280;
+		if (OMAP_TYPE_SEC == get_omap_type()) {
+			void *data = (void *) (CONFIG_ADDR_DOWNLOAD);
+			void *sign = (void *) (CONFIG_ADDR_DOWNLOAD +
+								len - 280);
+			if ((len < 281) || (len > (32 * 1024 * 1024)))
+				goto fail_verify;
 
-		n = verify(data, len, sign, 2);
-		if (n != 0) {
+			len -= 280;
+
+			n = verify(data, len, sign, 2);
+			if (n != 0)
+				goto fail_verify;
+
 		fail_verify:
 			serial_puts("*** SIGNATURE VERIFICATION FAILED ***\n");
 			for (;;) ;
 		}
-#endif
+
 		boot_image(cfg_machine_type, CONFIG_ADDR_DOWNLOAD, len);
 		serial_puts("*** BOOT FAILED ***\n");
 	}
 
 	for (;;) ;
 }
-
