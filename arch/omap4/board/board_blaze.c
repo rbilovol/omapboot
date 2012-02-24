@@ -287,19 +287,39 @@ static struct ddr_regs elpida2G_400mhz_2cs = {
 	.mr2		= 0x4
 };
 
+const struct ddr_regs ddr_regs_elpida4G_400_mhz_1cs = {
+	.tim1		= 0x10eb0662,
+	.tim2		= 0x20370dd2,
+	.tim3		= 0x00b1c33f,
+	.phy_ctrl_1	= 0x449FF408,
+	.ref_ctrl	= 0x00000618,
+	.config_init	= 0x80800eb2,
+	.config_final	= 0x80801ab2,
+	.zq_config	= 0xd00b3215,
+	.mr1		= 0x83,
+	.mr2		= 0x4
+};
 
 void board_ddr_init(void)
 {
+	const struct ddr_regs *ddr_regs = 0;
+	int omap_rev = OMAP_REV_INVALID;
 	/* 1GB, 128B interleaved */
 	writel(0x80640300, DMM_BASE + DMM_LISA_MAP_0);
 	writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
 	writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
 
-	if (get_omap_rev() >= OMAP_4460_ES1_DOT_0) {
+	omap_rev = get_omap_rev();
+	if (omap_rev >= OMAP_4460_ES1_DOT_0 && omap_rev <= OMAP_4460_ES1_DOT_1) {
 		writel(0x80640300, MA_BASE + DMM_LISA_MAP_0);
 		elpida2G_400mhz_2cs.phy_ctrl_1	= 0x449FF408;
+		ddr_regs = &elpida2G_400mhz_2cs;
 	}
 
-	omap4_ddr_init(&elpida2G_400mhz_2cs,
-		       &elpida2G_400mhz_2cs);
+	if (omap_rev == OMAP_4470_ES1_DOT_0) {
+		writel(0x80640300, MA_BASE + DMM_LISA_MAP_3);
+		ddr_regs = &ddr_regs_elpida4G_400_mhz_1cs;
+	}
+
+	omap4_ddr_init(ddr_regs, ddr_regs);
 }
