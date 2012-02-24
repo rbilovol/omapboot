@@ -113,7 +113,7 @@ int match_omap4_bootloader(usb_ifc_info *ifc)
 	if (ifc->dev_vendor != 0x0451)
 		return -1;
 	if ((ifc->dev_product != 0xd010) && (ifc->dev_product != 0xd00f) &&
-		(ifc->dev_product != 0xd011))
+		(ifc->dev_product != 0xd011) &&  (ifc->dev_product != 0xd012))
 		return -1;
 	return 0;
 }
