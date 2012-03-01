@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 unsigned char basic_header[512] = {
 	0x40, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00,
@@ -47,16 +48,18 @@ int main(int argc, char **argv)
 {
 	unsigned x[2];
 
-	if (argc < 3)
-	    return -1;
+	if (argc < 4)
+		return -1;
 
 	x[1] = strtoul(argv[1], 0, 0);
 	x[0] = strtoul(argv[2], 0, 0);
 	
 	if (write(1, basic_header, sizeof(basic_header)) < 0)
 		return -1;
-	if (write(1, x, sizeof(x)) < 0)
-		return -1;
-	
+	if (!strcmp(argv[3], "add_gp_hdr")) {
+		if (write(1, x, sizeof(x)) < 0)
+			return -1;
+	}
+
 	return 0;
 }
