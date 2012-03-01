@@ -42,6 +42,11 @@ extern u32 public_rom_base;
 
 #define PUBLIC_IRQ_INITIALIZE				(0x40)
 
+#define PUBLIC_HAL_WDTIMER_ENABLE_OFFSET		(0x50)
+#define PUBLIC_HAL_WDTIMER_DISABLE_OFFSET		(0x54)
+#define PUBLIC_HAL_WDTIMER_RESET_OFFSET			(0x58)
+#define PUBLIC_HAL_WDTIMER_SET_TIMEOUT_OFFSET		(0x5C)
+
 #define PUBLIC_HAL_I2C_DRIVER_INIT_OFFSET		(0x60)
 #define PUBLIC_HAL_I2C_DRIVER_WRITE_OFFSET		(0x64)
 #define PUBLIC_HAL_I2C_DRIVER_READ_OFFSET		(0x68)
@@ -181,6 +186,12 @@ int i2c_read(hal_i2c i2c_id, u16 slave, u32 count, void *data, u32 start_time,
 
 int i2c_close(hal_i2c i2c_id);
 
+/* WDTIMER */
+int watchdog_enable(void);
+int watchdog_disable(void);
+int watchdog_reset(void);
+int watchdog_set_timeout(u32 timeout);
+
 /* rom api prototypes ------------------------------------------------ begin */
 
 /* PUBLIC_GET_DRIVER_MEM */
@@ -256,6 +267,30 @@ typedef int (** const hal_i2c_close_pt)(hal_i2c);
 #define rom_hal_i2c_close(a) \
 		(*(hal_i2c_close_pt) \
 		(public_rom_base + PUBLIC_HAL_I2C_DRIVER_CLOSE_OFFSET))(a);
+
+/* PUBLIC_HAL_WDTIMER_ENABLE */
+typedef int (** const hal_wdtimer_enable_pt)(void);
+#define rom_hal_wdtimer_enable() \
+	(*(hal_wdtimer_enable_pt) \
+	(public_rom_base + PUBLIC_HAL_WDTIMER_ENABLE_OFFSET))();
+
+/* PUBLIC_HAL_WDTIMER_DISABLE */
+typedef int (** const hal_wdtimer_disable_pt)(void);
+#define rom_hal_wdtimer_disable() \
+	(*(hal_wdtimer_disable_pt) \
+	(public_rom_base + PUBLIC_HAL_WDTIMER_DISABLE_OFFSET))();
+
+/* PUBLIC_HAL_WDTIMER_RESET */
+typedef int (** const hal_wdtimer_reset_pt)(void);
+#define rom_hal_wdtimer_reset() \
+	(*(hal_wdtimer_reset_pt) \
+	(public_rom_base + PUBLIC_HAL_WDTIMER_RESET_OFFSET))();
+
+/* PUBLIC_HAL_WDTIMER_SET_TIMEOUT */
+typedef int (** const hal_wdtimer_set_timeout_pt)(u32);
+#define rom_hal_wdtimer_set_timeout(a) \
+	(*(hal_wdtimer_set_timeout_pt) \
+	(public_rom_base + PUBLIC_HAL_WDTIMER_SET_TIMEOUT_OFFSET))(a);
 
 /* rom api prototypes -------------------------------------------------- end */
 
