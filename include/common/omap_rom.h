@@ -71,8 +71,14 @@ extern u32 public_rom_base;
 #define DEVICE_TYPE_NAND	0x03
 #define DEVICE_TYPE_ONENAND	0x04
 #define DEVICE_SDCARD		0x05
+#if defined CONFIG_IS_OMAP4
 #define DEVICE_EMMC		0x06
 #define DEVICE_EMMC_MUX5	0x07
+#elif defined CONFIG_IS_OMAP5
+#define DEVICE_EMMC_BOOT	0x06
+#define DEVICE_EMMC		0x07
+#define DEVICE_SATA		0x09
+#endif
 
 #define XFER_MODE_CPU 0
 #define XFER_MODE_DMA 1

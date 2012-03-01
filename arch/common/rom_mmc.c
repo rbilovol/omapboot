@@ -35,7 +35,13 @@
 #include <aboot/io.h>
 #include <common/omap_rom.h>
 #include <common/mmc.h>
+
+#if defined CONFIG_IS_OMAP4
 #include <omap4/hw.h>
+#elif defined CONFIG_IS_OMAP5
+#include <omap5/hw.h>
+#endif
+
 #include "config.h"
 
 int mmc_open(u8 device, struct mmc *mmc)
@@ -206,7 +212,8 @@ int mmc_write(struct mmc *mmc, u32 start, u32 count, void *data)
 		(0x2df58|1), /*OMAP_4430_ES2_DOT_2*/
 		(0x2df58|1), /*OMAP_4430_ES2_DOT_3*/
 		(0x36028|1), /*OMAP_4460_ES1_DOT_0*/
-		(0x36028|1)  /*OMAP_4460_ES1_DOT_1*/
+		(0x36028|1),  /*OMAP_4460_ES1_DOT_1*/
+		(0x3ee18|1)  /*OMAP_5430_ES1_DOT_0*/
 	};
 
 	const u32 rom_hal_mmchs_sendcommand_addr[] = {
@@ -217,7 +224,8 @@ int mmc_write(struct mmc *mmc, u32 start, u32 count, void *data)
 		(0x2ddd4|1), /*OMAP_4430_ES2_DOT_2*/
 		(0x2ddd4|1), /*OMAP_4430_ES2_DOT_3*/
 		(0x35ea4|1), /*OMAP_4460_ES1_DOT_0*/
-		(0x35ea4|1)  /*OMAP_4460_ES1_DOT_1*/
+		(0x35ea4|1),  /*OMAP_4460_ES1_DOT_1*/
+		(0x3ec8c|1)  /*OMAP_5430_ES1_DOT_0*/
 	};
 
 	rom_hal_mmchs_writedata   =
