@@ -703,8 +703,11 @@ void do_fastboot(void)
 			e = fastboot_flash_find_ptn(&cmd[6]);
 
 			if (e == 0) {
+				char ptn_name[20];
+				strncpy(ptn_name, cmd+6, cmdsize-6);
+
 				printf("Partition: %s does not exist\n",
-								e->name);
+								ptn_name);
 				sprintf(response,
 					"FAILpartition does not exist");
 				goto fail;
