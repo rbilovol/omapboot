@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2011 The Android Open Source Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,66 +26,43 @@
  * SUCH DAMAGE.
  */
 
+/* omap54xx and ID detection and reporting */
+
 #include <aboot/aboot.h>
 #include <aboot/io.h>
-
-#if defined CONFIG_IS_OMAP4
-#include <omap4/hw.h>
-#elif defined CONFIG_IS_OMAP5
 #include <omap5/hw.h>
-#endif
 
-#define OFF_RBR		0x00
-#define OFF_THR		0x00
-#define OFF_DLL		0x00
-#define OFF_IER		0x04
-#define OFF_DLM		0x04
-#define OFF_FCR		0x08
-#define OFF_IIR		0x08
-#define OFF_LCR		0x0C
-#define OFF_MCR		0x10
-#define OFF_LSR		0x14
-#define OFF_MSR		0x18
-#define OFF_SCR		0x1C
-#define OFF_MDR1	0x20
+#define DEVICETYPE_MASK	(0x7 << 8)
 
-#define WR(val, addr) writeb(val, cfg_uart_base + OFF_##addr)
-#define RD(addr) readb(cfg_uart_base + OFF_##addr)
+struct omap_id {
+	omap_rev    rev_num;
+	u32         rev_reg_val;
+};
 
-unsigned cfg_uart_base = CONFIG_SERIAL_BASE;
+static struct omap_id  map[] = {
+	{ OMAP_5430_ES1_DOT_0, 0x0B94202F },
+	{ OMAP_REV_INVALID,    0x00000000 },
+};
 
-void serial_init(void)
+omap_rev get_omap_rev(void)
 {
-	unsigned divisor = CONFIG_SERIAL_CLK_HZ / 16 / CONFIG_BAUDRATE;
+	u8 i;
+	u32 id_code;
 
-	WR(0x00, IER);
-	WR(0x07, MDR1); /* reset */
-	WR(0x83, LCR);  /* 8N1 + banksel */
-	WR(divisor & 0xFF, DLL);
-	WR(divisor >> 8, DLM);
-	WR(0x03, LCR);  /* 8N1 */
-	WR(0x03, MCR);  /* DTR, RTS */
-	WR(0x07, FCR);  /* reset and enable FIFO */
-	WR(0x00, MDR1); /* run */
+	id_code = readl(CONTROL_ID_CODE);
+	for (i = 0; map[i].rev_num != OMAP_REV_INVALID; i++) {
+		if (map[i].rev_reg_val == id_code)
+			return map[i].rev_num;
+	}
+
+	return OMAP_REV_INVALID;
 }
 
-static inline void _serial_putc(char c)
+omap_type get_omap_type(void)
 {
-	while (!(RD(LSR) & 0x20))
-		;
-	WR(c, THR);
-}
+	unsigned int value;
 
-void serial_putc(char c)
-{
-	if (c == '\n')
-		_serial_putc('\r');
-	_serial_putc(c);
+	value = readl(CONTROL_STATUS);
+	value &= DEVICETYPE_MASK;
+	return value >> 8;
 }
-
-void serial_puts(const char *s)
-{
-	while (*s)
-		serial_putc(*s++);
-}
-

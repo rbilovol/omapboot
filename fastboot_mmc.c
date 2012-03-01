@@ -137,6 +137,28 @@ static struct partition partitions[] = {
 	{ "userdata", 0},
 	{ 0, 0 },
 };
+#elif defined CONFIG_OMAP5EVM
+/*
+  Increasing the size of the xloader partition
+  so that the bootloader is now located at 0x300,
+  which is where SPL expects U-BOOT to be.
+*/
+static struct partition partitions[] = {
+	{ "-", 128 },
+	{ "xloader", 256 },
+	{ "bootloader", 256 },
+	/* "misc" partition is required for recovery */
+	{ "misc", 128 },
+	{ "-", 384 },
+	{ "efs", 16384 },
+	{ "crypto", 16 },
+	{ "recovery", 8*1024 },
+	{ "boot", 8*1024 },
+	{ "system", 512*1024 },
+	{ "cache", 256*1024 },
+	{ "userdata", 0},
+	{ 0, 0 },
+};
 #endif
 
 static struct ptable the_ptable;

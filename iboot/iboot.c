@@ -53,7 +53,7 @@ u32 public_rom_base;
 
 #if defined CONFIG_PANDA
 u8 device = DEVICE_SDCARD;
-#elif defined CONFIG_BLAZE
+#elif defined CONFIG_BLAZE || defined CONFIG_OMAP5EVM
 u8 device = DEVICE_EMMC;
 #endif
 

@@ -82,6 +82,8 @@ M_NAME := bin2c
 M_OBJS := tools/bin2c.o
 include build/host-executable.mk
 
+OMAP5_COMMON_OBJS :=	arch/omap5/id.o
+
 OMAP4_COMMON_OBJS :=	arch/omap4/clock.o \
 			arch/omap4/sdram.o \
 			arch/omap4/gpmc.o \
@@ -104,6 +106,11 @@ M_BASE := 0x40309000
 M_OBJS := arch/common/start_reloc.o
 M_OBJS += $(OMAP4_COMMON_OBJS)
 endif
+ifeq ($(ARCH), omap5)
+M_BASE := 0x40309000
+M_OBJS := arch/common/start_reloc.o
+M_OBJS += $(OMAP5_COMMON_OBJS)
+endif
 M_OBJS += $(COMMON_OBJS)
 M_OBJS += aboot.o
 M_LIBS := $(TARGET_LIBGCC)
@@ -114,6 +121,11 @@ ifeq ($(ARCH), omap4)
 M_BASE := 0x40300200
 M_OBJS := iboot/start_reloc.o
 M_OBJS += $(OMAP4_COMMON_OBJS)
+endif
+ifeq ($(ARCH), omap5)
+M_BASE := 0x40300200
+M_OBJS := iboot/start_reloc.o
+M_OBJS += $(OMAP5_COMMON_OBJS)
 endif
 M_OBJS += $(COMMON_OBJS)
 M_OBJS += iboot/iboot.o
