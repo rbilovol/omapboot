@@ -32,6 +32,10 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
+#include <aboot/types.h>
+
+#define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))
+
 unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);
 

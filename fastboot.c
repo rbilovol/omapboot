@@ -43,18 +43,24 @@
 
 #if defined CONFIG_FASTBOOT
 #include <common/fastboot.h>
+#include <common/sparse_format.h>
 
 struct usb usb;
+struct mmc mmc;
+struct mmc_devicedata *dd;
 
 /* To support the Android-style naming of flash */
 #define MAX_PTN 16
 static fastboot_ptentry ptable[MAX_PTN];
+static struct fastboot_ptentry *e;
 
 static u8 *transfer_buffer = (void *) 0x82000000;
 static u8 *read_buffer = (void *) 0x83000000;
 
 static char *dsize;
 static u32 getsize;
+static u32 sector;
+static sparse_header_t *sparse_header;
 
 char *get_serial_number(void)
 {
@@ -289,6 +295,219 @@ static int download_image(void)
 
 }
 
+static int flash_sparse_formatted_image(void)
+{
+	int ret = 0;
+	u32 chunk = 0;
+	u32 chunk_data_sz = 0;
+	u32 num_sectors = 0;
+	u32 out_blocks = 0;
+	u32 total_blocks = 0;
+	char response[65];
+
+	chunk_header_t *chunk_header;
+
+	if ((sparse_header->total_blks * sparse_header->blk_sz) > e->length) {
+		printf("Image size exceeds %d limit\n", e->length);
+		strcpy(response, "FAIL");
+		return -1;
+	}
+
+	if ((sparse_header->major_version != 1) ||
+		(sparse_header->file_hdr_sz != sizeof(sparse_header_t)) ||
+		(sparse_header->chunk_hdr_sz != sizeof(chunk_header_t))) {
+			printf("Invalid sparse format\n");
+			strcpy(response, "FAIL");
+			return -1;
+	}
+
+	/* Read and skip over sparse image header */
+	transfer_buffer += sparse_header->file_hdr_sz;
+
+	if (sparse_header->file_hdr_sz > sizeof(sparse_header_t)) {
+		/* Skip the remaining bytes in a header
+		that is longer than we expected */
+		transfer_buffer += (sparse_header->file_hdr_sz -
+					sizeof(sparse_header_t));
+	}
+
+	DBG("=== Sparse Image Header ===\n");
+	DBG("sizeof(sparse_header_t) = %d\n", sizeof(sparse_header_t));
+	DBG("magic: 0x%x\n", sparse_header->magic);
+	DBG("major_version: 0x%x\n", sparse_header->major_version);
+	DBG("minor_version: 0x%x\n", sparse_header->minor_version);
+	DBG("file_hdr_sz: %d\n", sparse_header->file_hdr_sz);
+	DBG("chunk_hdr_sz: %d\n", sparse_header->chunk_hdr_sz);
+	DBG("blk_sz: %d\n", sparse_header->blk_sz);
+	DBG("total_blks: %d\n", sparse_header->total_blks);
+	DBG("total_chunks: %d\n", sparse_header->total_chunks);
+
+	/* Start processing chunks */
+	for (chunk = 0; chunk < sparse_header->total_chunks; chunk++) {
+
+		/* Read and skip over chunk header */
+		chunk_header = (chunk_header_t *) transfer_buffer;
+		transfer_buffer += sizeof(chunk_header_t);
+
+		DBG("=== Chunk Header ===\n");
+		DBG("sizeof(sparse_header_t) = %d"
+					"\n", sizeof(chunk_header_t));
+		DBG("chunk_type: 0x%x\n", chunk_header->chunk_type);
+		DBG("chunk_sz: 0x%x\n", chunk_header->chunk_sz);
+		DBG("total_sz: 0x%x\n", chunk_header->total_sz);
+
+		if (sparse_header->chunk_hdr_sz > sizeof(chunk_header_t)) {
+
+			/* Skip the remaining bytes in a header that is longer
+			than we	expected */
+			transfer_buffer += (sparse_header->chunk_hdr_sz -
+						sizeof(chunk_header_t));
+		}
+
+		chunk_data_sz = (sparse_header->blk_sz *
+						chunk_header->chunk_sz);
+		DBG("chunk_data_sz = %d\n", chunk_data_sz);
+
+		num_sectors = (chunk_data_sz/512);
+		printf("writing to sector %d and # of sectors %d\n",
+							sector, num_sectors);
+
+		switch (chunk_header->chunk_type) {
+
+		case CHUNK_TYPE_RAW:
+
+			if (chunk_header->total_sz !=
+				(sparse_header->chunk_hdr_sz +
+							chunk_data_sz)) {
+				DBG("bogus chunk size for chunk type RAW "
+							"%d\n", chunk);
+			}
+
+			out_blocks += chunk_data_sz;
+
+			ret = mmc_write(&mmc, sector, num_sectors,
+							transfer_buffer);
+			if (ret != 0) {
+				printf("mmc write failed\n");
+				return ret;
+			}
+
+			#ifdef DEBUG
+			/*read back the data and compare */
+			for (sector_count = 0; sector_count < num_sectors;
+							sector_count++) {
+
+				ret = mmc_read(&mmc, sector+sector_count, 1,
+					read_buffer + (sector_count*512));
+				if (ret != 0) {
+					printf("mmc read failed\n");
+					return ret;
+				}
+				if (memcmp(read_buffer + (sector_count*512),
+				transfer_buffer + (sector_count*512), 512)) {
+					printf("mmc data mismatch sector %d\n",
+							sector + sector_count);
+				}
+			}
+			#endif
+
+			total_blocks += chunk_header->chunk_sz;
+			sector += (chunk_data_sz/512);
+			transfer_buffer += chunk_data_sz;
+			break;
+
+		case CHUNK_TYPE_DONT_CARE:
+
+			total_blocks += chunk_header->chunk_sz;
+			sector += (chunk_data_sz/512);
+			DBG("bogus chunk size for chunktype DONT_CARE %d\n",
+									chunk);
+			out_blocks += chunk_data_sz;
+
+			break;
+
+		case CHUNK_TYPE_CRC:
+
+			if (chunk_header->total_sz !=
+					sparse_header->chunk_hdr_sz) {
+				DBG("bogus chunk size for chunktype CRC %d"
+								"\n", chunk);
+			}
+
+			total_blocks += chunk_header->chunk_sz;
+			sector += (chunk_data_sz/512);
+			transfer_buffer += chunk_data_sz;
+			out_blocks += chunk_data_sz;
+
+			break;
+
+		default:
+
+			sprintf(response, "FAILUnknown chunk type");
+			break;
+
+		return -1;
+		}
+	}
+
+	printf("Wrote %d blocks, expected to write %d blocks \n", total_blocks,
+						sparse_header->total_blks);
+
+	printf("out blocks = %d\n", out_blocks);
+	strcpy(response, "OKAY");
+	fastboot_tx_status(response, strlen(response));
+
+	return ret;
+}
+
+static int flash_non_sparse_formatted_image(void)
+{
+	int ret = 0;
+	u32 num_sectors = 0;
+	char response[65];
+
+	num_sectors = CEIL(getsize, 512);
+
+	if (num_sectors > (getsize / 512)) {
+		/* do nothing */
+	} else
+		num_sectors = (getsize / 512);
+
+	printf("writing to sector %d\n and # of sectors = %d\n", sector,
+							num_sectors);
+
+	ret = mmc_write(&mmc, sector, num_sectors, transfer_buffer);
+	if (ret != 0) {
+		printf("mmc write failed\n");
+		return ret;
+	}
+
+	#ifdef DEBUG
+		for (sector_count = 0; sector_count < num_sectors;
+						sector_count++) {
+
+			/*read back the data and compare */
+			ret = mmc_read(&mmc, sector+sector_count, 1,
+				read_buffer + (sector_count*512));
+			if (ret != 0) {
+				printf("mmc read failed\n");
+				return ret;
+			}
+
+			if (memcmp(read_buffer + (sector_count*512),
+				transfer_buffer + (sector_count*512), 512)) {
+				printf("mmc data mismatch sector %d\n",
+							sector+sector_count);
+			}
+		}
+	#endif
+
+	strcpy(response, "OKAY");
+	fastboot_tx_status(response, strlen(response));
+
+	return ret;
+}
+
 void do_fastboot(void)
 {
 	int ret = 0;
@@ -298,6 +517,8 @@ void do_fastboot(void)
 	/* Use 65 instead of 64, null gets dropped
 	strcpy's need the extra byte */
 	char response[65];
+
+	getsize = 0;
 
 	/* enable irqs */
 	enable_irqs();
@@ -409,6 +630,68 @@ void do_fastboot(void)
 				printf("Finished downloading...\n");
 
 		} /* "download" if loop ends */
+
+		if (memcmp(cmd, "flash:", 6) == 0) {
+
+			ret = 0;
+
+			if (getsize == 0)
+				goto fail;
+
+			/* Init the MMC and load the partition table */
+			ret = board_mmc_init();
+			if (ret != 0) {
+				printf("board_mmc_init() failed\n");
+				sprintf(response,
+					"FAILUnable to init the MMC");
+				goto fail;
+			}
+
+			e = fastboot_flash_find_ptn(&cmd[6]);
+
+			if (e == 0) {
+				printf("Partition: %s does not exist\n",
+								e->name);
+				sprintf(response,
+					"FAILpartition does not exist");
+				goto fail;
+
+			} else if (getsize > e->length) {
+				printf("Image is too large for partition\n");
+				sprintf(response, "FAILimage is too large for "
+								"partition");
+				goto fail;
+
+			} else
+				printf("writing to partition %s, begins at "
+					"sector%d and is %d long \n", e->name,
+							e->start, e->length);
+
+			/* store the start address of the partition */
+			sector = e->start;
+
+			sparse_header = (sparse_header_t *) transfer_buffer;
+
+			/*check if we have a sparse compressed image */
+			if (sparse_header->magic == SPARSE_HEADER_MAGIC) {
+
+				ret = flash_sparse_formatted_image();
+				if (ret != 0)
+					goto fail;
+				else
+					printf("Done flashing the sparse "
+					"formatted image to %s\n", e->name);
+			} else {
+				/* normal flashing case */
+				ret = flash_non_sparse_formatted_image();
+				if (ret != 0)
+					goto fail;
+				else
+					printf("Done flashing the non-sparse "
+					"formatted image to %s\n", e->name);
+			}
+
+		} /* "flash" if loop ends */
 
 	} /* while(1) loop ends */
 
