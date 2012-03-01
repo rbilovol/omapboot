@@ -29,6 +29,7 @@
 #ifndef _ROM_ROM_H_
 #define _ROM_ROM_H_
 
+extern u32 public_rom_base;
 
 /* public api */
 #define PUBLIC_API_BASE_4430		(0x28400)
@@ -136,5 +137,33 @@ int usb_wait_write(struct usb *usb);
 
 int usb_read(struct usb *usb, void *data, unsigned len);
 int usb_write(struct usb *usb, void *data, unsigned len);
+
+/* rom api prototypes ------------------------------------------------ begin */
+
+/* PUBLIC_GET_DRIVER_MEM */
+typedef int (** const sys_getdrivermem_pt)(struct mem_driver **, u32);
+#define rom_get_mem_driver(a, b) \
+	(*(sys_getdrivermem_pt) \
+	(public_rom_base + PUBLIC_GET_DRIVER_MEM_OFFSET))(a, b);
+
+/* PUBLIC_GET_DRIVER_PER */
+typedef int (** const sys_getdriverper_pt)(struct per_driver **, u32);
+#define rom_get_per_driver(a, b) \
+	(*(sys_getdriverper_pt) \
+	(public_rom_base + PUBLIC_GET_DRIVER_PER_OFFSET))(a, b);
+
+/* PUBLIC_GET_DEVICE_MEM */
+typedef int (** const sys_getdevicedescmem_pt)(struct per_handle **);
+#define rom_get_mem_device(a) \
+	(*(sys_getdevicedescmem_pt) \
+	(public_rom_base + PUBLIC_GET_DEVICE_MEM_OFFSET))(a);
+
+/* PUBLIC_GET_DEVICE_PER */
+typedef int (** const sys_getdevicedescper_pt)(struct per_handle **);
+#define rom_get_per_device(a) \
+	(*(sys_getdevicedescper_pt) \
+	(public_rom_base + PUBLIC_GET_DEVICE_PER_OFFSET))(a);
+
+/* rom api prototypes -------------------------------------------------- end */
 
 #endif

@@ -65,6 +65,8 @@ struct usb usb;
 
 unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 
+u32 public_rom_base;
+
 unsigned call_trusted(unsigned appid, unsigned procid, unsigned flag, void *args);
 
 int verify(void *data, unsigned len, void *signature, unsigned rights) {
@@ -86,7 +88,6 @@ int verify(void *data, unsigned len, void *signature, unsigned rights) {
 #if WITH_FLASH_BOOT
 int load_image(unsigned device, unsigned start, unsigned count, void *data)
 {
-	int (*rom_get_mem_driver)(struct mem_driver **io, u32 type);
 	struct mem_driver *io = 0;
 	struct mem_device local_md_device, *md = 0;
 	struct read_desc rd;
@@ -94,12 +95,6 @@ int load_image(unsigned device, unsigned start, unsigned count, void *data)
 	u32 base;
 	int z;
 
-	if (get_omap_rev() >= OMAP_4460_ES1_DOT_0)
-		base = PUBLIC_API_BASE_4460;
-	else
-		base = PUBLIC_API_BASE_4430;
-
-	rom_get_mem_driver = API(base + PUBLIC_GET_DRIVER_MEM_OFFSET);
 	z = rom_get_mem_driver(&io, device);
 	if (z)
 		return -1;
@@ -164,7 +159,12 @@ int load_from_usb(unsigned *_len)
 
 void aboot(unsigned *info)
 {
-	unsigned bootdevice, n, len;
+	unsigned n, len;
+
+	if (get_omap_rev() >= OMAP_4460_ES1_DOT_1)
+		public_rom_base = PUBLIC_API_BASE_4460;
+	else
+		public_rom_base = PUBLIC_API_BASE_4430;
 
 	board_mux_init();
 	sdelay(100);
@@ -189,6 +189,8 @@ void aboot(unsigned *info)
 #if !WITH_FLASH_BOOT
 	n = load_from_usb(&len);
 #else
+	unsigned bootdevice;
+
 	if (info) {
 		bootdevice = info[2] & 0xFF;
 	} else {
