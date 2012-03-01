@@ -28,8 +28,14 @@
 
 #include <aboot/aboot.h>
 #include <aboot/io.h>
+
+#if defined CONFIG_IS_OMAP4
 #include <omap4/mux.h>
 #include <omap4/hw.h>
+#elif defined CONFIG_IS_OMAP5
+#include <omap5/hw.h>
+#endif
+
 #include <common/omap_rom.h>
 
 #define WITH_MEMORY_TEST	0
@@ -161,7 +167,9 @@ void aboot(unsigned *info)
 {
 	unsigned n, len;
 
-	if (get_omap_rev() >= OMAP_4460_ES1_DOT_1)
+	if (get_omap_rev() >= OMAP_5430_ES1_DOT_0)
+		public_rom_base = PUBLIC_API_BASE_5430;
+	else if (get_omap_rev() >= OMAP_4460_ES1_DOT_1)
 		public_rom_base = PUBLIC_API_BASE_4460;
 	else
 		public_rom_base = PUBLIC_API_BASE_4430;

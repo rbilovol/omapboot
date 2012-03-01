@@ -30,7 +30,13 @@
 #include <aboot/types.h>
 #include <aboot/io.h>
 #include <aboot/common.h>
+
+#if defined CONFIG_IS_OMAP4
 #include <omap4/hw.h>
+#elif defined CONFIG_IS_OMAP5
+#include <omap5/hw.h>
+#endif
+
 #include <common/omap_rom.h>
 #include <libc/string.h>
 #include "config.h"
@@ -130,6 +136,9 @@ static char *get_cpurevision(void)
 	case OMAP_4460_ES1_DOT_1:
 		strcpy(cpu_rev, "ES1.1");
 		break;
+	case OMAP_5430_ES1_DOT_0:
+		strcpy(cpu_rev, "ES1.0");
+		break;
 	default:
 		printf("OMAP_REV_INVALID\n");
 		strcpy(cpu_rev, "invalid");
@@ -165,6 +174,9 @@ static char *get_procversion(void)
 		break;
 	case OMAP_4460_ES1_DOT_1:
 		strcpy(proc_ver, "4460");
+		break;
+	case OMAP_5430_ES1_DOT_0:
+		strcpy(proc_ver, "5430");
 		break;
 	default:
 		printf("OMAP_REV_INVALID\n");

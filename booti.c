@@ -193,7 +193,8 @@ int do_booti(char *info)
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
 
-#if defined CONFIG_OMAP4_ANDROID_CMD_LINE
+#if defined CONFIG_OMAP4_ANDROID_CMD_LINE || \
+	defined CONFIG_OMAP5_ANDROID_CMD_LINE
 	char serial_str[64];
 	int serial_len;
 	char boot_str[64];

@@ -1,8 +1,13 @@
 
 #include <aboot/aboot.h>
 #include <aboot/io.h>
+
+#if defined CONFIG_IS_OMAP4
 #include <omap4/mux.h>
 #include <omap4/hw.h>
+#elif defined CONFIG_IS_OMAP5
+#include <omap5/hw.h>
+#endif
 
 /* syslib.c */
 

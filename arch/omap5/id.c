@@ -32,7 +32,7 @@
 #include <aboot/io.h>
 #include <omap5/hw.h>
 
-#define DEVICETYPE_MASK	(0x7 << 8)
+#define DEVICETYPE_MASK	(0x7 << 6)
 
 struct omap_id {
 	omap_rev    rev_num;
@@ -64,5 +64,5 @@ omap_type get_omap_type(void)
 
 	value = readl(CONTROL_STATUS);
 	value &= DEVICETYPE_MASK;
-	return value >> 8;
+	return value >> 6;
 }
