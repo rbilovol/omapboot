@@ -25,6 +25,14 @@
 ## OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 ## SUCH DAMAGE.
 
+VERSION = 1
+PATCHLEVEL = 0
+SUBLEVEL = 0
+ABOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
+$(shell echo -n "#define ABOOT_VERSION \"ABOOT " > include/version.h)
+$(shell echo -n $(ABOOT_VERSION) >> include/version.h)
+$(shell echo "\"" >> include/version.h)
+
 what_to_build:: all
 
 -include local.mk
@@ -108,6 +116,7 @@ M_OBJS += $(OMAP4_COMMON_OBJS)
 endif
 M_OBJS += $(COMMON_OBJS)
 M_OBJS += iboot/iboot.o
+M_OBJS += booti.o
 M_OBJS += libc/utils.o
 M_OBJS += crc32.o
 M_OBJS += fastboot.o
@@ -145,6 +154,7 @@ $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c
 clean::
 	@echo clean
 	@rm include/config.h
+	@rm include/version.h
 	@rm -rf $(OUT)
 
 all:: $(ALL)

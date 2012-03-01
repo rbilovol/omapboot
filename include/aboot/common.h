@@ -33,6 +33,9 @@
 #define _COMMON_H_
 
 #include <aboot/types.h>
+#include <version.h>
+
+char aboot_version_string[20];
 
 #define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))
 

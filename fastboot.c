@@ -55,8 +55,9 @@ static fastboot_ptentry ptable[MAX_PTN];
 static struct fastboot_ptentry *e;
 
 static u8 *transfer_buffer = (void *) 0x82000000;
+#ifdef DEBUG
 static u8 *read_buffer = (void *) 0x83000000;
-
+#endif
 static char *dsize;
 static u32 getsize;
 static u32 sector;
@@ -692,6 +693,22 @@ void do_fastboot(void)
 			}
 
 		} /* "flash" if loop ends */
+
+		if (memcmp(cmd, "boot", 4) == 0) {
+
+			char start[32];
+			char *booti_args[4] = { "booti", NULL, "boot", NULL };
+			booti_args[1] = start;
+			sprintf(start, "0x%x", transfer_buffer);
+
+			strcpy(response, "OKAY");
+			fastboot_tx_status(response, strlen(response));
+
+			printf("booting kernel...\n");
+
+			do_booti((char *)booti_args);
+
+		} /* "boot" if loop ends */
 
 	} /* while(1) loop ends */
 

@@ -67,6 +67,7 @@ extern void gpmc_init(void);
 extern void board_late_init(void);
 extern int board_mmc_init(void);
 extern void prcm_init(void);
+extern int do_booti(char *info);
 extern int boot_image(unsigned machtype, unsigned image, unsigned len);
 extern void configure_core_dpll_no_lock(void);
 extern void lock_core_dpll_shadow(void);

@@ -30,3 +30,5 @@
 	#define FASTBOOT_VERSION	""
 	#define MANUFACTURER_NAME	""
 #endif
+
+#define CONFIG_OMAP4_ANDROID_CMD_LINE
