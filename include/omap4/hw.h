@@ -210,6 +210,10 @@
 #define WD_UNLOCK1		0xAAAA
 #define WD_UNLOCK2		0x5555
 
+#define CLK32K_COUNTER_REGISTER		0x4A304010
+#define CONTROL_PBIAS_LITE		0x4A100600
+#define CONTROL_CONF_MMC1		0x4A100628
+
 #define PRM_BASE                        0x4A306000
 #define PRM_DEVICE_BASE                 (PRM_BASE + 0x1B00)
 #define PRM_RSTCTRL                     PRM_DEVICE_BASE
