@@ -39,7 +39,7 @@ TARGET_LD := $(TOOLCHAIN)ld
 TARGET_OBJCOPY := $(TOOLCHAIN)objcopy
 TARGET_OBJDUMP := $(TOOLCHAIN)objdump
 
-$(shell cat config_$(BOARD).h > include/config.h)
+$(shell cat arch/$(ARCH)/configs/config_$(BOARD).h > include/config.h)
 TARGET_CFLAGS := -g -Os  -Wall
 TARGET_CFLAGS +=  -march=armv7-a -fno-builtin -ffreestanding
 TARGET_CFLAGS += -I. -Iinclude
@@ -86,7 +86,7 @@ endif
 
 M_OBJS += arch/common/serial.o
 M_OBJS += arch/common/rom_usb.o
-M_OBJS += board_$(BOARD).o
+M_OBJS += arch/$(ARCH)/board/board_$(BOARD).o
 M_OBJS += libc/printf.o 
 M_OBJS += libc/strlen.o libc/memset.o libc/memcpy.o
 M_OBJS += libc/raise.o
