@@ -1,4 +1,6 @@
 
+#define CONFIG_BLAZE
+
 #define CONFIG_BOARD_MACH_TYPE		3429
 #define CONFIG_IS_OMAP4
 
@@ -16,3 +18,15 @@
 #define CONFIG_ADDR_ATAGS		0x80000100
 #define CONFIG_ADDR_KERNEL		0x80008000
 #define CONFIG_ADDR_RAMDISK		0x81000000
+
+#define CONFIG_FASTBOOT			/* enable FASTBOOT for BLAZE */
+
+#ifdef CONFIG_FASTBOOT
+	#define PRODUCT_NAME		"blaze"
+	#define FASTBOOT_VERSION	"0.5"
+	#define MANUFACTURER_NAME	"Texas Instruments"
+#else
+	#define PRODUCT_NAME		""
+	#define FASTBOOT_VERSION	""
+	#define MANUFACTURER_NAME	""
+#endif
