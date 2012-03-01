@@ -56,6 +56,7 @@ u32 wait_on_value(u32 read_bit_mask, u32 match_value, u32 read_addr, u32 bound);
 void sdelay(unsigned long loops);
 
 /* global configuration, changable by board file */
+extern u8 device;
 extern unsigned cfg_machine_type;
 extern unsigned cfg_uart_base;
 

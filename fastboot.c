@@ -45,6 +45,10 @@
 
 struct usb usb;
 
+/* To support the Android-style naming of flash */
+#define MAX_PTN 16
+static fastboot_ptentry ptable[MAX_PTN];
+
 char *get_serial_number(void)
 {
 	static char serialno[20];
@@ -202,6 +206,46 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 	return 0;
 }
 
+void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count)
+{
+	if (count < MAX_PTN) {
+		memcpy(ptable + count, ptn, sizeof(*ptn));
+	count++;
+	}
+}
+
+void fastboot_flash_dump_ptn(int count)
+{
+	unsigned int n;
+	for (n = 0; n < count; n++) {
+		fastboot_ptentry *ptn = ptable + n;
+		printf("ptn %d name='%s' start=%d len=%d\n",
+		n, ptn->name, ptn->start, ptn->length);
+	}
+}
+
+fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
+{
+    unsigned int n;
+
+	for (n = 0; n < MAX_PTN; n++) {
+		/* Make sure a substring is not accepted */
+		if (strlen(name) == strlen(ptable[n].name)) {
+			if (0 == strcmp(ptable[n].name, name))
+				return ptable + n;
+		}
+	}
+	return 0;
+}
+
+fastboot_ptentry *fastboot_flash_get_ptn(unsigned int n, int count)
+{
+	if (n < count)
+		return ptable + n;
+	else
+		return 0;
+}
+
 void do_fastboot(void)
 {
 	int ret = 0;
@@ -244,6 +288,72 @@ void do_fastboot(void)
 			fastboot_getvar(cmd + 7, response);
 
 		} /* getvar if loop ends */
+
+		if (memcmp(cmd, "oem ", 4) == 0) {
+
+			ret = 0;
+
+			/* fastboot oem format */
+			if (memcmp(cmd, "oem format", 6) == 0) {
+
+				ret = fastboot_oem();
+				if (ret != 0) {
+					printf("fastboot_oem() failed\n");
+					strcpy(response, "FAIL");
+					goto fail;
+				} else {
+					strcpy(response, "OKAY");
+					fastboot_tx_status(response,
+							strlen(response));
+				}
+
+			} /* "oem format" if loop ends */
+
+			else if (memcmp(cmd, "oem recovery", 8) == 0) {
+
+				strcpy(response, "OKAY");
+
+				fastboot_tx_status(response, strlen(response));
+
+				/* close the usb connection */
+				usb_close(&usb);
+
+				/* Clear all reset reasons */
+				writel(0xfff, PRM_RSTST);
+
+				strcpy((char *)PUBLIC_SAR_RAM_1_FREE,
+							"recovery");
+
+				/* now warm reset the silicon */
+				writel(PRM_RSTCTRL_RESET_WARM_BIT,
+							PRM_RSTCTRL);
+				/* we never return */
+				while (1)
+					;
+
+			} /* "oem recovery if loop ends */
+
+			else if (memcmp(cmd, "oem unlock", 6) == 0) {
+
+				printf("\nfastboot oem unlock not implemented "
+								"yet!\n");
+
+				strcpy(response, "FAIL");
+
+				fastboot_tx_status(response, strlen(response));
+
+			} /* "oem unlock if loop ends */
+
+			else {
+
+				printf("\nfastboot: does not understand %s\n"\
+									, cmd);
+				strcpy(response, "FAIL");
+
+				fastboot_tx_status(response, strlen(response));
+			}
+
+		} /* "oem" if loop ends */
 
 	} /* while(1) loop ends */
 

@@ -210,8 +210,17 @@
 #define WD_UNLOCK1		0xAAAA
 #define WD_UNLOCK2		0x5555
 
-/* FIXME */
-#define PRM_RSTCTRL          			0x48307250
+#define PRM_BASE                        0x4A306000
+#define PRM_DEVICE_BASE                 (PRM_BASE + 0x1B00)
+#define PRM_RSTCTRL                     PRM_DEVICE_BASE
+#define PRM_RSTCTRL_RESET_WARM_BIT      (1<<0)
+#define PRM_RSTCTRL_RESET_COLD_BIT      (1<<1)
+#define PRM_RSTST                       (PRM_DEVICE_BASE + 0x4)
+#define PRM_RSTST_RESET_COLD_BIT        (1<<0)
+#define PRM_RSTST_RESET_WARM_BIT        (1<<1)
+
+#define PUBLIC_SAR_RAM_1_FREE		(0x4a326000 + 0xA0C)
+
   /* PRCM */
 #define CM_SYS_CLKSEL				0x4a306110
 
