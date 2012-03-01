@@ -29,6 +29,7 @@
 #include <aboot/aboot.h>
 #include <aboot/types.h>
 #include <aboot/io.h>
+#include <aboot/common.h>
 #include <omap4/hw.h>
 #include <common/omap_rom.h>
 #include <libc/string.h>
@@ -48,6 +49,12 @@ struct usb usb;
 /* To support the Android-style naming of flash */
 #define MAX_PTN 16
 static fastboot_ptentry ptable[MAX_PTN];
+
+static u8 *transfer_buffer = (void *) 0x82000000;
+static u8 *read_buffer = (void *) 0x83000000;
+
+static char *dsize;
+static u32 getsize;
 
 char *get_serial_number(void)
 {
@@ -246,6 +253,42 @@ fastboot_ptentry *fastboot_flash_get_ptn(unsigned int n, int count)
 		return 0;
 }
 
+static int download_image(void)
+{
+	int ret = 0;
+	int size_of_dsize = 0;
+	int count = 0;
+	char response[65];
+
+	size_of_dsize = strlen(dsize);
+	count = size_of_dsize;
+
+	getsize =
+		get_downloadsize_from_string(size_of_dsize, dsize);
+	if (getsize == 0) {
+		sprintf(response, "FAILdata invalid size");
+		return -1;
+	} else
+		sprintf(response, "DATA%08x", getsize);
+
+	fastboot_tx_status(response, strlen(response));
+
+	/* read the data */
+	printf("Reading %u amount of data ...\n", getsize);
+	ret = usb_read(&usb, transfer_buffer, getsize);
+	if (ret < 0) {
+		printf("failed to read the fastboot command\n");
+		strcpy(response, "FAIL");
+		return ret;
+	} else {
+		strcpy(response, "OKAY");
+		fastboot_tx_status(response, strlen(response));
+	}
+
+	return ret;
+
+}
+
 void do_fastboot(void)
 {
 	int ret = 0;
@@ -354,6 +397,18 @@ void do_fastboot(void)
 			}
 
 		} /* "oem" if loop ends */
+
+		if (memcmp(cmd, "download:", 9) == 0) {
+
+			ret = 0;
+			dsize = &cmd[10];
+			ret = download_image();
+			if (ret != 0)
+				goto fail;
+			else
+				printf("Finished downloading...\n");
+
+		} /* "download" if loop ends */
 
 	} /* while(1) loop ends */
 

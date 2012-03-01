@@ -108,6 +108,7 @@ M_OBJS += $(OMAP4_COMMON_OBJS)
 endif
 M_OBJS += $(COMMON_OBJS)
 M_OBJS += iboot/iboot.o
+M_OBJS += libc/utils.o
 M_OBJS += crc32.o
 M_OBJS += fastboot.o
 M_OBJS += fastboot_mmc.o
