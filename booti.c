@@ -82,8 +82,9 @@ int do_booti(char *info)
 	if (!(strcmp(info, "mmc"))) {
 		printf("do_booti(): boot device is mmc\n");
 		boot_from_mmc = 1;
-	} else
-		addr = 0x82000000;
+	}
+
+	addr = CONFIG_ADDR_DOWNLOAD;
 
 	hdr = (boot_img_hdr *) addr;
 
