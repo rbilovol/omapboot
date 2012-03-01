@@ -73,27 +73,41 @@ M_NAME := bin2c
 M_OBJS := tools/bin2c.o
 include build/host-executable.mk
 
+OMAP4_COMMON_OBJS :=	arch/omap4/clock.o \
+			arch/omap4/sdram.o \
+			arch/omap4/gpmc.o \
+			arch/omap4/gpio.o \
+			arch/omap4/id.o \
+
+COMMON_OBJS :=	arch/common/serial.o \
+		arch/common/rom_usb.o \
+		arch/$(ARCH)/board/board_$(BOARD).o \
+		libc/printf.o \
+		libc/raise.o \
+		libc/string.o \
+		trusted.o \
+		boot.o \
+		misc.o \
+
 M_NAME := aboot
 ifeq ($(ARCH), omap4)
 M_BASE := 0x40309000
 M_OBJS := arch/common/start_reloc.o
-M_OBJS += arch/omap4/clock.o
-M_OBJS += arch/omap4/sdram.o
-M_OBJS += arch/omap4/gpmc.o
-M_OBJS += arch/omap4/gpio.o
-M_OBJS += arch/omap4/id.o
+M_OBJS += $(OMAP4_COMMON_OBJS)
 endif
+M_OBJS += $(COMMON_OBJS)
+M_OBJS += aboot.o
+M_LIBS := $(TARGET_LIBGCC)
+include build/target-executable.mk
 
-M_OBJS += arch/common/serial.o
-M_OBJS += arch/common/rom_usb.o
-M_OBJS += arch/$(ARCH)/board/board_$(BOARD).o
-M_OBJS += libc/printf.o 
-M_OBJS += libc/raise.o
-M_OBJS += libc/string.o
-M_OBJS += aboot.o 
-M_OBJS += trusted.o
-M_OBJS += boot.o
-M_OBJS += misc.o
+M_NAME := iboot
+ifeq ($(ARCH), omap4)
+M_BASE := 0x40300200
+M_OBJS := iboot/start_reloc.o
+M_OBJS += $(OMAP4_COMMON_OBJS)
+endif
+M_OBJS += $(COMMON_OBJS)
+M_OBJS += iboot/iboot.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
@@ -105,11 +119,16 @@ M_OBJS += arch/common/serial.o
 
 include build/target-executable.mk
 
+$(OUT)/iboot.ift: $(OUT)/iboot.bin $(OUT)/mkheader
+	@echo generate $@
+	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/iboot.bin` > $@
+	@cat $(OUT)/iboot.bin >> $@
+
 $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
 	@echo generate $@
 	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/aboot.bin` > $@
 	@cat $(OUT)/aboot.bin >> $@
-ALL += $(OUT)/aboot.ift
+ALL += $(OUT)/aboot.ift $(OUT)/iboot.ift
 
 $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c
 	@echo generate $@
