@@ -208,7 +208,9 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 
 	DBG("fastboot_getvar()\n");
 
-	if (!memcmp(rx_buffer, "version", 7))
+	if (!memcmp(rx_buffer, "version-bootloader", 18))
+		strcpy(response + 4, ABOOT_VERSION);
+	else if (!memcmp(rx_buffer, "version", 7))
 		strcpy(response + 4, FASTBOOT_VERSION);
 	else if (!memcmp(rx_buffer, "product", 7))
 		strcpy(response + 4, PRODUCT_NAME);
@@ -224,6 +226,41 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 	} else if (!memcmp(rx_buffer, "cpu", 3)) {
 		strcpy(procver, get_procversion());
 		strcpy(response + 4, procver);
+	} else if (!memcmp(rx_buffer, "downloadsize", 12)) {
+		if (getsize)
+			sprintf(response + 4, "%08x", getsize);
+	} else if (!strcmp(rx_buffer, "all")) {
+		/* product name */
+		strcpy(response, "INFO");
+		strcpy(response + strlen(response), "product: ");
+		strcpy(response + strlen(response), PRODUCT_NAME);
+		fastboot_tx_status(response, strlen(response));
+		/* processor version */
+		strcpy(response, "INFO");
+		strcpy(procver, get_procversion());
+		strcpy(response + strlen(response), "cpu: ");
+		strcpy(response + strlen(response), procver);
+		fastboot_tx_status(response, strlen(response));
+		/* cpu revision */
+		strcpy(response, "INFO");
+		strcpy(cpurev, get_cpurevision());
+		strcpy(response + strlen(response), "cpurev: ");
+		strcpy(response + strlen(response), cpurev);
+		fastboot_tx_status(response, strlen(response));
+		/* device is GP/EMU/HS */
+		strcpy(response, "INFO");
+		strcpy(proctype, get_proc_type());
+		strcpy(response + strlen(response), "secure: ");
+		strcpy(response + strlen(response), proctype);
+		fastboot_tx_status(response, strlen(response));
+		strcpy(response, "INFO");
+		/*serial number */
+		strcpy(serial, get_serial_number());
+		strcpy(response + strlen(response), "serialno: ");
+		strcpy(response + strlen(response), serial);
+		fastboot_tx_status(response, strlen(response));
+
+		strcpy(response, "OKAY");
 	} else
 		printf("fastboot_getvar():unsupported variable\n");
 
