@@ -67,6 +67,7 @@ struct usb_handle
     int desc;
     unsigned char ep_in;
     unsigned char ep_out;
+    int dev_product;
 };
 
 static inline int badname(const char *name)
@@ -90,7 +91,7 @@ static int check(void *_desc, int len, unsigned type, int size)
 }
 
 static int filter_usb_device(int fd, char *ptr, int len, int writable,
-                             ifc_match_func callback,
+				ifc_match_func callback, int *dev_product,
                              int *ept_in_id, int *ept_out_id, int *ifc_id)
 {
     struct usb_device_descriptor *dev;
@@ -184,6 +185,7 @@ static int filter_usb_device(int fd, char *ptr, int len, int writable,
         info.has_bulk_out = (out != -1);
         
         if(callback(&info) == 0) {
+		*dev_product = info.dev_product;
             *ept_in_id = in;
             *ept_out_id = out;
             *ifc_id = ifc->bInterfaceNumber;
@@ -199,7 +201,7 @@ static usb_handle *find_usb_device(const char *base, ifc_match_func callback)
     usb_handle *usb = 0;
     char busname[64], devname[64];
     char desc[1024];
-    int n, in, out, ifc;
+    int n, in, out, ifc, dev_product = 0;
     
     DIR *busdir, *devdir;
     struct dirent *de;
@@ -235,13 +237,18 @@ static usb_handle *find_usb_device(const char *base, ifc_match_func callback)
 
             n = read(fd, desc, sizeof(desc));
             
-            if(filter_usb_device(fd, desc, n, writable, callback,
+	if (filter_usb_device(fd, desc, n, writable, callback, &dev_product,
                                  &in, &out, &ifc) == 0) {
                 usb = calloc(1, sizeof(usb_handle));
                 strcpy(usb->fname, devname);
                 usb->ep_in = in;
                 usb->ep_out = out;
                 usb->desc = fd;
+		usb->dev_product = dev_product;
+		if (dev_product == 0xd011)
+			DBG("ZLP Enabled [ dev_product %x ]\n", dev_product);
+		else
+			DBG("ZLP Disabled [ dev_product %x ]\n", dev_product);
 
                 n = ioctl(fd, USBDEVFS_CLAIMINTERFACE, &ifc);
                 if(n != 0) {
@@ -307,10 +314,14 @@ int usb_write(usb_handle *h, const void *_data, int len)
         len -= xfer;
         data += xfer;
 
-	/* ToDo - Fix for OMAP4. Should only be used for OMAP5. */
-	/* ZLP: after every 64K or 512*n */
-	if ((!(count % (1024*64))) || (!len && (!(count % 512))))
-		usb_write(h, data, 0);
+	/* Send ZLP only for OMAP5. */
+	if (h->dev_product == 0xd011) {
+		/* ZLP: after every 64K or 512*n */
+		if ((!(count % (1024*64))) || (!len && (!(count % 512)))) {
+			DBG("Sending ZLP\n");
+			usb_write(h, data, 0);
+		}
+	}
     }
 
     return count;
