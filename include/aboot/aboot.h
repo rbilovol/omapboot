@@ -71,6 +71,9 @@ extern int do_booti(char *info);
 extern int boot_image(unsigned machtype, unsigned image, unsigned len);
 extern void configure_core_dpll_no_lock(void);
 extern void lock_core_dpll_shadow(void);
+extern int pmic_enable(void);
+extern int pbias_config(void);
+extern int pmic_disable(void);
 
 /* rev-id stuff */
 typedef enum {

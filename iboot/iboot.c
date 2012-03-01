@@ -32,6 +32,7 @@
 #include <aboot/aboot.h>
 #include <aboot/io.h>
 #include <common/omap_rom.h>
+#include <common/fastboot.h>
 #include <omap4/mux.h>
 #include <omap4/hw.h>
 #include "config.h"
@@ -80,6 +81,26 @@ void iboot(unsigned *info)
 
 	printf("MSV=%08x\n", *((unsigned *) 0x4A00213C));
 
+#if defined CONFIG_IS_OMAP4
+	hal_i2c i2c_id = HAL_I2C1;
+
+	ret = i2c_init(i2c_id);
+	if (ret != 0) {
+		printf("\nFailed to init I2C-%d\n", i2c_id);
+		goto fail;
+	} else
+		printf("\nInitialized I2C-%d\n", i2c_id);
+
+	ret = pmic_enable();
+	if (ret != 0) {
+		printf("could not enable the pmic\n");
+		goto fail;
+	} else {
+		printf("Configure the pbias\n");
+		pbias_config();
+	}
+#endif
+
 	enable_irqs();
 
 	ret = usb_open(&usb);
@@ -90,9 +111,8 @@ void iboot(unsigned *info)
 
 	usb_write(&usb, &MSG, 4);
 
-	serial_puts("\nstay in SRAM\n");
-	while (1)
-		;
+	serial_puts("\nstay in SRAM and enter FASTBOOT mode\n");
+	do_fastboot();
 
 fail:
 	while (1)
