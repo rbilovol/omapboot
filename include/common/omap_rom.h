@@ -34,6 +34,7 @@ extern u32 public_rom_base;
 /* public api */
 #define PUBLIC_API_BASE_4430		(0x28400)
 #define PUBLIC_API_BASE_4460		(0x30400)
+#define PUBLIC_API_BASE_5430		(0x38400)
 
 #define PUBLIC_GET_DRIVER_MEM_OFFSET (0x04)
 #define PUBLIC_GET_DRIVER_PER_OFFSET (0x08)
@@ -181,17 +182,19 @@ int mmc_write(struct mmc *mmc, u32 start, u32 count, void *data);
 
 /* Peripheral ROM interface */
 struct per_handle {
-	void *set_to_null;
+	void *config_object;
 	void (*callback)(struct per_handle *rh);
 	void *data;
 	u32 length;
 	u16 *options;
+#if defined(CONFIG_IS_OMAP4)
 	u32 xfer_mode;
+#endif
 	u32 device_type;
 	volatile u32 status;
 	u16 hs_toc_mask;
 	u16 gp_toc_mask;
-	u32 config_timeout;
+	u32 *device_data;
 };
 
 struct per_driver {
