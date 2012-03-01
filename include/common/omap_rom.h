@@ -40,6 +40,17 @@ extern u32 public_rom_base;
 #define PUBLIC_GET_DEVICE_MEM_OFFSET (0x80)
 #define PUBLIC_GET_DEVICE_PER_OFFSET (0x84)
 
+#define PUBLIC_IRQ_INITIALIZE				(0x40)
+
+#define PUBLIC_HAL_I2C_DRIVER_INIT_OFFSET		(0x60)
+#define PUBLIC_HAL_I2C_DRIVER_WRITE_OFFSET		(0x64)
+#define PUBLIC_HAL_I2C_DRIVER_READ_OFFSET		(0x68)
+#define PUBLIC_HAL_I2C_DRIVER_CLOSE_OFFSET		(0x6C)
+
+#define PUBLIC_HAL_CM_ENABLEMODULECLOCKS_OFFSET		(0xA0)
+#define PUBLIC_HAL_CM_DISABLEMODULECLOCKS_OFFSET	(0xA4)
+#define PUBLIC_HAL_CTRL_CONFIGUREPADS_OFFSET		(0xA8)
+
 #define DEVICE_NULL	0x40
 #define DEVICE_UART1	0x41
 #define DEVICE_UART2	0x42
@@ -58,6 +69,20 @@ extern u32 public_rom_base;
 #define STATUS_WAITING		4
 #define STATUS_NO_MEMORY	5
 #define STATUS_INVALID_PTR	6
+
+typedef enum {
+	HAL_MODULE_NULL = (0x00),
+	HAL_MODULE_MMC,
+	HAL_MODULE_UART,
+	HAL_MODULE_USB,
+	HAL_MODULE_I2C,
+	HAL_MODULE_DMTIMER1MS,
+	HAL_MODULE_WDTIMER,
+	HAL_MODULE_ELM,
+	HAL_MODULE_GPMC,
+	HAL_MODULE_EMIF
+
+} hal_module;
 
 /* Memory ROM interface */
 struct read_desc {
@@ -138,6 +163,24 @@ int usb_wait_write(struct usb *usb);
 int usb_read(struct usb *usb, void *data, unsigned len);
 int usb_write(struct usb *usb, void *data, unsigned len);
 
+/* I2C */
+typedef enum {
+	HAL_I2C1 = (0x00),
+	HAL_I2C2,
+	HAL_I2C3,
+	HAL_I2C4
+} hal_i2c;
+
+int i2c_init(hal_i2c i2c_id);
+
+int i2c_write(hal_i2c i2c_id, u16 slave, u32 count, void *data, u32 start_time,
+								u32 timeout);
+
+int i2c_read(hal_i2c i2c_id, u16 slave, u32 count, void *data, u32 start_time,
+								u32 timeout);
+
+int i2c_close(hal_i2c i2c_id);
+
 /* rom api prototypes ------------------------------------------------ begin */
 
 /* PUBLIC_GET_DRIVER_MEM */
@@ -163,6 +206,56 @@ typedef int (** const sys_getdevicedescper_pt)(struct per_handle **);
 #define rom_get_per_device(a) \
 	(*(sys_getdevicedescper_pt) \
 	(public_rom_base + PUBLIC_GET_DEVICE_PER_OFFSET))(a);
+
+/* PUBLIC_HAL_CTRL_CONFIGUREPADS */
+typedef int (** const hal_ctrl_configurepads_pt)(hal_module, u32);
+#define rom_hal_ctrl_configurepads(a, b) \
+	(*(hal_ctrl_configurepads_pt)\
+	(public_rom_base + PUBLIC_HAL_CTRL_CONFIGUREPADS_OFFSET))(a, b);
+
+/* PUBLIC_HAL_CM_ENABLEMODULECLOCKS */
+typedef int (** const hal_cm_enablemoduleclocks_pt)(hal_module, u32);
+#define rom_hal_cm_enablemoduleclocks(a, b) \
+	(*(hal_cm_enablemoduleclocks_pt) \
+	(public_rom_base + PUBLIC_HAL_CM_ENABLEMODULECLOCKS_OFFSET))(a, b);
+
+/* PUBLIC_HAL_CM_DISABLEMODULECLOCKS */
+typedef int (** const hal_cm_disablemoduleclocks_pt)(hal_module, u32);
+#define rom_hal_cm_disablemoduleclocks(a, b) \
+	(*(hal_cm_disablemoduleclocks_pt) \
+	(public_rom_base + PUBLIC_HAL_CM_DISABLEMODULECLOCKS_OFFSET))(a, b);
+
+/* PUBLIC_IRQ_INITIALIZE */
+typedef int (** const irq_initialize_pt)(void);
+#define rom_irq_initialize() \
+	(*(irq_initialize_pt) \
+	(public_rom_base + PUBLIC_IRQ_INITIALIZE))();
+
+/* PUBLIC_HAL_I2C_DRIVER_INITIALIZE */
+typedef int (** const hal_i2c_initialize_pt)(hal_i2c);
+#define rom_hal_i2c_initialize(a) \
+	(*(hal_i2c_initialize_pt) \
+	(public_rom_base + PUBLIC_HAL_I2C_DRIVER_INIT_OFFSET))(a);
+
+/* PUBLIC_HAL_I2C_DRIVER_WRITE */
+typedef int (** const hal_i2c_write_pt)(hal_i2c, u16, u32, void*, u32, u32);
+#define rom_hal_i2c_write(a, b, c, d, e, f) \
+	(*(hal_i2c_write_pt) \
+	(public_rom_base + PUBLIC_HAL_I2C_DRIVER_WRITE_OFFSET)) \
+						(a, b, c, d, e, f);
+
+/* PUBLIC_HAL_I2C_DRIVER_READ */
+typedef int (** const hal_i2c_read_pt)(hal_i2c, u16, u32, void*, u32, u32);
+#define rom_hal_i2c_read(a, b, c, d, e, f) \
+		(*(hal_i2c_read_pt) \
+		(public_rom_base + PUBLIC_HAL_I2C_DRIVER_READ_OFFSET)) \
+							(a, b, c, d, e, f);
+
+/* PUBLIC_HAL_I2C_DRIVER_CLOSE */
+typedef int (** const hal_i2c_close_pt)(hal_i2c);
+#define rom_hal_i2c_close(a) \
+		(*(hal_i2c_close_pt) \
+		(public_rom_base + PUBLIC_HAL_I2C_DRIVER_CLOSE_OFFSET))(a);
 
 /* rom api prototypes -------------------------------------------------- end */
 
