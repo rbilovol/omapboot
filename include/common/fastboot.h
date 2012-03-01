@@ -17,7 +17,7 @@ struct fastboot_ptentry {
 	/* The start wrt the nand part, must be multiple of nand block size */
 	unsigned int start;
 	/* The length of the partition, must be multiple of nand block size */
-	unsigned int length;
+	u64 length;
 	/* Controls the details of how operations are done on the partition
 	See the FASTBOOT_PTENTRY_FLAGS_*'s defined below */
 	unsigned int flags;
@@ -35,6 +35,7 @@ unsigned int fastboot_flash_get_ptn_count(void);
 fastboot_ptentry *fastboot_flash_find_ptn(const char *name);
 
 extern int fastboot_oem(void);
+extern char *get_ptn_size(char *buf, const char *ptn);
 
 #else
 
@@ -48,6 +49,7 @@ unsigned int fastboot_flash_get_ptn_count(void) { return 0; };
 fastboot_ptentry *fastboot_flash_find_ptn(const char *name) { return; };
 
 extern int fastboot_oem(void) { return 0; }
+extern char *get_ptn_size(char *buf, const char *ptn) { return 0; };
 
 #endif /* CONFIG_FASTBOOT */
 

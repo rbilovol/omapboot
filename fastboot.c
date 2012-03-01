@@ -229,6 +229,9 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 	} else if (!memcmp(rx_buffer, "downloadsize", 12)) {
 		if (getsize)
 			sprintf(response + 4, "%08x", getsize);
+	} else if (!strcmp(rx_buffer, "userdata_size")) {
+		strcpy(response + 4, get_ptn_size(response + strlen(response),
+								"userdata"));
 	} else if (!strcmp(rx_buffer, "all")) {
 		/* product name */
 		strcpy(response, "INFO");

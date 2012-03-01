@@ -49,6 +49,7 @@
 
 struct mmc mmc;
 struct mmc_devicedata *dd;
+u64 sz;
 int count;
 
 static const u8 partition_type[16] = {
@@ -305,10 +306,10 @@ void import_efi_partition(struct efi_entry *entry)
 
 	if (e.length > 0x100000)
 		printf("partition begins at %8d, has length=%7dM and is named "
-				"%s\n", e.start, e.length/0x100000, e.name);
+			"%s\n", e.start, (u32)(e.length/0x100000), e.name);
 	else
 		printf("partition begins at %8d, has length=%7dK and is named "
-				"%s\n", e.start, e.length/0x400, e.name);
+			"%s\n", e.start, (u32)(e.length/0x400), e.name);
 }
 
 static int load_ptbl(void)
@@ -530,5 +531,76 @@ int board_mmc_init(void)
 
 	return 0;
 }
-#endif
 
+void get_entry_size(struct efi_entry *entry, const char *ptn)
+{
+	int ret = 0;
+
+	ret = memcmp(entry->type_uuid, partition_type, sizeof(partition_type));
+	if (ret != 0)
+		return;
+
+	if (!strcmp(ptn, (const char *)entry->name))
+		sz = (entry->last_lba - entry->first_lba)/2;
+
+	return;
+}
+
+char *get_ptn_size(char *buf, const char *ptn)
+{
+	static u8 data[512];
+	static struct efi_entry entry[4];
+	int m = 0; int r = 0; int j = 0;
+	u32 *sz_ptr; sz = 0;
+
+	r = mmc_open(device, &mmc);
+	if (r != 0) {
+		printf("mmc init failed, retrying ...\n");
+		r = mmc_open(device, &mmc);
+		if (r != 0) {
+			printf("mmc init failed on retry, exiting!\n");
+			return buf;
+		}
+	}
+
+	r = mmc_read(&mmc, 1, 1, data);
+	if (r != 0) {
+		printf("error reading primary GPT header\n");
+		return buf;
+	}
+
+	if (memcmp(data, "EFI PART", 8)) {
+		printf("efi partition table not found\n");
+		return buf;
+	} else
+		printf("efi partition table found\n");
+
+	for (j = 2; j < 34; j++) {
+		r = mmc_read(&mmc, j, 1, entry);
+		if (r != 0) {
+			printf("error reading partition entries\n");
+			return buf;
+		}
+
+		for (m = 0; m < 4; m++) {
+			if (sz)
+				break;
+
+			get_entry_size(entry + m, ptn);
+		}
+	}
+
+	if (sz >= 0xFFFFFFFF) {
+		sz_ptr = &sz;
+		DBG("sz is > 0xFFFFFFFF\n");
+		sprintf(buf, "0x%08x , %08x KB", sz_ptr[1], sz_ptr[0]);
+	} else {
+		DBG("Size of the partition = %d KB\n", (u32)sz);
+		sprintf(buf, "%d KB", (u32)sz);
+	}
+
+	return buf;
+
+}
+
+#endif
