@@ -249,7 +249,7 @@ int add_ptn(struct ptable *ptbl, u64 first, u64 last, const char *name)
 {
 	struct efi_header *hdr = &ptbl->header;
 	struct efi_entry *entry = ptbl->entry;
-	u32 n;
+	u32 n; int i = 0;
 
 	printf("add_ptn\n");
 
@@ -271,9 +271,17 @@ int add_ptn(struct ptable *ptbl, u64 first, u64 last, const char *name)
 		entry->uniq_uuid[0] = n;
 		entry->first_lba = first;
 		entry->last_lba = last;
-		strcpy(entry->name, name);
-		printf("entry->name=%s and length = %d \n", entry->name,
-								strlen(name));
+
+		/* Converting partition name to simple unicode
+		as expected by the kernel */
+		while (i <= EFI_NAMELEN && *name) {
+			entry->name[i] = name[i];
+			if (name[i] == 0)
+				break;
+			entry->name[i+1] = '0';
+			i++;
+		}
+
 		return 0;
 	}
 
@@ -284,7 +292,7 @@ int add_ptn(struct ptable *ptbl, u64 first, u64 last, const char *name)
 void import_efi_partition(struct efi_entry *entry)
 {
 	struct fastboot_ptentry e;
-	int ret = 0;
+	int ret = 0; int n = 0;
 
 	printf("import_efi_partition\n");
 
@@ -295,7 +303,14 @@ void import_efi_partition(struct efi_entry *entry)
 		return;
 	}
 
-	strcpy(e.name, entry->name);
+	/* copying a simple unicode partition name */
+	while (n < (sizeof(e.name)-1)) {
+		e.name[n] = entry->name[n];
+		n++;
+	}
+
+	e.name[n] = 0;
+
 	e.start = entry->first_lba;
 	e.length = (entry->last_lba - entry->first_lba + 1) * 512;
 	e.flags = 0;
