@@ -64,8 +64,36 @@ extern u32 public_rom_base;
 #define DEVICE_USB	0x45
 #define DEVICE_USBEXT	0x46
 
+#define DEVICE_TYPE_NULL	0x00
+#define DEVICE_TYPE_XIP		0x01
+#define DEVICE_TYPE_XIP_WAIT	0x02
+#define DEVICE_TYPE_NAND	0x03
+#define DEVICE_TYPE_ONENAND	0x04
+#define DEVICE_SDCARD		0x05
+#define DEVICE_EMMC		0x06
+#define DEVICE_EMMC_MUX5	0x07
+
 #define XFER_MODE_CPU 0
 #define XFER_MODE_DMA 1
+
+#define MMCSD_SECTOR_SIZE_SHIFT		(9)
+#define MMCSD_SECTOR_SIZE		(1 << MMSD_SECTOR_SIZE_SHIFT)
+
+/* parmas to mmc configure function */
+#define MMCSD_CONFIGID_SETCLOCK		(0)
+#define MMCSD_CLOCK_DIVIDER_19_2MHZ	((96+1)*1000/19200)
+#define MMCSD_CLOCK_DIVIDER_48MHz	((96+1)*1000/48000)
+
+#define MMCSD_CONFIGID_SETBUSWIDTH	(1)
+#define MMCSD_1BIT_BUS_WIDTH_SUPPORTED	(1 << 0)
+#define MMCSD_4BIT_BUS_WIDTH_SUPPORTED	(1 << 1)
+#define MMCSD_8BIT_BUS_WIDTH_SUPPORTED	(1 << 2)
+
+#define MMCSD_CONFIGID_SETPARTITION	(3)
+
+#define MMCSD_CONFIGID_SETDDRMODE		(4)
+#define MMCSD_4BIT_DDR_BUS_WIDTH_SUPPORTED	(1 << 3)
+#define MMCSD_8BIT_DDR_BUS_WIDTH_SUPPORTED	(1 << 4)
 
 #define STATUS_OKAY		0
 #define STATUS_FAILED		1
@@ -115,6 +143,41 @@ struct mem_driver {
 	int (*configure)(struct mem_device *md, void *config);
 };
 
+/* MMC */
+struct mmc_config {
+	u32 configid;
+	u32 value;
+};
+
+struct mmc {
+	struct mem_device dread;
+	struct mem_driver *io;
+};
+
+/* mmc device data */
+#define MMCSD_TYPE_MMC			(1)
+#define MMCSD_TYPE_SD			(2)
+#define MMCSD_MODE_RAW			(1)
+#define MMCSD_MODE_FAT			(2)
+#define MMCSD_ADDRESSING_BYTE		(1)
+#define MMCSD_ADDRESSING_SECTOR		(2)
+
+struct mmc_devicedata {
+	u32 moduleid;
+	u32 type;      /* memory type (MMC/SD)  */
+	u32 mode;      /* opmode (BOOT/RAW/FAT) */
+	u32 copy;
+	u32 version;
+	u32 addressing; /* sector or byte addressed */
+	u32 buswidth;
+	u32 size;
+}; /* did not include the remaining fields */
+
+int mmc_open(u8 device, struct mmc *mmc);
+int mmc_read(struct mmc *mmc, u32 start, u32 count, void *data);
+int mmc_configure(struct mmc *mmc, u32 id, u32 value);
+int mmc_info(struct mmc *mmc);
+int mmc_write(struct mmc *mmc, u32 start, u32 count, void *data);
 
 /* Peripheral ROM interface */
 struct per_handle {

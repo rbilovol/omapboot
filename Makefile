@@ -111,6 +111,7 @@ M_OBJS += iboot/iboot.o
 M_OBJS += crc32.o
 M_OBJS += arch/common/rom_i2c.o
 M_OBJS += arch/common/rom_wdtimer.o
+M_OBJS += arch/common/rom_mmc.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
