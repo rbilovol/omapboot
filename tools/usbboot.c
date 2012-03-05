@@ -47,7 +47,7 @@ typedef struct tocentry {
 
 #define USE_TOC 0
 
-int usb_boot(usb_handle *usb,
+int usb_boot(usb_handle *usb, int fastboot_mode,
 	     void *data, unsigned sz, 
 	     void *data2, unsigned sz2)
 {
@@ -82,13 +82,18 @@ int usb_boot(usb_handle *usb,
 	usb_write(usb, &msg_size, sizeof(msg_size));
 	usb_write(usb, data, sz);
 
-	if (data2) {
+	if ((data2) || (fastboot_mode)) {
 		fprintf(stderr,"waiting for 2ndstage response...\n");
 		usb_read(usb, &msg_size, sizeof(msg_size));
 		if (msg_size != 0xaabbccdd) {
 			fprintf(stderr,"unexpected 2ndstage response\n");
 			return -1;
 		}
+
+	/* In fastboot mode, we stay in SRAM so don't
+	download data2 to the target. Return back from here */
+	if (fastboot_mode)
+		return 0;
 
 		msg_size = sz2;
 
@@ -146,46 +151,63 @@ fail:
 extern unsigned char aboot_data[];
 extern unsigned aboot_size;
 
+extern unsigned char iboot_data[];
+extern unsigned iboot_size;
+
 int main(int argc, char **argv)
 {
 	void *data, *data2;
 	unsigned sz, sz2;
 	usb_handle *usb;
 	int once = 1;
+	int fastboot_mode = 0;
 
 	if (argc < 2) {
-		fprintf(stderr,"usage: usbboot [ <2ndstage> ] <image>\n");
+		fprintf(stderr, "usage: usbboot [ <2ndstage> ] <image>\n");
+		fprintf(stderr, "or: usbboot -f		==> to start the "
+						"target in fastboot mode\n");
 		return 0;
 	}
 
-	if (argc < 3) {
-		fprintf(stderr, "using built-in 2ndstage.bin of size %d-KB\n",
-							aboot_size/1024);
-		data = aboot_data;
-		sz = aboot_size;
+	if ((argv[1][0] == '-') && ((argv[1][1] == 'f') ||
+	(argv[1][1] == 'F'))) {
+		fprintf(stderr, "usbboot -f:  starting in fastboot mode\n");
+		data = iboot_data;
+		fastboot_mode = 1;
+		sz = iboot_size;
+		data2 = 0;
+		sz2 = 0;
 	} else {
-		data = load_file(argv[1], &sz);
-		if (data == 0) {
-			fprintf(stderr,"cannot load '%s'\n", argv[1]);
+		if (argc < 3) {
+			fprintf(stderr, "using built-in 2ndstage.bin of size"
+						" %d-KB\n", aboot_size/1024);
+			data = aboot_data;
+			sz = aboot_size;
+		} else {
+			data = load_file(argv[1], &sz);
+			if (data == 0) {
+				fprintf(stderr, "cannot load '%s'\n", argv[1]);
+				return -1;
+			}
+			argc--;
+			argv++;
+		}
+
+		data2 = load_file(argv[1], &sz2);
+		if (data2 == 0) {
+			fprintf(stderr, "cannot load '%s'\n", argv[1]);
 			return -1;
 		}
-		argc--;
-		argv++;
-	}
-	
-	data2 = load_file(argv[1], &sz2);
-	if (data2 == 0) {
-		fprintf(stderr,"cannot load '%s'\n", argv[1]);
-		return -1;
 	}
 
 	for (;;) {
 		usb = usb_open(match_omap4_bootloader);
 		if (usb)
-			return usb_boot(usb, data, sz, data2, sz2);
+			return usb_boot(usb, fastboot_mode,
+					data, sz, data2, sz2);
 		if (once) {
 			once = 0;
-			fprintf(stderr,"waiting for OMAP44xx device...\n");
+			fprintf(stderr, "waiting for OMAP44xx device...\n");
 		}
 		usleep(250);
 	}

@@ -71,6 +71,7 @@ M_NAME := usbboot
 M_OBJS := tools/usbboot.o
 M_OBJS += tools/usb_linux.o
 M_OBJS += 2ndstage.o
+M_OBJS += secondstage.o
 include build/host-executable.mk
 
 M_NAME := mkheader
@@ -154,6 +155,12 @@ $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	$(QUIET)./$(OUT)/bin2c aboot < $@ > $(OUT)/2ndstage.c
 	gcc -c -o $@ $(OUT)/2ndstage.c
 
+$(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
+	@echo generate $@
+	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
+	@cat $(OUT)/iboot.bin >> $@
+	$(QUIET)./$(OUT)/bin2c iboot < $@ > $(OUT)/secondstage.c
+	gcc -c -o $@ $(OUT)/secondstage.c
 clean::
 	@echo clean
 	@rm include/config.h
