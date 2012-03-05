@@ -148,6 +148,31 @@ fail:
 	return 0;
 }
 
+static int usage(void)
+{
+	fprintf(stderr, "\nusbboot syntax and options:\n\n");
+	fprintf(stderr, "usbboot [ <2ndstage> ] <image>\n");
+	fprintf(stderr, "=================================================\n");
+	fprintf(stderr, "example: ./out/<board>/usbboot u-boot.bin\n");
+	fprintf(stderr, "---- ---- ---- ---- OR ---- ---- ---- ----\n");
+	fprintf(stderr, "example: ./out/<board>/usbboot out/<board>/aboot.bin "
+			"u-boot.bin\n");
+	fprintf(stderr, "==>this will download and execute aboot second \n"
+			"stage in SRAM and then download and execute \n"
+			"u-boot.bin in SDRAM\n");
+	fprintf(stderr, "=================================================\n");
+	fprintf(stderr, "example: ./out/<board>/usbboot -f \n");
+	fprintf(stderr, "---- ---- ---- ---- OR ---- ---- ---- ----\n");
+	fprintf(stderr, "example: ./out/<board>/usbboot -f "
+						"out<board>/iboot.ift\n");
+	fprintf(stderr, "==>this will download and execute iboot second \n"
+			"stage in SRAM along with the configuration header\n"
+			"(CH) and then enter into FASTBOOT mode\n");
+	fprintf(stderr, "=================================================\n");
+
+	return 0;
+}
+
 extern unsigned char aboot_data[];
 extern unsigned aboot_size;
 
@@ -162,10 +187,8 @@ int main(int argc, char **argv)
 	int once = 1;
 	int fastboot_mode = 0;
 
-	if (argc < 2) {
-		fprintf(stderr, "usage: usbboot [ <2ndstage> ] <image>\n");
-		fprintf(stderr, "or: usbboot -f		==> to start the "
-						"target in fastboot mode\n");
+	if ((argc < 2) || (argc > 3)) {
+		usage();
 		return 0;
 	}
 
@@ -187,6 +210,7 @@ int main(int argc, char **argv)
 			data = load_file(argv[1], &sz);
 			if (data == 0) {
 				fprintf(stderr, "cannot load '%s'\n", argv[1]);
+				usage();
 				return -1;
 			}
 			argc--;
@@ -196,6 +220,7 @@ int main(int argc, char **argv)
 		data2 = load_file(argv[1], &sz2);
 		if (data2 == 0) {
 			fprintf(stderr, "cannot load '%s'\n", argv[1]);
+			usage();
 			return -1;
 		}
 	}
@@ -207,7 +232,7 @@ int main(int argc, char **argv)
 					data, sz, data2, sz2);
 		if (once) {
 			once = 0;
-			fprintf(stderr, "waiting for OMAP44xx device...\n");
+			fprintf(stderr, "waiting for device...\n");
 		}
 		usleep(250);
 	}
