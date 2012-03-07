@@ -289,10 +289,28 @@ int add_ptn(struct ptable *ptbl, u64 first, u64 last, const char *name)
 	return -1;
 }
 
+static char *convert_ptn_name_to_unicode(struct efi_entry *entry)
+{
+	int i = 0;
+	static char name[16];
+
+	/* copying a simple unicode partition name */
+	while (i < (sizeof(entry->name)-1)) {
+		name[i] = entry->name[i];
+		i++;
+		if (entry->name[i] == 0)
+			break;
+	}
+
+	name[i] = 0;
+
+	return name;
+}
+
 void import_efi_partition(struct efi_entry *entry)
 {
 	struct fastboot_ptentry e;
-	int ret = 0; int n = 0;
+	int ret = 0;
 
 	printf("import_efi_partition\n");
 
@@ -303,13 +321,7 @@ void import_efi_partition(struct efi_entry *entry)
 		return;
 	}
 
-	/* copying a simple unicode partition name */
-	while (n < (sizeof(e.name)-1)) {
-		e.name[n] = entry->name[n];
-		n++;
-	}
-
-	e.name[n] = 0;
+	strcpy(e.name, (convert_ptn_name_to_unicode(entry)));
 
 	e.start = entry->first_lba;
 	e.length = (entry->last_lba - entry->first_lba + 1) * 512;
@@ -550,12 +562,15 @@ int board_mmc_init(void)
 void get_entry_size(struct efi_entry *entry, const char *ptn)
 {
 	int ret = 0;
+	char name[16];
 
 	ret = memcmp(entry->type_uuid, partition_type, sizeof(partition_type));
 	if (ret != 0)
 		return;
 
-	if (!strcmp(ptn, (const char *)entry->name))
+	strcpy(name, (convert_ptn_name_to_unicode(entry)));
+
+	if (!strcmp(name, ptn))
 		sz = (entry->last_lba - entry->first_lba)/2;
 
 	return;
@@ -600,7 +615,6 @@ char *get_ptn_size(char *buf, const char *ptn)
 		for (m = 0; m < 4; m++) {
 			if (sz)
 				break;
-
 			get_entry_size(entry + m, ptn);
 		}
 	}
