@@ -137,6 +137,7 @@ static char *get_cpurevision(void)
 		strcpy(cpu_rev, "ES1.1");
 		break;
 	case OMAP_5430_ES1_DOT_0:
+	case OMAP_5432_ES1_DOT_0:
 		strcpy(cpu_rev, "ES1.0");
 		break;
 	default:
@@ -177,6 +178,9 @@ static char *get_procversion(void)
 		break;
 	case OMAP_5430_ES1_DOT_0:
 		strcpy(proc_ver, "5430");
+		break;
+	case OMAP_5432_ES1_DOT_0:
+		strcpy(proc_ver, "5432");
 		break;
 	default:
 		printf("OMAP_REV_INVALID\n");
