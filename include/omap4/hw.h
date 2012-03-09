@@ -1,5 +1,5 @@
 /*
- * cpu.h
+ * hw.h
  *
  * Copyright(c) 2010 Texas Instruments.   All rights reserved.
  *
