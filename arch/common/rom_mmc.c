@@ -213,7 +213,9 @@ int mmc_write(struct mmc *mmc, u32 start, u32 count, void *data)
 		(0x2df58|1), /*OMAP_4430_ES2_DOT_3*/
 		(0x36028|1), /*OMAP_4460_ES1_DOT_0*/
 		(0x36028|1),  /*OMAP_4460_ES1_DOT_1*/
-		(0x3ee18|1)  /*OMAP_5430_ES1_DOT_0*/
+		(0x36028|1),  /*4470 placeholder*/
+		(0x3ee18|1),  /*OMAP_5430_ES1_DOT_0*/
+		(0x3ee18|1)  /*OMAP_5432_ES1_DOT_0*/
 	};
 
 	const u32 rom_hal_mmchs_sendcommand_addr[] = {
@@ -225,7 +227,9 @@ int mmc_write(struct mmc *mmc, u32 start, u32 count, void *data)
 		(0x2ddd4|1), /*OMAP_4430_ES2_DOT_3*/
 		(0x35ea4|1), /*OMAP_4460_ES1_DOT_0*/
 		(0x35ea4|1),  /*OMAP_4460_ES1_DOT_1*/
-		(0x3ec8c|1)  /*OMAP_5430_ES1_DOT_0*/
+		(0x35ea4|1),  /*4470 placeholder*/
+		(0x3ec8c|1),  /*OMAP_5430_ES1_DOT_0*/
+		(0x3ec8c|1)  /*OMAP_5432_ES1_DOT_0*/
 	};
 
 	rom_hal_mmchs_writedata   =
