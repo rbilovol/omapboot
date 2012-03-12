@@ -108,7 +108,7 @@ struct partition {
 	u32 size_kb;
 };
 
-#if defined CONFIG_BLAZE
+#if defined CONFIG_BLAZE || defined CONFIG_BLAZE_TABLET
 static struct partition partitions[] = {
 	{ "-", 128 },
 	{ "xloader", 128 },
