@@ -138,7 +138,7 @@ static struct partition partitions[] = {
 	{ "userdata", 0},
 	{ 0, 0 },
 };
-#elif defined CONFIG_OMAP5EVM
+#elif defined CONFIG_OMAP5EVM || defined CONFIG_OMAP5UEVM
 /*
   Increasing the size of the xloader partition
   so that the bootloader is now located at 0x300,
