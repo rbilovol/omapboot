@@ -41,6 +41,7 @@ TOOLCHAIN ?= arm-eabi-
 
 BOARD ?= panda
 ARCH ?= omap4
+EXTRAOPTS ?= -m32
 
 TARGET_CC := $(TOOLCHAIN)gcc
 TARGET_LD := $(TOOLCHAIN)ld
@@ -55,7 +56,7 @@ TARGET_CFLAGS += -include include/config.h
 
 TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
 
-HOST_CFLAGS := -g -O2 -Wall
+HOST_CFLAGS := -g -O2 -Wall $(EXTRAOPTS)
 HOST_CFLAGS += -Itools
 HOST_CFLAGS += -include include/config.h
 
@@ -165,14 +166,14 @@ $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
 	@cat $(OUT)/aboot.bin >> $@
 	$(QUIET)./$(OUT)/bin2c aboot < $@ > $(OUT)/2ndstage.c
-	gcc -c -o $@ $(OUT)/2ndstage.c
+	gcc -c $(EXTRAOPTS) -o $@ $(OUT)/2ndstage.c
 
 $(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@
 	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
 	@cat $(OUT)/iboot.bin >> $@
 	$(QUIET)./$(OUT)/bin2c iboot < $@ > $(OUT)/secondstage.c
-	gcc -c -o $@ $(OUT)/secondstage.c
+	gcc -c $(EXTRAOPTS) -o $@ $(OUT)/secondstage.c
 clean::
 	@echo clean
 	@rm include/config.h
