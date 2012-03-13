@@ -1,2 +1,4 @@
+include/config.h
+include/version.h
 local.mk
 out
