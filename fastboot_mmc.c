@@ -312,8 +312,6 @@ void import_efi_partition(struct efi_entry *entry)
 	struct fastboot_ptentry e;
 	int ret = 0;
 
-	printf("import_efi_partition\n");
-
 	ret = memcmp(entry->type_uuid, partition_type, sizeof(partition_type));
 	if (ret != 0) {
 		DBG("memcmp failed, ret = %d. entry->type_uuid and "
@@ -332,11 +330,11 @@ void import_efi_partition(struct efi_entry *entry)
 	fastboot_flash_add_ptn(&e, count);
 
 	if (e.length > 0x100000)
-		printf("partition begins at %8d, has length=%7dM and is named "
-			"%s\n", e.start, (u32)(e.length/0x100000), e.name);
+		printf("%8d %7dM %s\n", e.start,
+			(u32)(e.length/0x100000), e.name);
 	else
-		printf("partition begins at %8d, has length=%7dK and is named "
-			"%s\n", e.start, (u32)(e.length/0x400), e.name);
+		printf("%8d %7dK %s\n", e.start,
+			(u32)(e.length/0x400), e.name);
 }
 
 static int load_ptbl(void)
@@ -436,6 +434,7 @@ static int do_format(void)
 
 		if (add_ptn(ptbl, next, next + sz - 1, partitions[n].name))
 			return -1;
+
 		next += sz;
 	}
 
