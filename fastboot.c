@@ -788,13 +788,15 @@ void do_fastboot(void)
 								ptn_name);
 				sprintf(response,
 					"FAILpartition does not exist");
-				goto fail;
+				fastboot_tx_status(response, strlen(response));
+				continue;
 
 			} else if (getsize > e->length) {
 				printf("Image is too large for partition\n");
 				sprintf(response, "FAILimage is too large for "
 								"partition");
-				goto fail;
+				fastboot_tx_status(response, strlen(response));
+				continue;
 
 			} else
 				printf("writing to partition %s, begins at "
