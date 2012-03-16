@@ -30,6 +30,7 @@
 #include <aboot/types.h>
 #include <aboot/io.h>
 #include <aboot/common.h>
+#include <aboot/bootimg.h>
 
 #if defined CONFIG_IS_OMAP4
 #include <omap4/hw.h>
@@ -61,9 +62,7 @@ static fastboot_ptentry ptable[MAX_PTN];
 static struct fastboot_ptentry *e;
 
 static u8 *transfer_buffer = (void *) 0x82000000;
-#ifdef DEBUG
 static u8 *read_buffer = (void *) 0x83000000;
-#endif
 static char *dsize;
 static u32 getsize;
 static u32 sector;
@@ -517,6 +516,75 @@ static int flash_sparse_formatted_image(void)
 	return ret;
 }
 
+static int fastboot_update_zimage(char *response)
+{
+	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
+	u8 *ramdisk_buffer;
+	u32 ramdisk_sector_start, ramdisk_sectors;
+	u32 kernel_sector_start, kernel_sectors;
+	u32 hdr_sectors = 0;
+	u32 sectors_per_page = 0;
+
+	e = fastboot_flash_find_ptn("boot");
+	if (NULL == e) {
+		sprintf(response, "FAILCannot find boot partition");
+		return (-1);
+	}
+	/* Read the boot image header */
+	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
+	if (mmc_read(&mmc, e->start, hdr_sectors, (void *)hdr)) {
+		sprintf(response, "FAILCannot read hdr from boot partition");
+		return (-1);
+	}
+
+	/* Extract ramdisk location and read it into local buffer */
+	sectors_per_page = hdr->page_size / 512;
+	ramdisk_sector_start = e->start + sectors_per_page;
+	ramdisk_sector_start += CEIL(hdr->kernel_size, hdr->page_size)*
+						sectors_per_page;
+	ramdisk_sectors = CEIL(hdr->ramdisk_size, hdr->page_size)*
+						sectors_per_page;
+
+	ramdisk_buffer = (u8 *)hdr;
+	ramdisk_buffer += hdr_sectors *512;
+	if (mmc_read(&mmc, ramdisk_sector_start,
+		ramdisk_sectors, ramdisk_buffer)) {
+		sprintf(response, "FAILCannot read ramdisk from boot partition");
+		return (-1);
+	}
+
+	/* Change the boot img hdr */
+	hdr->kernel_size = getsize;
+	if (mmc_write(&mmc, e->start,
+		hdr_sectors, (void *)hdr)) {
+		sprintf(response, "FAILCannot writeback boot img hdr");
+		return (-1);
+	}
+
+	/* Write the new downloaded kernel*/
+	kernel_sector_start = e->start + sectors_per_page;
+	kernel_sectors = CEIL(hdr->kernel_size, hdr->page_size)*
+					sectors_per_page;
+	if (mmc_write(&mmc, kernel_sector_start, kernel_sectors,
+			transfer_buffer)) {
+		sprintf(response, "FAILCannot write new kernel");
+		return (-1);
+	}
+
+	/* Write the saved Ramdisk back */
+	ramdisk_sector_start = e->start + sectors_per_page;
+	ramdisk_sector_start += CEIL(hdr->kernel_size, hdr->page_size)*
+						sectors_per_page;
+	if (mmc_write(&mmc, ramdisk_sector_start, ramdisk_sectors,
+						ramdisk_buffer)) {
+		sprintf(response, "FAILCannot write back original ramdisk");
+		return (-1);
+	}
+
+	sprintf(response, "OKAY");
+	return (0);
+}
+
 static int flash_non_sparse_formatted_image(void)
 {
 	int ret = 0;
@@ -702,6 +770,12 @@ void do_fastboot(void)
 				sprintf(response,
 					"FAILUnable to init the MMC");
 				goto fail;
+			}
+			if ((memcmp(cmd+6, "zimage", 6) == 0) ||
+				(memcmp(cmd+6, "zImage", 6) == 0)){
+				fastboot_update_zimage(response);
+				fastboot_tx_status(response, strlen(response));
+				continue;
 			}
 
 			e = fastboot_flash_find_ptn(&cmd[6]);
