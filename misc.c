@@ -39,3 +39,11 @@ void sdelay(unsigned long loops)
 	__asm__ volatile ("1:\n" "subs %0, %1, #1\n"
 			  "bne 1b":"=r" (loops):"0"(loops));
 }
+
+void set_modify(u32 reg, u32 mask, u32 value)
+{
+	u32 read = readl(reg);
+	u32 reg_value = ((read & ~(mask)) | value);
+
+	writel(reg_value, reg);
+}

@@ -1,5 +1,8 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2012, Texas Instruments, Inc.
+ * Texas Instruments, <www.ti.com>
+ *
+ * Copyright (C) 2012 The Android Open Source Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,14 +29,18 @@
  * SUCH DAMAGE.
  */
 
+#include <aboot/aboot.h>
 #include <aboot/io.h>
+#include <omap5/hw.h>
+#include <config.h>
 
-/* Use CH (configuration header) to do the settings */
-
-void board_mux_init(void) {}
-void board_ddr_init(void) {}
-void board_late_init(void)
+void gpmc_init(void)
 {
-	/* enable uart3 console */
-	writel(2, 0x4A009550);
+	writel(0x0, GPMC_IRQENABLE);
+	writel(0x0, GPMC_TIMEOUT_CONTROL);
+	/*
+	* Disable the GPMC0 config set by ROM code
+	* It conflicts with our MPDB (both at 0x08000000)
+	*/
+	writel(0x0, GPMC_CONFIG7_0);
 }

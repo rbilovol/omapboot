@@ -83,7 +83,10 @@ M_NAME := bin2c
 M_OBJS := tools/bin2c.o
 include build/host-executable.mk
 
-OMAP5_COMMON_OBJS :=	arch/omap5/id.o
+OMAP5_COMMON_OBJS :=	arch/omap5/id.o \
+			arch/omap5/clock.o \
+			arch/omap5/sdram.o \
+			arch/omap5/gpmc.o
 
 OMAP4_COMMON_OBJS :=	arch/omap4/clock.o \
 			arch/omap4/sdram.o \

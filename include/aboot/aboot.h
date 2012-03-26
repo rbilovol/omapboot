@@ -38,6 +38,7 @@ void serial_puts(const char *s);
 
 void board_mux_init(void);
 void board_ddr_init(void);
+void setup_emif_config(void);
 
 int printf(const char *fmt, ...);
 int snprintf(char *str, size_t len, const char *fmt, ...);
@@ -54,6 +55,7 @@ void disable_irqs(void);
 void sr32(u32 addr, u32 start_bit, u32 num_bits, u32 value);
 u32 wait_on_value(u32 read_bit_mask, u32 match_value, u32 read_addr, u32 bound);
 void sdelay(unsigned long loops);
+void set_modify(u32 reg, u32 mask, u32 value);
 
 /* global configuration, changable by board file */
 extern u8 device;
