@@ -32,6 +32,7 @@
 #include <aboot/aboot.h>
 #include <aboot/io.h>
 #include <omap5/hw.h>
+#include <omap5/clock.h>
 #include <config.h>
 
 typedef struct dpll_param dpll_param;
@@ -58,6 +59,33 @@ struct dpll_param iva_dpll_params[2] = {
 struct dpll_param abe_dpll_params = {
 	750, 0, 1, 1, -1, -1, -1, -1, -1, -1
 };
+
+static void setup_clocks(void)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(omap5_clocks); i++) {
+		switch (omap5_clocks[i].ctrl) {
+		case WRITEL:
+			writel(omap5_clocks[i].ad, omap5_clocks[i].value);
+			break;
+		case MODIFY:
+		case MODIFY_WAIT:
+			set_modify(omap5_clocks[i].ad, omap5_clocks[i].mask,
+							omap5_clocks[i].value);
+			if (omap5_clocks[i].ctrl == MODIFY_WAIT) {
+				if (!wait_on_value(BIT(16) | BIT(17), 0,
+						omap5_clocks[i].ad, LDELAY))
+					printf("Clock enable failed for 0x%p\n",
+						omap5_clocks[i].ad);
+					return;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 
 void configure_core_dpll(dpll_param *dpll_param_p)
 {
@@ -320,5 +348,7 @@ void prcm_init(void)
 	/* core dpll has now been locked */
 
 	configure_usb_dpll(&usb_dpll_params[0]);
+
+	setup_clocks();
 
 }
