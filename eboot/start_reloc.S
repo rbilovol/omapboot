@@ -1,5 +1,8 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2012, Texas Instruments, Inc.
+ * Texas Instruments, <www.ti.com>
+ *
+ * Copyright (C) 2012 The Android Open Source Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,44 +29,58 @@
  * SUCH DAMAGE.
  */
 
-#define CONFIG_OMAP5EVM
+#define PRM_RSTCTRL                     0x4A307B00
+#define PRM_RSTCTRL_RESET_COLD_BIT      (1<<1)
 
-#define CONFIG_BOARD_MACH_TYPE		3777
-#define CONFIG_IS_OMAP5
+.text
+.globl _start
 
-#define CONFIG_BAUDRATE			115200
+_start:
+		/* obtain address of where _start was loaded */
+		adr r7, _start
+		adr r8, size
+		ldr r8, [r8]
 
-#define CONFIG_SERIAL_BASE		OMAP54XX_UART3
-#define CONFIG_SERIAL_CLK_HZ		48000000
+		/* image end (source) */
+		add r7, r8, r7
 
-#define CONFIG_RAM_HANDLERS		0x4030D020
-#define CONFIG_RAM_VECTORS		0x4030D000
-#define CONFIG_STACK_TOP		0x4030D000
+		/* image start and end (destination) */
+		ldr r8, =_start
+		ldr r9, =__bss_end
 
-#define CONFIG_ADDR_DOWNLOAD		0x82000000
+copy:
+		ldr r6, [r7], #-4
+		str r6, [r9], #-4
+		cmp r9, r8
+		bne copy
 
-#define CONFIG_ADDR_ATAGS		0x80000100
-#define CONFIG_ADDR_KERNEL		0x80008000
-#define CONFIG_ADDR_RAMDISK		0x81000000
+		ldr r8, =eboot
+		bx r8
+		b .
 
-#define CONFIG_FASTBOOT			/* enable FASTBOOT for OMAP5 evm */
+size:
+		.word __bss_end - _start
 
-#ifdef CONFIG_FASTBOOT
-	#define PRODUCT_NAME		"omap5evm"
-	#define FASTBOOT_VERSION	"0.5"
-	#define MANUFACTURER_NAME	"Texas Instruments"
-	#define SERIALNO		"03210"
-#else
-	#define PRODUCT_NAME		""
-	#define FASTBOOT_VERSION	""
-	#define MANUFACTURER_NAME	""
-	#define SERIALNO		""
-#endif
+.global enable_irqs
+.global disable_irqs
 
-#define CONFIG_OMAP5_ANDROID_CMD_LINE
+enable_irqs:
+	cpsie I
+	bx lr
 
-#define EXTENDED_CMDLINE	" mem=1536M@0x80000000 " \
-				"mem=512M@0xA0000000 " \
-				"omapfb.vram=0:32M " \
-				"earlyprintk " \
-				"vram=32M\0" ;
+disable_irqs:
+	cpsid I
+	bx lr
+
+.globl reset_cpu
+reset_cpu:
+        ldr     r1, rstctl      /* get addr for global reset reg */
+        ldr     r3, rstbit      /*  sw reset bit */
+        str     r3, [r1]        /* force reset */
+        mov     r0, r0
+_loop_forever:
+        b       _loop_forever
+rstctl:
+        .word   PRM_RSTCTRL
+rstbit:
+        .word   PRM_RSTCTRL_RESET_COLD_BIT

@@ -35,6 +35,7 @@ $(shell echo "\"" >> include/version.h)
 
 ABOOT_TEXT_BASE = 0x40309000
 IBOOT_TEXT_BASE = 0x40300200
+EBOOT_TEXT_BASE = 0x40300200
 
 what_to_build:: all
 
@@ -148,6 +149,31 @@ M_OBJS += arch/common/rom_mmc.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
+M_NAME := eboot
+ifeq ($(ARCH), omap4)
+M_BASE := $(EBOOT_TEXT_BASE)
+M_OBJS := eboot/start_reloc.o
+M_OBJS += $(OMAP4_COMMON_OBJS)
+endif
+ifeq ($(ARCH), omap5)
+M_BASE := $(EBOOT_TEXT_BASE)
+M_OBJS := eboot/start_reloc.o
+M_OBJS += $(OMAP5_COMMON_OBJS)
+endif
+M_OBJS += $(COMMON_OBJS)
+M_OBJS += eboot/eboot.o
+M_OBJS += pmic.o
+M_OBJS += booti.o
+M_OBJS += libc/utils.o
+M_OBJS += crc32.o
+M_OBJS += fastboot.o
+M_OBJS += fastboot_mmc.o
+M_OBJS += arch/common/rom_i2c.o
+M_OBJS += arch/common/rom_wdtimer.o
+M_OBJS += arch/common/rom_mmc.o
+M_LIBS := $(TARGET_LIBGCC)
+include build/target-executable.mk
+
 M_NAME := agent
 M_BASE := 0x82000000
 M_OBJS := arch/common/start.o
@@ -155,6 +181,13 @@ M_OBJS += agent.o
 M_OBJS += arch/common/serial.o
 
 include build/target-executable.mk
+
+$(OUT)/eboot.ift: $(OUT)/eboot.bin $(OUT)/mkheader
+	@echo generate $@
+	@./$(OUT)/mkheader $(EBOOT_TEXT_BASE) `wc -c $(OUT)/eboot.bin` add_gp_hdr > $@
+	@cat $(OUT)/eboot.bin >> $@
+	@echo Renaming eboot.ift to MLO ...Done!
+	@cp $(OUT)/eboot.ift $(OUT)/MLO
 
 $(OUT)/iboot.ift: $(OUT)/iboot.bin $(OUT)/mkheader
 	@echo generate $@
@@ -165,7 +198,8 @@ $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
 	@echo generate $@
 	@./$(OUT)/mkheader $(ABOOT_TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
 	@cat $(OUT)/aboot.bin >> $@
-ALL += $(OUT)/aboot.ift $(OUT)/iboot.ift
+
+ALL += $(OUT)/aboot.ift $(OUT)/iboot.ift $(OUT)/eboot.ift
 
 $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@

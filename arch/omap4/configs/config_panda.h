@@ -62,3 +62,9 @@
 #endif
 
 #define CONFIG_OMAP4_ANDROID_CMD_LINE
+
+#define EXTENDED_CMDLINE	"mem=1024M@0x80000000 " \
+				"mem=512M@0xA0000000 " \
+				"omapfb.vram=0:4M " \
+				"earlyprintk " \
+				"vram=16M\0" ;

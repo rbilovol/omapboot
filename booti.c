@@ -32,6 +32,7 @@
 #include <libc/string.h>
 #include <common/omap_rom.h>
 #include <common/fastboot.h>
+#include <common/boot_settings.h>
 #include "config.h"
 #include "version.h"
 
@@ -45,6 +46,79 @@
 
 struct mmc mmc;
 struct mmc_devicedata *dd;
+
+static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
+{
+	u32 *atag_start = atag;
+	char *p;
+	char *cmdline = (char *)hdr->cmdline;
+
+	*(atag++) = 5;
+	*(atag++) = _CORE;
+	*(atag++) = 0;
+	*(atag++) = 0;
+	*(atag++) = 0;
+
+	*(atag++) = 4;
+	*(atag++) = _INITRD;
+	*(atag++) = hdr->ramdisk_addr;
+	*(atag++) = hdr->ramdisk_size;
+
+	*(atag++) = 4;
+	*(atag++) = _MEM;
+	*(atag++) = 0x80000000; /* memory start */
+	*(atag++) = 0x80000000; /* memory size */
+
+	if (!cmdline)
+		goto _none;
+
+	for (p = cmdline; *p == ' '; p++)
+		;
+
+	if (*p == '\0')
+		goto _none;
+
+	u32 size = strlen(p); /* size in bytes */
+	*(atag++) = 2 + size/4; /* size text + size of size + size of tag */
+	*(atag++) = _CMDLINE;
+	strcpy((char *)atag, p);
+	atag += size/4;	/* size in u32 */
+_none:
+	*(atag++) = 0;
+	*(atag) = _NONE;
+
+	return atag - atag_start;
+}
+
+void boot_settings(boot_img_hdr *hdr, u32 atag)
+{
+	char temp_cmdline[512] = EXTENDED_CMDLINE;
+	char serial_str[64];
+	int serial_len;
+	u32 atag_size, boot_len;
+	char aboot_version_string[64];
+	char boot_str[64];
+
+	serial_len = sprintf(serial_str, " androidboot.serialno=%s",
+		get_serial_number());
+
+	strcpy((char *)hdr->cmdline, temp_cmdline);
+	if (sizeof(hdr->cmdline) >= (serial_len +
+		strlen((const char *)hdr->cmdline) + 1))
+		strcat((char *)hdr->cmdline, serial_str);
+
+	strcpy(aboot_version_string, ABOOT_VERSION);
+	boot_len = sprintf(boot_str, " androidboot.bootloader=%s",
+		aboot_version_string);
+
+	if (sizeof(hdr->cmdline) >= (boot_len +
+			strlen((const char *)hdr->cmdline) + 1))
+		strcat((char *)hdr->cmdline, boot_str);
+
+	atag_size = setup_atag(hdr, (u32 *)atag);
+
+	return;
+}
 
 void bootimg_print_image_hdr(boot_img_hdr *hdr)
 {
@@ -91,20 +165,18 @@ int do_booti(char *info)
 	if (boot_from_mmc) {
 
 		struct fastboot_ptentry *pte;
-		pte = fastboot_flash_find_ptn(ptn);
-		if (!pte) {
-			printf("booti: cannot find '%s' partition\n", ptn);
+
+		/* Init the MMC and load the partition table */
+		ret = board_mmc_init();
+		if (ret != 0) {
+			printf("board_mmc_init() failed\n");
 			goto fail;
 		}
 
-		ret = mmc_open(device, &mmc);
-		if (ret != 0) {
-			printf("mmc init failed, retrying ...\n");
-			ret = mmc_open(device, &mmc);
-			if (ret != 0) {
-				printf("mmc init failed on retry, exiting!\n");
-				return ret;
-			}
+		pte = fastboot_flash_find_ptn(ptn);
+		if (!pte) {
+			printf("booti: cannot find '%s' partition\n", ptn);
+			do_fastboot();
 		}
 
 		ret = mmc_read(&mmc, pte->start, sizeof(boot_img_hdr),
@@ -196,37 +268,14 @@ int do_booti(char *info)
 
 #if defined CONFIG_OMAP4_ANDROID_CMD_LINE || \
 	defined CONFIG_OMAP5_ANDROID_CMD_LINE
-	char serial_str[64];
-	int serial_len;
-	char boot_str[64];
-	int boot_len;
-
-	strcpy(serial_str, get_serial_number());
-	serial_len = sprintf(serial_str, " androidboot.serialno=%s",
-								serial_str);
-
-	if (sizeof(hdr->cmdline) >= (serial_len +
-				strlen((const char *)hdr->cmdline) + 1))
-		strcat((char *)hdr->cmdline, serial_str);
-
-	strcpy(aboot_version_string, ABOOT_VERSION);
-	boot_len = sprintf(boot_str, " androidboot.bootloader=%s",
-							aboot_version_string);
-
-	if (sizeof(hdr->cmdline) >= (boot_len +
-				strlen((const char *)hdr->cmdline) + 1))
-		strcat((char *)hdr->cmdline, boot_str);
+	boot_settings(&hdr[0], ATAGS_ARGS);
 #endif
 
-	ulong initrd_start, initrd_end;
 	void (*theKernel)(int zero, int arch, uint params);
 	theKernel = (void (*)(int, int, uint))(hdr->kernel_addr);
 
-	initrd_start = hdr->ramdisk_addr;
-	initrd_end = initrd_start + hdr->ramdisk_size;
-
 	printf("\nbooting kernel...\n");
-	theKernel(0, cfg_machine_type, 0x84000000);
+	theKernel(0, cfg_machine_type, ATAGS_ARGS);
 
 fail:
 	printf("do_booti failed, stay here\n");
