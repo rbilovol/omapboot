@@ -33,6 +33,9 @@ $(shell echo -n "#define ABOOT_VERSION \"ABOOT " > include/version.h)
 $(shell echo -n $(ABOOT_VERSION) >> include/version.h)
 $(shell echo "\"" >> include/version.h)
 
+ABOOT_TEXT_BASE = 0x40309000
+IBOOT_TEXT_BASE = 0x40300200
+
 what_to_build:: all
 
 -include local.mk
@@ -106,12 +109,12 @@ COMMON_OBJS :=	arch/common/serial.o \
 
 M_NAME := aboot
 ifeq ($(ARCH), omap4)
-M_BASE := 0x40309000
+M_BASE := $(ABOOT_TEXT_BASE)
 M_OBJS := arch/common/start_reloc.o
 M_OBJS += $(OMAP4_COMMON_OBJS)
 endif
 ifeq ($(ARCH), omap5)
-M_BASE := 0x40309000
+M_BASE := $(ABOOT_TEXT_BASE)
 M_OBJS := arch/common/start_reloc.o
 M_OBJS += $(OMAP5_COMMON_OBJS)
 endif
@@ -122,12 +125,12 @@ include build/target-executable.mk
 
 M_NAME := iboot
 ifeq ($(ARCH), omap4)
-M_BASE := 0x40300200
+M_BASE := $(IBOOT_TEXT_BASE)
 M_OBJS := iboot/start_reloc.o
 M_OBJS += $(OMAP4_COMMON_OBJS)
 endif
 ifeq ($(ARCH), omap5)
-M_BASE := 0x40300200
+M_BASE := $(IBOOT_TEXT_BASE)
 M_OBJS := iboot/start_reloc.o
 M_OBJS += $(OMAP5_COMMON_OBJS)
 endif
@@ -155,25 +158,25 @@ include build/target-executable.mk
 
 $(OUT)/iboot.ift: $(OUT)/iboot.bin $(OUT)/mkheader
 	@echo generate $@
-	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
+	@./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
 	@cat $(OUT)/iboot.bin >> $@
 
 $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
 	@echo generate $@
-	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
+	@./$(OUT)/mkheader $(ABOOT_TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
 	@cat $(OUT)/aboot.bin >> $@
 ALL += $(OUT)/aboot.ift $(OUT)/iboot.ift
 
 $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@
-	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
+	@./$(OUT)/mkheader $(ABOOT_TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
 	@cat $(OUT)/aboot.bin >> $@
 	$(QUIET)./$(OUT)/bin2c aboot < $@ > $(OUT)/2ndstage.c
 	gcc -c $(EXTRAOPTS) -o $@ $(OUT)/2ndstage.c
 
 $(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@
-	@./$(OUT)/mkheader $(TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
+	@./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
 	@cat $(OUT)/iboot.bin >> $@
 	$(QUIET)./$(OUT)/bin2c iboot < $@ > $(OUT)/secondstage.c
 	gcc -c $(EXTRAOPTS) -o $@ $(OUT)/secondstage.c

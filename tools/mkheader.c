@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 	
 	if (write(1, basic_header, sizeof(basic_header)) < 0)
 		return -1;
-	if (!strcmp(argv[3], "add_gp_hdr")) {
+	if (!strcmp(argv[4], "add_gp_hdr")) {
 		if (write(1, x, sizeof(x)) < 0)
 			return -1;
 	}
