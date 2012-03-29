@@ -45,10 +45,10 @@ int usb_open(struct usb *usb)
 	if (n)
 		return n;
 
-	/* exit if boot device is not usb */
 	if ((boot->device_type != DEVICE_USB) &&
 	    (boot->device_type != DEVICE_USBEXT))
-		return -1;
+		/* set the default device to be USB */
+		boot->device_type = DEVICE_USB;
 
 	/* get rom usb driver */
 	n = rom_get_per_driver(&usb->io, boot->device_type);
