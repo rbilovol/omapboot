@@ -228,6 +228,40 @@ struct usb {
 	struct per_driver *io;
 };
 
+#if defined(CONFIG_IS_OMAP5)
+
+#define HAL_USB_TRB_HWO_HW_OWNED		(1)
+#define HAL_USB_TRB_CHN_NO_CHAIN		(0)
+#define HAL_USB_TRB_LST_LAST			(1)
+#define HAL_USB_TRB_CSP_NO_CONT_SHORT_PACKET	(0)
+#define HAL_USB_TRB_TRBCTL_TYPE_NORMAL		(1)
+
+struct usb_trb {
+	u32 ptrlo;       /* buffer ptr low */
+	u32 ptrhi;       /* buffer ptr high */
+	u32 bufsiz:24;   /* buffer size */
+	u32 pcm1:2;      /* packet count */
+	u32 rsvd1:2;     /* reserved */
+	u32 trbsts:4;    /* trb status */
+	u32 hwo:1;       /* hardware owned */
+	u32 lst:1;       /* last trb */
+	u32 chn:1;       /* chained */
+	u32 csp:1;       /* continue on short pkt */
+	u32 trbctl:6;    /* trb control */
+	u32 ispimi:1;    /* interrupt on short pkt */
+	u32 ioc:1;       /* interrupt on completion */
+	u32 rsvd3:2;     /* reserved */
+	u32 streamid:16; /* streamid */
+	u32 rsvd2:2;     /* reserved */
+} __attribute__ ((packed));
+
+struct usb_ioconf {
+	u32 mode;                  /* Data transfer mode (deprecated) */
+	u32 conf_timeout;          /* Redefines the USB timeout       */
+	struct usb_trb *trb_pool;  /* User defined Trb pool           */
+};
+#endif
+
 int usb_open(struct usb *usb);
 void usb_close(struct usb *usb);
 

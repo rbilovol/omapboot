@@ -30,6 +30,10 @@
 #include <aboot/io.h>
 #include <common/omap_rom.h>
 
+#if defined(CONFIG_IS_OMAP5)
+struct usb_ioconf ioconf;
+volatile struct usb_trb trbout;
+#endif
 
 int usb_open(struct usb *usb)
 {
@@ -55,10 +59,19 @@ int usb_open(struct usb *usb)
 	if (n)
 		return n;
 
+#if defined(CONFIG_IS_OMAP5)
+	memset(&trbout, 0, sizeof(trbout));
+	ioconf.mode         = 0;
+	ioconf.conf_timeout = 0;
+	ioconf.trb_pool     = &trbout;
+	usb->dread.config_object = &ioconf;
+#endif
+
 #if defined(CONFIG_IS_OMAP4)
 	usb->dread.xfer_mode = boot->xfer_mode;
-#endif
 	usb->dread.config_object = boot->config_object;
+#endif
+
 	usb->dread.options = boot->options;
 	usb->dread.device_type = boot->device_type;
 	usb->dread.device_data = 0;
@@ -86,6 +99,18 @@ static void rom_read_callback(struct per_handle *rh)
 void usb_queue_read(struct usb *usb, void *data, unsigned len)
 {
 	int n;
+
+#if defined(CONFIG_IS_OMAP5)
+	trbout.ptrlo    = (u32)data;
+	trbout.ptrhi    = 0;
+	trbout.bufsiz   = ((len >> 9) + ((len & 0x1FF) ? 1 : 0)) << 9;
+	trbout.hwo      = HAL_USB_TRB_HWO_HW_OWNED;
+	trbout.chn      = HAL_USB_TRB_CHN_NO_CHAIN;
+	trbout.lst      = HAL_USB_TRB_LST_LAST;
+	trbout.csp      = HAL_USB_TRB_CSP_NO_CONT_SHORT_PACKET;
+	trbout.trbctl   = HAL_USB_TRB_TRBCTL_TYPE_NORMAL;
+#endif
+
 	usb->dread.data = data;
 	usb->dread.length = len;
 	usb->dread.status = -1;
@@ -96,6 +121,7 @@ void usb_queue_read(struct usb *usb, void *data, unsigned len)
 #endif
 	usb->dread.callback = rom_read_callback;
 	local_read_usb = usb;
+
 	n = usb->io->read(&usb->dread);
 	if (n)
 		usb->dread.status = n;

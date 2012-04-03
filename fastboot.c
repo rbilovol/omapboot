@@ -704,17 +704,9 @@ void do_fastboot(void)
 
 	while (1) {
 
-		cmdsize = 0;
+		cmdsize = 64;
 		memset(&cmd, 0, 64);
 		memset(&response, 0, 64);
-
-		/* receive the fastboot command size from host*/
-		ret = usb_read(&usb, &cmdsize, 4);
-		if (ret < 0) {
-			printf("failed to read the fastboot command size\n");
-			strcpy(response, "FAIL");
-			goto fail;
-		}
 
 		/* receive the fastboot command from host */
 		ret = usb_read(&usb, &cmd, cmdsize);
