@@ -75,6 +75,8 @@ void eboot(unsigned *info)
 	else
 		public_rom_base = PUBLIC_API_BASE_4430;
 
+	watchdog_disable();
+
 	board_mux_init();
 	sdelay(100);
 
