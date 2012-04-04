@@ -33,10 +33,6 @@ $(shell echo -n "#define ABOOT_VERSION \"ABOOT " > include/version.h)
 $(shell echo -n $(ABOOT_VERSION) >> include/version.h)
 $(shell echo "\"" >> include/version.h)
 
-ABOOT_TEXT_BASE = 0x40309000
-IBOOT_TEXT_BASE = 0x40300200
-EBOOT_TEXT_BASE = 0x40300200
-
 what_to_build:: all
 
 -include local.mk
@@ -86,6 +82,18 @@ include build/host-executable.mk
 M_NAME := bin2c
 M_OBJS := tools/bin2c.o
 include build/host-executable.mk
+
+ifeq ($(ARCH), omap4)
+ABOOT_TEXT_BASE = 0x40309000
+IBOOT_TEXT_BASE = 0x40300200
+EBOOT_TEXT_BASE = 0x40300200
+endif
+
+ifeq ($(ARCH), omap5)
+ABOOT_TEXT_BASE = 0x40309000
+IBOOT_TEXT_BASE = 0x40309000
+EBOOT_TEXT_BASE = 0x40309000
+endif
 
 OMAP5_COMMON_OBJS :=	arch/omap5/id.o \
 			arch/omap5/clock.o \
