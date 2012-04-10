@@ -128,7 +128,7 @@ int usb_boot(usb_handle *usb, int fastboot_mode,
 	return 0;
 }
 
-int match_omap4_bootloader(usb_ifc_info *ifc)
+int match_omap_bootloader(usb_ifc_info *ifc)
 {
 	if (ifc->dev_vendor != 0x0451)
 		return -1;
@@ -218,7 +218,7 @@ int main(int argc, char **argv)
 	(argv[1][1] == 'F'))) {
 		fprintf(stderr, "usbboot -f:  starting in fastboot mode\n");
 		for (;;) {
-			usb = usb_open(match_omap4_bootloader);
+			usb = usb_open(match_omap_bootloader);
 			if (usb) {
 				strcpy(proctype, usb_boot_read_chip_info(usb));
 				if (!memcmp(proctype, "EMU", 3)) {
@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 
 	for (;;) {
 		if (usb == NULL)
-			usb = usb_open(match_omap4_bootloader);
+			usb = usb_open(match_omap_bootloader);
 		if (usb)
 			return usb_boot(usb, fastboot_mode,
 					data, sz, data2, sz2);
