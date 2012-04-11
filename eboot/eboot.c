@@ -44,6 +44,10 @@
 
 #include "config.h"
 
+#ifndef CONFIG_USE_CH_CONFIG
+#define CONFIG_USE_CH_CONFIG 0
+#endif
+
 #ifdef DEBUG
 #define DBG(x...) printf(x)
 #else
@@ -67,6 +71,7 @@ void eboot(unsigned *info)
 {
 	int ret = 0;
 	unsigned bootdevice = -1;
+	int use_config_header = CONFIG_USE_CH_CONFIG;
 
 	if (get_omap_rev() >= OMAP_5430_ES1_DOT_0)
 		public_rom_base = PUBLIC_API_BASE_5430;
@@ -81,7 +86,8 @@ void eboot(unsigned *info)
 	sdelay(100);
 
 	scale_vcores();
-	prcm_init();
+	if (!use_config_header)
+		prcm_init();
 	board_ddr_init();
 	gpmc_init();
 	board_late_init();

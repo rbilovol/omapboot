@@ -49,6 +49,10 @@
 #define DBG(x...)
 #endif /* DEBUG */
 
+#ifndef CONFIG_USE_CH_CONFIG
+#define CONFIG_USE_CH_CONFIG 0
+#endif
+
 static unsigned MSG = 0xaabbccdd;
 
 struct usb usb;
@@ -67,6 +71,7 @@ u8 device = DEVICE_EMMC;
 void iboot(unsigned *info)
 {
 	int ret = 0;
+	int use_config_header = CONFIG_USE_CH_CONFIG;
 
 	if (get_omap_rev() >= OMAP_5430_ES1_DOT_0)
 		public_rom_base = PUBLIC_API_BASE_5430;
@@ -79,7 +84,9 @@ void iboot(unsigned *info)
 	sdelay(100);
 
 	scale_vcores();
-	prcm_init();
+	if (!use_config_header)
+		prcm_init();
+
 	board_ddr_init();
 	gpmc_init();
 	board_late_init();
