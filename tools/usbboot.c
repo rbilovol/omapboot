@@ -47,14 +47,13 @@ typedef struct tocentry {
 
 #define USE_TOC 0
 
-int usb_boot(usb_handle *usb, int fastboot_mode,
-	     void *data, unsigned sz, 
-	     void *data2, unsigned sz2)
+static char *usb_boot_read_chip_info(usb_handle *usb)
 {
-	uint32_t msg_boot = 0xF0030002;
+	static char proc_type[8];
 	uint32_t msg_getid = 0xF0030003;
-	uint32_t msg_size = sz;
 	uint8_t id[81];
+	uint8_t *crc1;
+	uint8_t gp_device_crc1[4] = {0, 0, 0, 0};
 	int i;
 
 #define OFF_CHIP	0x04
@@ -77,6 +76,25 @@ int usb_boot(usb_handle *usb, int fastboot_mode,
 	fprintf(stderr,"CRC1: %02x%02x%02x%02x\n",
 		id[77], id[78], id[79], id[80]);
 
+	crc1 = &id[77];
+	if (memcmp(crc1, &gp_device_crc1, 4 * sizeof(uint8_t))) {
+		fprintf(stderr, "device is ED/HD (EMU/HS)\n");
+		strcpy(proc_type, "EMU");
+	} else {
+		fprintf(stderr, "device is GP\n");
+		strcpy(proc_type, "GP");
+	}
+
+	return proc_type;
+}
+
+int usb_boot(usb_handle *usb, int fastboot_mode,
+	     void *data, unsigned sz,
+	     void *data2, unsigned sz2)
+{
+	uint32_t msg_boot = 0xF0030002;
+	uint32_t msg_size = sz;
+
 	fprintf(stderr,"sending 2ndstage to target... %08x\n",msg_boot);
 	usb_write(usb, &msg_boot, sizeof(msg_boot));
 	usb_write(usb, &msg_size, sizeof(msg_size));
@@ -92,8 +110,10 @@ int usb_boot(usb_handle *usb, int fastboot_mode,
 
 	/* In fastboot mode, we stay in SRAM so don't
 	download data2 to the target. Return back from here */
-	if (fastboot_mode)
+	if (fastboot_mode) {
+		fprintf(stderr, "received 2ndstage response...\n");
 		return 0;
+	}
 
 		msg_size = sz2;
 
@@ -184,9 +204,10 @@ int main(int argc, char **argv)
 {
 	void *data, *data2;
 	unsigned sz, sz2;
-	usb_handle *usb;
+	usb_handle *usb = NULL;
 	int once = 1;
 	int fastboot_mode = 0;
+	char proctype[8];
 
 	if ((argc < 2) || (argc > 3)) {
 		usage();
@@ -196,9 +217,38 @@ int main(int argc, char **argv)
 	if ((argv[1][0] == '-') && ((argv[1][1] == 'f') ||
 	(argv[1][1] == 'F'))) {
 		fprintf(stderr, "usbboot -f:  starting in fastboot mode\n");
-		data = iboot_data;
+		for (;;) {
+			usb = usb_open(match_omap4_bootloader);
+			if (usb) {
+				strcpy(proctype, usb_boot_read_chip_info(usb));
+				if (!memcmp(proctype, "EMU", 3)) {
+					data = load_file("iboot.ift", &sz);
+					if (!data) {
+						fprintf(stderr, "unable to "
+						"load signed ED/HD (EMU/HS)"
+						"iboot.ift\n");
+						return -1;
+					}
+				 } else {
+					fprintf(stderr, "using built-in GP "
+						"iboot of size %d-KB\n",
+							iboot_size/1024);
+					data = iboot_data;
+					sz = iboot_size;
+				}
+
+				break;
+			}
+
+			if (once) {
+				once = 0;
+				fprintf(stderr, "waiting for device...\n");
+			}
+			usleep(250);
+		}
+
+		once = 1;
 		fastboot_mode = 1;
-		sz = iboot_size;
 		data2 = 0;
 		sz2 = 0;
 	} else {
@@ -227,7 +277,8 @@ int main(int argc, char **argv)
 	}
 
 	for (;;) {
-		usb = usb_open(match_omap4_bootloader);
+		if (usb == NULL)
+			usb = usb_open(match_omap4_bootloader);
 		if (usb)
 			return usb_boot(usb, fastboot_mode,
 					data, sz, data2, sz2);
