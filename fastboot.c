@@ -585,6 +585,60 @@ static int fastboot_update_zimage(char *response)
 	return (0);
 }
 
+static int fastboot_update_ramdisk(char *response)
+{
+	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
+	u32 ramdisk_sector_start, ramdisk_sectors;
+	u32 hdr_sectors = 0;
+	u32 sectors_per_page = 0;
+
+	e = fastboot_flash_find_ptn("boot");
+	if (NULL == e) {
+		sprintf(response, "FAILCannot find boot partition");
+		return -1;
+	}
+	/* Read the boot image header */
+	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
+	if (mmc_read(&mmc, e->start, hdr_sectors, (void *)hdr)) {
+		sprintf(response, "FAILCannot read hdr from boot partition");
+		return -1;
+	}
+
+	/* Calculate ramdisk location */
+	sectors_per_page = hdr->page_size / 512;
+	ramdisk_sector_start = e->start + sectors_per_page;
+	ramdisk_sector_start += CEIL(hdr->kernel_size, hdr->page_size)*
+						sectors_per_page;
+	ramdisk_sectors = CEIL(getsize, hdr->page_size)*
+				       sectors_per_page;
+
+	/* Make sure ramdisk image is not too large */
+	if ((e->start + e->length/512) <
+		(ramdisk_sector_start + ramdisk_sectors)) {
+		sprintf(response, "FAILNew Ramdisk too large");
+		return -1;
+	}
+
+	/* Change the boot img hdr */
+	hdr->ramdisk_size = getsize;
+	if (mmc_write(&mmc, e->start,
+		hdr_sectors, (void *)hdr)) {
+		sprintf(response, "FAILCannot writeback boot img hdr");
+		return -1;
+	}
+
+	/* Write the new ramdisk image */
+	if (mmc_write(&mmc, ramdisk_sector_start, ramdisk_sectors,
+					transfer_buffer)) {
+		sprintf(response, "FAILCannot write new ramdisk");
+		return -1;
+	}
+
+	sprintf(response, "OKAY");
+	return 0;
+}
+
+
 static int flash_non_sparse_formatted_image(void)
 {
 	int ret = 0;
@@ -774,6 +828,10 @@ void do_fastboot(void)
 			if ((memcmp(cmd+6, "zimage", 6) == 0) ||
 				(memcmp(cmd+6, "zImage", 6) == 0)){
 				fastboot_update_zimage(response);
+				fastboot_tx_status(response, strlen(response));
+				continue;
+			} else if (memcmp(cmd+6, "ramdisk", 7) == 0) {
+				fastboot_update_ramdisk(response);
 				fastboot_tx_status(response, strlen(response));
 				continue;
 			}
