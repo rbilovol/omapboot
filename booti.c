@@ -44,6 +44,10 @@
 
 #define ALIGN(n, pagesz)	((n + (pagesz - 1)) & (~(pagesz - 1)))
 
+#ifndef EXTENDED_CMDLINE
+#define EXTENDED_CMDLINE	""
+#endif
+
 struct mmc mmc;
 struct mmc_devicedata *dd;
 
@@ -122,7 +126,9 @@ void boot_settings(boot_img_hdr *hdr, u32 atag)
 
 void bootimg_print_image_hdr(boot_img_hdr *hdr)
 {
+#ifdef DEBUG
 	int i;
+	printf("printing bootimg header ...\n");
 	printf("   Image magic:   %s\n", hdr->magic);
 
 	printf("   kernel_size:   0x%x\n", hdr->kernel_size);
@@ -142,6 +148,8 @@ void bootimg_print_image_hdr(boot_img_hdr *hdr)
 
 	for (i = 0; i < 8; i++)
 		printf("   id[%d]:   0x%x\n", i, hdr->id[i]);
+#endif
+	return;
 }
 
 int do_booti(char *info)
@@ -153,10 +161,8 @@ int do_booti(char *info)
 	int sector_count = 0; int num_sectors = 0;
 	int ret = 0;
 
-	if (!(strcmp(info, "mmc"))) {
-		printf("do_booti(): boot device is mmc\n");
+	if (!(strcmp(info, "mmc")))
 		boot_from_mmc = 1;
-	}
 
 	addr = CONFIG_ADDR_DOWNLOAD;
 
@@ -184,10 +190,8 @@ int do_booti(char *info)
 		if (ret != 0) {
 			printf("booti: failed to read bootimg header\n");
 			goto fail;
-		} else {
-			printf("printing bootimg header ...\n");
+		} else
 			bootimg_print_image_hdr(hdr);
-			}
 
 		ret = memcmp(hdr->magic, "ANDROID!", 8);
 		if (ret != 0) {
@@ -218,8 +222,9 @@ int do_booti(char *info)
 				goto fail;
 			}
 		}
+#ifdef DEBUG
 		printf("Done reading kernel from mmc\n");
-
+#endif
 		num_sectors = CEIL(hdr->ramdisk_size, 512);
 		if (num_sectors > (hdr->ramdisk_size / 512)) {
 			/* do nothing */
@@ -238,7 +243,9 @@ int do_booti(char *info)
 				goto fail;
 			}
 		}
+#ifdef DEBUG
 		printf("Done reading ramdisk from mmc\n");
+#endif
 	} else {
 		u32 kaddr, raddr;
 

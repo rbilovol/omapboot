@@ -93,9 +93,9 @@ void iboot(unsigned *info)
 
 	serial_init();
 
-	serial_puts("\n[ iboot second-stage loader ]\n\n");
+	serial_puts("Texas Instruments RAM loader\n");
 
-	printf("MSV=%08x\n", *((unsigned *) 0x4A00213C));
+	/* printf("MSV=%08x\n", *((unsigned *) 0x4A00213C)); */
 
 #if defined CONFIG_IS_OMAP4
 	hal_i2c i2c_id = HAL_I2C1;
@@ -127,7 +127,7 @@ void iboot(unsigned *info)
 
 	usb_write(&usb, &MSG, 4);
 
-	serial_puts("\nstay in SRAM and enter FASTBOOT mode\n");
+	serial_puts("Entering fastboot mode...\n");
 	do_fastboot();
 
 fail:

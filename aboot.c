@@ -185,9 +185,9 @@ void aboot(unsigned *info)
 
 	serial_init();
 
-	serial_puts("\n[ aboot second-stage loader ]\n\n");
+	serial_puts("Texas Instruments Ram Loader\n");
 
-	printf("MSV=%08x\n",*((unsigned*) 0x4A00213C));
+	/* printf("MSV=%08x\n",*((unsigned*) 0x4A00213C)); */
 
 #if WITH_MEMORY_TEST
 	memtest(0x82000000, 8*1024*1024);

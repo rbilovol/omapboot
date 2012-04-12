@@ -94,7 +94,7 @@ void eboot(unsigned *info)
 
 	serial_init();
 
-	serial_puts("\n[ eboot second-stage loader ]\n\n");
+	serial_puts("Texas Instruments Bootloader\n");
 
 	#if defined CONFIG_IS_OMAP4
 	hal_i2c i2c_id = HAL_I2C1;
@@ -129,12 +129,12 @@ void eboot(unsigned *info)
 
 	switch (bootdevice) {
 	case 0x05:
-		serial_puts("boot device: MMC1\n\n");
+		serial_puts("boot device: MMC1\n");
 		do_booti("mmc");
 		break;
 	case 0x06:
 	case 0x07:
-		serial_puts("boot device: MMC2\n\n");
+		serial_puts("boot device: MMC2\n");
 		do_booti("mmc");
 		break;
 	default:

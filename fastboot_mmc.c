@@ -251,7 +251,7 @@ int add_ptn(struct ptable *ptbl, u64 first, u64 last, const char *name)
 	struct efi_entry *entry = ptbl->entry;
 	u32 n; int i = 0;
 
-	printf("add_ptn\n");
+	DBG("add_ptn\n");
 
 	if (first < 34) {
 		printf("partition '%s' overlaps partition table\n", name);
@@ -335,6 +335,7 @@ void import_efi_partition(struct efi_entry *entry)
 	else
 		printf("%8d %7dK %s\n", e.start,
 			(u32)(e.length/0x400), e.name);
+
 }
 
 static int load_ptbl(void)
@@ -345,7 +346,7 @@ static int load_ptbl(void)
 
 	count = 0;
 
-	printf("load_ptbl\n");
+	DBG("load_ptbl\n");
 
 	r = mmc_read(&mmc, 0, 1, data);
 	if (r != 0) {
@@ -391,11 +392,11 @@ static int do_format(void)
 	int num_sectors = 0;
 	int ret = 0;
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	int i = 0; int j = 0;
 	u32 sector_sz = 0;
 	static u8 data[512];
-	#endif
+#endif
 
 	printf("do_format\n");
 
@@ -455,7 +456,7 @@ static int do_format(void)
 		return ret;
 	}
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	ret = mmc_read(&mmc, 0, 1, data);
 	if (ret != 0) {
 		printf("error reading MBR\n");
@@ -466,7 +467,7 @@ static int do_format(void)
 				printf("%02X ", data[i]);
 			printf("\n");
 		}
-	#endif
+#endif
 
 	printf("writing the GPT table to disk ... \n");
 	ret = mmc_write(&mmc, 1, 1, &ptbl->header);
@@ -475,7 +476,7 @@ static int do_format(void)
 		return ret;
 	}
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	ret = mmc_read(&mmc, 1, 1, data);
 	if (ret != 0) {
 		printf("error reading GPT table\n");
@@ -486,7 +487,7 @@ static int do_format(void)
 				printf("%02X ", data[i]);
 			printf("\n");
 		}
-	#endif
+#endif
 
 	ret = mmc_write(&mmc, 2, sizeof(ptbl->entry)/512, &ptbl->entry);
 	if (ret != 0) {
@@ -494,7 +495,7 @@ static int do_format(void)
 		return ret;
 	}
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	for (j = 2; j < 34; j++) {
 		ret = mmc_read(&mmc, j, 1, data);
 		if (ret != 0) {
@@ -507,9 +508,9 @@ static int do_format(void)
 			printf("\n");
 		}
 	}
-	#endif
+#endif
 
-	printf("\nnew partition table:\n");
+	DBG("\nnew partition table:\n");
 	ret = load_ptbl();
 	if (ret != 0) {
 		printf("Failed to load partition table\n");
@@ -523,7 +524,7 @@ int fastboot_oem(void)
 {
 	int ret = 0;
 
-	printf("fastboot_oem\n");
+	DBG("fastboot_oem\n");
 
 	ret = do_format();
 	if (ret != 0)
@@ -536,7 +537,7 @@ int board_mmc_init(void)
 {
 	int ret = 0;
 
-	printf("board_mmc_init\n");
+	DBG("board_mmc_init\n");
 
 	ret = mmc_open(device, &mmc);
 	if (ret != 0) {
@@ -548,7 +549,7 @@ int board_mmc_init(void)
 		}
 	}
 
-	printf("\nefi partition table:\n");
+	DBG("efi partition table:\n");
 	ret =  load_ptbl();
 	if (ret != 0) {
 		printf("Failed to load the partition table\n");
