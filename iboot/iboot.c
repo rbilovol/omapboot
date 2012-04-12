@@ -29,6 +29,7 @@
  * SUCH DAMAGE.
  */
 
+#include <version.h>
 #include <aboot/aboot.h>
 #include <aboot/io.h>
 #include <common/omap_rom.h>
@@ -93,7 +94,8 @@ void iboot(unsigned *info)
 
 	serial_init();
 
-	serial_puts("Texas Instruments RAM loader\n");
+	printf("%s\n", ABOOT_VERSION);
+	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
 
 	/* printf("MSV=%08x\n", *((unsigned *) 0x4A00213C)); */
 

@@ -26,12 +26,11 @@
 ## SUCH DAMAGE.
 
 VERSION = 1
-PATCHLEVEL = 0
+PATCHLEVEL = 1
 SUBLEVEL = 0
+ORGANIZATION="Texas Instruments Inc"
+VERSION_FILE = include/version.h
 ABOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
-$(shell echo -n "#define ABOOT_VERSION \"ABOOT " > include/version.h)
-$(shell echo -n $(ABOOT_VERSION) >> include/version.h)
-$(shell echo "\"" >> include/version.h)
 
 what_to_build:: all
 
@@ -228,7 +227,14 @@ clean::
 	@rm include/version.h
 	@rm -rf $(OUT)
 
-all:: $(ALL)
+all:: version $(ALL)
+
+version:
+	@echo -n "#define ABOOT_VERSION \""$(ORGANIZATION)" Bootloader " > $(VERSION_FILE); \
+	echo -n "$(ABOOT_VERSION)" >> $(VERSION_FILE); \
+	echo -n $(shell $(CONFIG_SHELL) build/getgitinfo \
+		 $(TOPDIR)) >> $(VERSION_FILE); \
+		echo "\"" >> $(VERSION_FILE)
 
 # we generate .d as a side-effect of compiling. override generic rule:
 %.d:

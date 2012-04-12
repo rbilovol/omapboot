@@ -33,6 +33,7 @@
 #include <aboot/io.h>
 #include <common/omap_rom.h>
 #include <common/fastboot.h>
+#include <version.h>
 
 #if defined CONFIG_IS_OMAP4
 #include <omap4/mux.h>
@@ -94,7 +95,8 @@ void eboot(unsigned *info)
 
 	serial_init();
 
-	serial_puts("Texas Instruments Bootloader\n");
+	printf("%s\n", ABOOT_VERSION);
+	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
 
 	#if defined CONFIG_IS_OMAP4
 	hal_i2c i2c_id = HAL_I2C1;
