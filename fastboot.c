@@ -68,6 +68,8 @@ static u32 getsize;
 static u32 sector;
 static sparse_header_t *sparse_header;
 
+static u8 device;
+
 char *get_serial_number(void)
 {
 	static char serialno[20];
@@ -233,8 +235,8 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 		if (getsize)
 			sprintf(response + 4, "%08x", getsize);
 	} else if (!strcmp(rx_buffer, "userdata_size")) {
-		strcpy(response + 4, get_ptn_size(response + strlen(response),
-								"userdata"));
+		strcpy(response + 4, get_ptn_size(device,
+		     response + strlen(response), "userdata"));
 	} else if (!strcmp(rx_buffer, "all")) {
 		/* product name */
 		strcpy(response, "INFO");
@@ -701,6 +703,7 @@ void do_fastboot(void)
 
 	/* enable irqs */
 	enable_irqs();
+	device = board_get_flash_slot();
 
 	while (1) {
 
@@ -731,7 +734,7 @@ void do_fastboot(void)
 			/* fastboot oem format */
 			if (memcmp(cmd, "oem format", 6) == 0) {
 
-				ret = fastboot_oem();
+				ret = fastboot_oem(device);
 				if (ret != 0) {
 					printf("fastboot_oem() failed\n");
 					strcpy(response, "FAIL");
@@ -810,7 +813,7 @@ void do_fastboot(void)
 				goto fail;
 
 			/* Init the MMC and load the partition table */
-			ret = board_mmc_init();
+			ret = board_mmc_init(device);
 			if (ret != 0) {
 				printf("board_mmc_init() failed\n");
 				sprintf(response,
@@ -891,7 +894,7 @@ void do_fastboot(void)
 
 			printf("booting kernel...\n");
 
-			do_booti((char *)booti_args);
+			do_booti(device, (char *)booti_args);
 
 		} /* "boot" if loop ends */
 

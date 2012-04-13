@@ -26,7 +26,9 @@
  * SUCH DAMAGE.
  */
 
+#include <aboot/aboot.h>
 #include <aboot/io.h>
+#include <common/omap_rom.h>
 
 /* Use CH (configuration header) to do the settings */
 
@@ -41,4 +43,9 @@ void board_late_init(void)
 int user_fastboot_request()
 {
 	return 0;
+}
+
+u8 board_get_flash_slot()
+{
+	return DEVICE_EMMC;
 }

@@ -152,7 +152,7 @@ void bootimg_print_image_hdr(boot_img_hdr *hdr)
 	return;
 }
 
-int do_booti(char *info)
+int do_booti(u8 device, char *info)
 {
 	boot_img_hdr *hdr;
 	u32 addr; u32 sector1; u32 sector2;
@@ -173,7 +173,7 @@ int do_booti(char *info)
 		struct fastboot_ptentry *pte;
 
 		/* Init the MMC and load the partition table */
-		ret = board_mmc_init();
+		ret = board_mmc_init(device);
 		if (ret != 0) {
 			printf("board_mmc_init() failed\n");
 			goto fail;

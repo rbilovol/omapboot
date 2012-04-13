@@ -3,6 +3,7 @@
 #include <aboot/io.h>
 #include <omap4/mux.h>
 #include <omap4/hw.h>
+#include <common/omap_rom.h>
 
 void board_late_init(void)
 {
@@ -295,4 +296,9 @@ void board_ddr_init(void)
 int user_fastboot_request(void)
 {
 	return 0;
+}
+
+u8 board_get_flash_slot()
+{
+	return DEVICE_EMMC;
 }

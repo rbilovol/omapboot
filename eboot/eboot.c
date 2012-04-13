@@ -61,12 +61,7 @@ unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 
 u32 public_rom_base;
 
-#if defined CONFIG_PANDA
-u8 device = DEVICE_SDCARD;
-#elif defined CONFIG_BLAZE || defined CONFIG_OMAP5EVM || \
-	defined CONFIG_BLAZE_TABLET || defined CONFIG_OMAP5UEVM
-u8 device = DEVICE_EMMC;
-#endif
+static u8 device;
 
 void eboot(unsigned *info)
 {
@@ -90,6 +85,7 @@ void eboot(unsigned *info)
 	if (!use_config_header)
 		prcm_init();
 	board_ddr_init();
+	device = board_get_flash_slot();
 	gpmc_init();
 	board_late_init();
 
@@ -135,12 +131,12 @@ void eboot(unsigned *info)
 	switch (bootdevice) {
 	case 0x05:
 		serial_puts("boot device: MMC1\n");
-		do_booti("mmc");
+		do_booti(device, "mmc");
 		break;
 	case 0x06:
 	case 0x07:
 		serial_puts("boot device: MMC2\n");
-		do_booti("mmc");
+		do_booti(device, "mmc");
 		break;
 	default:
 		serial_puts("boot device: unknown\n");

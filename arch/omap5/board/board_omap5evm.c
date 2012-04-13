@@ -31,6 +31,7 @@
 #include <omap5/hw.h>
 #include <omap5/mux.h>
 #include <config.h>
+#include <common/omap_rom.h>
 
 /* Use CH (configuration header) to do the settings */
 
@@ -322,4 +323,9 @@ int user_fastboot_request()
 		return 1;
 	}
 	return 0;
+}
+
+u8 board_get_flash_slot()
+{
+	return DEVICE_EMMC;
 }

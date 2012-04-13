@@ -382,7 +382,7 @@ static int load_ptbl(void)
 	return 0;
 }
 
-static int do_format(void)
+static int do_format(u8 device)
 {
 	struct ptable *ptbl = &the_ptable;
 	u32 blocks = 0;
@@ -520,20 +520,20 @@ static int do_format(void)
 	return 0;
 }
 
-int fastboot_oem(void)
+int fastboot_oem(u8 device)
 {
 	int ret = 0;
 
 	DBG("fastboot_oem\n");
 
-	ret = do_format();
+	ret = do_format(device);
 	if (ret != 0)
 		printf("do_format() failed\n");
 
 	return ret;
 }
 
-int board_mmc_init(void)
+int board_mmc_init(u8 device)
 {
 	int ret = 0;
 
@@ -576,7 +576,7 @@ void get_entry_size(struct efi_entry *entry, const char *ptn)
 	return;
 }
 
-char *get_ptn_size(char *buf, const char *ptn)
+char *get_ptn_size(u8 device, char *buf, const char *ptn)
 {
 	static u8 data[512];
 	static struct efi_entry entry[4];

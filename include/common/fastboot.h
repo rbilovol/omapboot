@@ -61,8 +61,8 @@ void fastboot_flash_dump_ptn(int count);
 unsigned int fastboot_flash_get_ptn_count(void);
 fastboot_ptentry *fastboot_flash_find_ptn(const char *name);
 
-extern int fastboot_oem(void);
-extern char *get_ptn_size(char *buf, const char *ptn);
+extern int fastboot_oem(u8 device);
+extern char *get_ptn_size(u8 device, char *buf, const char *ptn);
 
 #else
 
@@ -74,8 +74,8 @@ void fastboot_flash_dump_ptn(int count) { return; };
 unsigned int fastboot_flash_get_ptn_count(void) { return 0; };
 fastboot_ptentry *fastboot_flash_find_ptn(const char *name) { return; };
 
-extern int fastboot_oem(void) { return 0; }
-extern char *get_ptn_size(char *buf, const char *ptn) { return 0; };
+extern int fastboot_oem(u8 device) { return 0; }
+extern char *get_ptn_size(u8 device, char *buf, const char *ptn) { return 0; };
 
 #endif /* CONFIG_FASTBOOT */
 

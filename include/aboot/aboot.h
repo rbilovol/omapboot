@@ -58,7 +58,6 @@ void sdelay(unsigned long loops);
 void set_modify(u32 reg, u32 mask, u32 value);
 
 /* global configuration, changable by board file */
-extern u8 device;
 extern unsigned cfg_machine_type;
 extern unsigned cfg_uart_base;
 
@@ -67,9 +66,10 @@ extern void scale_vcores(void);
 extern void prcm_init(void);
 extern void gpmc_init(void);
 extern void board_late_init(void);
-extern int board_mmc_init(void);
+extern int board_mmc_init(u8 device);
+extern u8 board_get_flash_slot();
 extern void prcm_init(void);
-extern int do_booti(char *info);
+extern int do_booti(u8 device, char *info);
 extern int boot_image(unsigned machtype, unsigned image, unsigned len);
 extern void configure_core_dpll_no_lock(void);
 extern void lock_core_dpll_shadow(void);

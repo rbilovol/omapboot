@@ -62,12 +62,6 @@ unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 
 u32 public_rom_base;
 
-#if defined CONFIG_PANDA
-u8 device = DEVICE_SDCARD;
-#elif defined CONFIG_BLAZE || defined CONFIG_OMAP5EVM || \
-	defined CONFIG_BLAZE_TABLET || defined CONFIG_OMAP5UEVM
-u8 device = DEVICE_EMMC;
-#endif
 
 void iboot(unsigned *info)
 {
