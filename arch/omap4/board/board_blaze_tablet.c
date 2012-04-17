@@ -291,3 +291,8 @@ void board_ddr_init(void)
 
 	omap4_ddr_init(ddr_regs, ddr_regs);
 }
+
+int user_fastboot_request(void)
+{
+	return 0;
+}

@@ -37,3 +37,8 @@ void board_late_init(void)
 	/* enable uart3 console */
 	writel(2, 0x4A009550);
 }
+
+int user_fastboot_request()
+{
+	return 0;
+}

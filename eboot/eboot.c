@@ -124,6 +124,9 @@ void eboot(unsigned *info)
 		goto fail;
 	}
 
+	if (user_fastboot_request())
+		do_fastboot();
+
 	if (info)
 		bootdevice = info[2] & 0xFF;
 

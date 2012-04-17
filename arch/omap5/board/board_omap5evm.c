@@ -305,3 +305,21 @@ void board_late_init(void)
 	/* enable uart3 console */
 	writel(2, 0x4A009550);
 }
+
+int user_fastboot_request()
+{
+	u32 temp;
+	/* set the clock for the keypad */
+	sr32(CM_WKUPAON_KBD_CLKCTRL, 0, 2, 0x02);
+	/* any key pressed ? */
+	temp = readl(KBD_STATEMACHINE);
+	if (temp == 0)
+		return 0;
+	sdelay(200000);
+	temp = readl(KBD_FULLCODE31_0);
+	if ((temp & USER_FASTBOOT_RQ) == USER_FASTBOOT_RQ) {
+		printf("Keypress detected: going to fastboot mode\n");
+		return 1;
+	}
+	return 0;
+}

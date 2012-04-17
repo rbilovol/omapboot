@@ -122,3 +122,8 @@ void board_ddr_init(void)
 	writel(0x0, 0x80000000);
 	writel(0x0, 0x80000080);
 }
+
+int user_fastboot_request(void)
+{
+	return 0;
+}

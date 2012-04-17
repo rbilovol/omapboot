@@ -67,3 +67,5 @@
 				"omapfb.vram=0:32M " \
 				"earlyprintk " \
 				"vram=32M\0" ;
+
+#define USER_FASTBOOT_RQ	(KEY_VOLUME_UP | KEY_VOLUME_DOWN)

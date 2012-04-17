@@ -76,6 +76,7 @@ extern void lock_core_dpll_shadow(void);
 extern int pmic_enable(void);
 extern int pbias_config(void);
 extern int pmic_disable(void);
+extern int user_fastboot_request(void);
 
 /* rev-id stuff */
 typedef enum {

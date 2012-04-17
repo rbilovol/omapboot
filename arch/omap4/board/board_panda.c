@@ -301,3 +301,8 @@ void board_ddr_init(void)
 		       &elpida2G_400mhz_2cs);
 
 }
+
+int user_fastboot_request(void)
+{
+	return 0;
+}

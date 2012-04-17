@@ -427,6 +427,13 @@
 #define CM_WKUP_WDTIMER2_CLKCTRL		0x4ae07830
 #define CM_L4PER_I2C1_CLKCTRL			0x4a0094a0
 
+/* keypad */
+#define CM_WKUPAON_KBD_CLKCTRL			0x4AE07878
+#define KBD_STATEMACHINE			0x4AE1C048
+#define KBD_FULLCODE31_0			0x4AE1C054
+#define KEY_VOLUME_UP				0x40000
+#define KEY_VOLUME_DOWN				0x80000
+
 /* Used to index into DPLL parameter tables */
 struct dpll_param {
 	unsigned int 	m;
