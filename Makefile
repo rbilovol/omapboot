@@ -91,8 +91,9 @@ M_OBJS += $(OMAP_COMMON_OBJS)
 M_OBJS += $(COMMON_OBJS)
 M_OBJS += $(PROC_COMMON_OBJS)
 M_OBJS += $(BOARD_OBJS)
-M_OBJS += booti.o
 M_OBJS += aboot.o
+M_OBJS += booti.o
+M_OBJS += device_tree.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
@@ -105,6 +106,7 @@ M_OBJS += $(COMMON_OBJS)
 M_OBJS += $(PROC_COMMON_OBJS)
 M_OBJS += $(BOARD_OBJS)
 M_OBJS += booti.o
+M_OBJS += device_tree.o
 M_OBJS += iboot/iboot.o
 M_OBJS += pmic.o
 M_LIBS := $(TARGET_LIBGCC)
@@ -121,6 +123,7 @@ M_OBJS += $(BOARD_OBJS)
 M_OBJS += booti.o
 M_OBJS += eboot/eboot.o
 M_OBJS += pmic.o
+M_OBJS += device_tree.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 

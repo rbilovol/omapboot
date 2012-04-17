@@ -33,6 +33,7 @@
 #include <common/omap_rom.h>
 #include <common/fastboot.h>
 #include <common/boot_settings.h>
+#include <common/device_tree.h>
 #include "config.h"
 #include "version.h"
 
@@ -161,6 +162,7 @@ int do_booti(char *info)
 	u64 num_sectors = 0;
 	int sector_sz = 0;
 	int ret = 0;
+	unsigned dbt_addr = ATAGS_ARGS;
 
 	if (!(strcmp(info, "mmc")))
 		boot_from_mmc = 1;
@@ -183,6 +185,10 @@ int do_booti(char *info)
 			goto fail;
 		}
 		ret = load_ptbl(booti_ops->storage_ops, 0);
+
+		ret = load_dev_tree(booti_ops);
+		if (ret > 0)
+			dbt_addr = ret;
 
 		pte = fastboot_flash_find_ptn(ptn);
 		if (!pte) {
@@ -217,6 +223,7 @@ int do_booti(char *info)
 
 		printf("Reading kernel from start sector %d and reading %d "
 			"number of sectors\n", (int)sector1, (int)num_sectors);
+
 		ret = booti_ops->storage_ops->read(sector1, num_sectors,
 					(void *) hdr->kernel_addr);
 		if (ret != 0) {
@@ -230,8 +237,10 @@ int do_booti(char *info)
 		if (num_sectors <= (hdr->ramdisk_size / sector_sz))
 			num_sectors = (hdr->ramdisk_size / sector_sz);
 
+
 		printf("Reading ramdisk from start sector %d and reading %d "
 			"number of sectors\n", (int)sector2, (int)num_sectors);
+
 		ret = booti_ops->storage_ops->read(sector2, num_sectors,
 					(void *) hdr->ramdisk_addr);
 		if (ret != 0) {
@@ -273,11 +282,11 @@ int do_booti(char *info)
 	boot_settings(&hdr[0], ATAGS_ARGS);
 #endif
 
-	void (*theKernel)(int zero, int arch, uint params);
-	theKernel = (void (*)(int, int, uint))(hdr->kernel_addr);
+	void (*theKernel)(int zero, int arch, void *);
+	theKernel = (void (*)(int, int, void *))(hdr->kernel_addr);
 
 	printf("\nbooting kernel...\n");
-	theKernel(0, cfg_machine_type, ATAGS_ARGS);
+	theKernel(0, cfg_machine_type, (void *)dbt_addr);
 
 fail:
 	printf("do_booti failed, stay here\n");

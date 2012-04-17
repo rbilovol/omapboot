@@ -35,8 +35,8 @@
 
 static struct partition partitions[] = {
 	{ "-", 128 },
-	{ "xloader", 256 },
 	{ "bootloader", 256 },
+	{ "enviroment", 256 },
 	/* "misc" partition is required for recovery */
 	{ "misc", 128 },
 	{ "-", 384 },
