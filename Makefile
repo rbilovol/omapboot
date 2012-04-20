@@ -65,49 +65,17 @@ OUT_TARGET_OBJ := $(OUT)/target-obj
 
 ALL :=
 
+# Build the usbboot host tool
 include build/rules.mk
+include tools/host_usbboot.mk
 
-M_NAME := usbboot
-M_OBJS := tools/usbboot.o
-M_OBJS += tools/usb_linux.o
-M_OBJS += 2ndstage.o
-M_OBJS += secondstage.o
-include build/host-executable.mk
+# Build the target with it's dependencies
+include arch/$(ARCH)/board/$(BOARD).mk
 
-M_NAME := mkheader
-M_OBJS := tools/mkheader.o
-include build/host-executable.mk
-
-M_NAME := bin2c
-M_OBJS := tools/bin2c.o
-include build/host-executable.mk
-
-ifeq ($(ARCH), omap4)
-ABOOT_TEXT_BASE = 0x40309000
-IBOOT_TEXT_BASE = 0x40300200
-EBOOT_TEXT_BASE = 0x40300200
-endif
-
-ifeq ($(ARCH), omap5)
-ABOOT_TEXT_BASE = 0x40309000
-IBOOT_TEXT_BASE = 0x40309000
-EBOOT_TEXT_BASE = 0x40309000
-endif
-
-OMAP5_COMMON_OBJS :=	arch/omap5/id.o \
-			arch/omap5/clock.o \
-			arch/omap5/sdram.o \
-			arch/omap5/gpmc.o
-
-OMAP4_COMMON_OBJS :=	arch/omap4/clock.o \
-			arch/omap4/sdram.o \
-			arch/omap4/gpmc.o \
-			arch/omap4/gpio.o \
-			arch/omap4/id.o \
-
-COMMON_OBJS :=	arch/common/serial.o \
-		arch/common/rom_usb.o \
-		arch/$(ARCH)/board/board_$(BOARD).o \
+COMMON_OBJS := 	crc32.o \
+		libc/utils.o \
+		fastboot.o \
+		fastboot_mmc.o \
 		libc/printf.o \
 		libc/raise.o \
 		libc/string.o \
@@ -116,68 +84,40 @@ COMMON_OBJS :=	arch/common/serial.o \
 		misc.o \
 
 M_NAME := aboot
-ifeq ($(ARCH), omap4)
 M_BASE := $(ABOOT_TEXT_BASE)
 M_OBJS := arch/common/start_reloc.o
-M_OBJS += $(OMAP4_COMMON_OBJS)
-endif
-ifeq ($(ARCH), omap5)
-M_BASE := $(ABOOT_TEXT_BASE)
-M_OBJS := arch/common/start_reloc.o
-M_OBJS += $(OMAP5_COMMON_OBJS)
-endif
+M_OBJS += $(OMAP_COMMON_OBJS)
 M_OBJS += $(COMMON_OBJS)
+M_OBJS += $(PROC_COMMON_OBJS)
+M_OBJS += $(BOARD_OBJS)
+M_OBJS += booti.o
 M_OBJS += aboot.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
 M_NAME := iboot
-ifeq ($(ARCH), omap4)
 M_BASE := $(IBOOT_TEXT_BASE)
 M_OBJS := iboot/start_reloc.o
-M_OBJS += $(OMAP4_COMMON_OBJS)
-endif
-ifeq ($(ARCH), omap5)
-M_BASE := $(IBOOT_TEXT_BASE)
-M_OBJS := iboot/start_reloc.o
-M_OBJS += $(OMAP5_COMMON_OBJS)
-endif
+M_OBJS += $(OMAP_COMMON_OBJS)
 M_OBJS += $(COMMON_OBJS)
+M_OBJS += $(PROC_COMMON_OBJS)
+M_OBJS += $(BOARD_OBJS)
+M_OBJS += booti.o
 M_OBJS += iboot/iboot.o
 M_OBJS += pmic.o
-M_OBJS += booti.o
-M_OBJS += libc/utils.o
-M_OBJS += crc32.o
-M_OBJS += fastboot.o
-M_OBJS += fastboot_mmc.o
-M_OBJS += arch/common/rom_i2c.o
-M_OBJS += arch/common/rom_wdtimer.o
-M_OBJS += arch/common/rom_mmc.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
 M_NAME := eboot
-ifeq ($(ARCH), omap4)
 M_BASE := $(EBOOT_TEXT_BASE)
 M_OBJS := eboot/start_reloc.o
-M_OBJS += $(OMAP4_COMMON_OBJS)
-endif
-ifeq ($(ARCH), omap5)
-M_BASE := $(EBOOT_TEXT_BASE)
-M_OBJS := eboot/start_reloc.o
-M_OBJS += $(OMAP5_COMMON_OBJS)
-endif
+M_OBJS += $(OMAP_COMMON_OBJS)
 M_OBJS += $(COMMON_OBJS)
+M_OBJS += $(PROC_COMMON_OBJS)
+M_OBJS += $(BOARD_OBJS)
+M_OBJS += booti.o
 M_OBJS += eboot/eboot.o
 M_OBJS += pmic.o
-M_OBJS += booti.o
-M_OBJS += libc/utils.o
-M_OBJS += crc32.o
-M_OBJS += fastboot.o
-M_OBJS += fastboot_mmc.o
-M_OBJS += arch/common/rom_i2c.o
-M_OBJS += arch/common/rom_wdtimer.o
-M_OBJS += arch/common/rom_mmc.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
@@ -186,7 +126,6 @@ M_BASE := 0x82000000
 M_OBJS := arch/common/start.o
 M_OBJS += agent.o
 M_OBJS += arch/common/serial.o
-
 include build/target-executable.mk
 
 $(OUT)/eboot.ift: $(OUT)/eboot.bin $(OUT)/mkheader
@@ -223,8 +162,8 @@ $(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	gcc -c $(EXTRAOPTS) -o $@ $(OUT)/secondstage.c
 clean::
 	@echo clean
-	@rm include/config.h
-	@rm include/version.h
+	@rm -f include/config.h
+	@rm -f include/version.h
 	@rm -rf $(OUT)
 
 all:: version $(ALL)

@@ -33,6 +33,8 @@
 
 #include <aboot/aboot.h>
 #include <aboot/io.h>
+
+#include <common/usbboot_common.h>
 #include <common/omap_rom.h>
 #include <common/mmc.h>
 
@@ -197,7 +199,7 @@ int mmc_write(struct mmc *mmc, u32 start, u32 count, void *data)
 	int (*rom_hal_mmchs_sendcommand)(u32 moduleid, u32 cmd, u32 arg,
 								u32 *resp);
 	int (*rom_hal_mmchs_writedata)(u32 moduleid, u32 *buf);
-
+	struct bootloader_ops *boot_ops = (void *) 0x84100000;
 	struct mmc_devicedata *dd;
 	struct mem_device *md;
 	u32 arg;
@@ -232,11 +234,13 @@ int mmc_write(struct mmc *mmc, u32 start, u32 count, void *data)
 		(0x3ec8c|1)  /*OMAP_5432_ES1_DOT_0*/
 	};
 
+	boot_ops->proc_ops = init_processor_id_funcs();
+	/*TODO check for valid functions */
 	rom_hal_mmchs_writedata   =
-			API(&rom_hal_mmchs_writedata_addr[get_omap_rev()]);
+			API(&rom_hal_mmchs_writedata_addr[boot_ops->proc_ops->proc_get_proc_id()]);
 
 	rom_hal_mmchs_sendcommand =
-			API(&rom_hal_mmchs_sendcommand_addr[get_omap_rev()]);
+			API(&rom_hal_mmchs_sendcommand_addr[boot_ops->proc_ops->proc_get_proc_id()]);
 
 	/* Get the device data structure */
 	md = &mmc->dread;

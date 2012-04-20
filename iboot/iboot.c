@@ -32,15 +32,11 @@
 #include <version.h>
 #include <aboot/aboot.h>
 #include <aboot/io.h>
-#include <common/omap_rom.h>
-#include <common/fastboot.h>
 
-#if defined CONFIG_IS_OMAP4
-#include <omap4/mux.h>
-#include <omap4/hw.h>
-#elif defined CONFIG_IS_OMAP5
-#include <omap5/hw.h>
-#endif
+#include <common/common_proc.h>
+#include <common/fastboot.h>
+#include <common/omap_rom.h>
+#include <common/usbboot_common.h>
 
 #include "config.h"
 
@@ -50,10 +46,6 @@
 #define DBG(x...)
 #endif /* DEBUG */
 
-#ifndef CONFIG_USE_CH_CONFIG
-#define CONFIG_USE_CH_CONFIG 0
-#endif
-
 static unsigned MSG = 0xaabbccdd;
 
 struct usb usb;
@@ -61,37 +53,42 @@ struct usb usb;
 unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 
 u32 public_rom_base;
-
+struct bootloader_ops *boot_ops = (void *)0x84000000;
 
 void iboot(unsigned *info)
 {
 	int ret = 0;
-	int use_config_header = CONFIG_USE_CH_CONFIG;
 
-	if (get_omap_rev() >= OMAP_5430_ES1_DOT_0)
-		public_rom_base = PUBLIC_API_BASE_5430;
-	else if (get_omap_rev() >= OMAP_4460_ES1_DOT_1)
-		public_rom_base = PUBLIC_API_BASE_4460;
-	else
-		public_rom_base = PUBLIC_API_BASE_4430;
+	boot_ops->board_ops = init_board_funcs();
+	boot_ops->proc_ops = init_processor_id_funcs();
 
-	board_mux_init();
+	if (boot_ops->proc_ops->proc_get_api_base)
+		public_rom_base = boot_ops->proc_ops->proc_get_api_base();
+
+	if (boot_ops->board_ops->board_mux_init)
+		boot_ops->board_ops->board_mux_init();
+
 	sdelay(100);
 
-	scale_vcores();
-	if (!use_config_header)
-		prcm_init();
+	if (boot_ops->board_ops->board_scale_vcores)
+		boot_ops->board_ops->board_scale_vcores();
 
-	board_ddr_init();
-	gpmc_init();
-	board_late_init();
+	if(boot_ops->board_ops->board_prcm_init)
+		boot_ops->board_ops->board_prcm_init();
+
+	if (boot_ops->board_ops->board_ddr_init)
+		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
+
+	if (boot_ops->board_ops->board_gpmc_init)
+		boot_ops->board_ops->board_gpmc_init();
+
+	if (boot_ops->board_ops->board_late_init)
+		boot_ops->board_ops->board_late_init();
 
 	serial_init();
 
 	printf("%s\n", ABOOT_VERSION);
 	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
-
-	/* printf("MSV=%08x\n", *((unsigned *) 0x4A00213C)); */
 
 #if defined CONFIG_IS_OMAP4
 	hal_i2c i2c_id = HAL_I2C1;
@@ -124,7 +121,7 @@ void iboot(unsigned *info)
 	usb_write(&usb, &MSG, 4);
 
 	serial_puts("Entering fastboot mode...\n");
-	do_fastboot();
+	do_fastboot(boot_ops);
 
 fail:
 	while (1)

@@ -29,16 +29,56 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _COMMON_H_
-#define _COMMON_H_
+#ifndef _USBBOOT_COMMON_H_
+#define _USBBOOT_COMMON_H_
 
 #include <aboot/types.h>
 #include <version.h>
 
-char aboot_version_string[20];
 #define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))
+
+struct partition {
+	const char *name;
+	u32 size_kb;
+};
+
+/* Use these functions to override the
+ * default configuration for the processor */
+struct proc_specific_functions {
+	u32 (*proc_get_api_base)(void);
+	char* (*proc_get_serial_num)(void);
+	char* (*proc_get_type)(void);
+	char* (*proc_get_revision)(void);
+	char* (*proc_get_version)(void);
+	int (*proc_get_proc_id)(void);
+};
+
+/* Use these functions to override the
+ * default configuration for the processor */
+struct board_specific_functions {
+	void (*board_scale_vcores)(void);
+	struct partition *(*board_get_part_tbl)(void);
+	void (*board_prcm_init)(void);
+	void (*board_gpmc_init)(void);
+	void (*board_late_init)(void);
+	void (*board_mux_init)(void);
+	void (*board_ddr_init)(struct proc_specific_functions *proc_ops);
+	int (*board_storage_init)(u8 device);
+	int (*board_user_fastboot_request)(void);
+	u8 (*board_get_flash_slot)(void);
+};
+
+struct bootloader_ops {
+	struct board_specific_functions *board_ops;
+	struct proc_specific_functions *proc_ops;
+};
+
+void* init_board_funcs(void);
+void* init_processor_id_funcs(void);
+
 unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);
+
 int get_downloadsize_from_string(int count, char *string);
 
 #endif

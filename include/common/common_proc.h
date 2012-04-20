@@ -29,16 +29,18 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _COMMON_H_
-#define _COMMON_H_
+#ifndef __COMMON_PROC_H_
+#define __COMMON_PROC_H_
 
-#include <aboot/types.h>
-#include <version.h>
-
-char aboot_version_string[20];
-#define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))
-unsigned long crc32(unsigned long crc, const unsigned char *buf,
-						unsigned int len);
-int get_downloadsize_from_string(int count, char *string);
+/* OMAP default configuration functions */
+void scale_vcores(void);
+void prcm_init(void);
+void gpmc_init(void);
+int mmc_init(u8 device);
+void prcm_init(void);
+void setup_emif_config(void);
+int pmic_enable(void);
+int pbias_config(void);
+int pmic_disable(void);
 
 #endif

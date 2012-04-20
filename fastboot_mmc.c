@@ -27,11 +27,15 @@
  */
 
 #include <aboot/aboot.h>
-#include <aboot/types.h>
-#include <aboot/io.h>
-#include <libc/string.h>
 #include <aboot/common.h>
+#include <aboot/io.h>
+#include <aboot/types.h>
+
+#include <libc/string.h>
+
+#include <common/common_proc.h>
 #include <common/omap_rom.h>
+
 #include "config.h"
 
 #ifdef DEBUG
@@ -103,70 +107,12 @@ struct ptable {
 	struct efi_entry entry[EFI_ENTRIES];
 };
 
-struct partition {
-	const char *name;
-	u32 size_kb;
-};
-
-#if defined CONFIG_BLAZE || defined CONFIG_BLAZE_TABLET
-static struct partition partitions[] = {
-	{ "-", 128 },
-	{ "xloader", 128 },
-	{ "bootloader", 256 },
-	/* "misc" partition is required for recovery */
-	{ "misc", 128 },
-	{ "-", 384 },
-	{ "efs", 16384 },
-	{ "crypto", 16 },
-	{ "recovery", 8*1024 },
-	{ "boot", 8*1024 },
-	{ "system", 512*1024 },
-	{ "cache", 256*1024 },
-	{ "userdata", 0},
-	{ 0, 0 },
-};
-#elif defined CONFIG_PANDA
-static struct partition partitions[] = {
-	{ "-", 128 },
-	{ "xloader", 128 },
-	{ "bootloader", 256 },
-	{ "-", 512 },
-	{ "recovery", 8*1024 },
-	{ "boot", 8*1024 },
-	{ "system", 512*1024 },
-	{ "cache", 256*1024 },
-	{ "userdata", 0},
-	{ 0, 0 },
-};
-#elif defined CONFIG_OMAP5EVM || defined CONFIG_OMAP5UEVM
-/*
-  Increasing the size of the xloader partition
-  so that the bootloader is now located at 0x300,
-  which is where SPL expects U-BOOT to be.
-*/
-static struct partition partitions[] = {
-	{ "-", 128 },
-	{ "xloader", 256 },
-	{ "bootloader", 256 },
-	/* "misc" partition is required for recovery */
-	{ "misc", 128 },
-	{ "-", 384 },
-	{ "efs", 16384 },
-	{ "crypto", 16 },
-	{ "recovery", 8*1024 },
-	{ "boot", 8*1024 },
-	{ "system", 512*1024 },
-	{ "cache", 256*1024 },
-	{ "userdata", 0},
-	{ 0, 0 },
-};
-#endif
-
+static struct partition *partitions;
 static struct ptable the_ptable;
 
 static void init_mbr(u8 *mbr, u32 blocks)
 {
-	printf("init_mbr\n");
+	DBG("init_mbr\n");
 
 	mbr[0x1be] = 0x00; /* nonbootable */
 	mbr[0x1bf] = 0xFF; /* bogus CHS */
@@ -193,7 +139,7 @@ static void start_ptbl(struct ptable *ptbl, unsigned blocks)
 {
 	struct efi_header *hdr = &ptbl->header;
 
-	printf("start_ptbl\n");
+	DBG("start_ptbl\n");
 
 	memset(ptbl, 0, sizeof(*ptbl));
 
@@ -234,7 +180,7 @@ static void end_ptbl(struct ptable *ptbl)
 	struct efi_header *hdr = &ptbl->header;
 	u32 n;
 
-	printf("end_ptbl\n");
+	DBG("end_ptbl\n");
 
 	n = crc32(0, 0, 0);
 	n = crc32(n, (void *) ptbl->entry, sizeof(ptbl->entry));
@@ -382,8 +328,9 @@ static int load_ptbl(void)
 	return 0;
 }
 
-static int do_format(u8 device)
+int do_gpt_format(struct fastboot_data *fb_data)
 {
+	/* For testing need to pass this in better */
 	struct ptable *ptbl = &the_ptable;
 	u32 blocks = 0;
 	u32 next;
@@ -398,12 +345,11 @@ static int do_format(u8 device)
 	static u8 data[512];
 #endif
 
-	printf("do_format\n");
-
-	ret = mmc_open(device, &mmc);
+	DBG("do_format\n");
+	ret = mmc_open(fb_data->device, &mmc);
 	if (ret != 0) {
 		printf("mmc init failed, retrying ...\n");
-		ret = mmc_open(device, &mmc);
+		ret = mmc_open(fb_data->device, &mmc);
 		if (ret != 0) {
 			printf("mmc init failed on retry, exiting!\n");
 			return ret;
@@ -411,16 +357,18 @@ static int do_format(u8 device)
 	}
 
 	mmc_info(&mmc);
-	dd = mmc.dread.device_data;
+	fb_data->dd = mmc.dread.device_data;
 
-	if (dd->mode != 1)
-		dd->mode = 1; /*MMCSD_MODE_RAW*/
+	if (fb_data->dd->mode != 1)
+		fb_data->dd->mode = 1; /*MMCSD_MODE_RAW*/
 
-	blocks = dd->size;
+	blocks = fb_data->dd->size;
 	DBG("sector_sz %u\n", sector_sz);
 	DBG("blocks %u\n", blocks);
 
 	start_ptbl(ptbl, blocks);
+	if (fb_data->board_ops->board_get_part_tbl)
+		partitions = fb_data->board_ops->board_get_part_tbl();
 
 	n = 0;
 	next = 0;
@@ -455,7 +403,6 @@ static int do_format(u8 device)
 		printf("mmc write failed\n");
 		return ret;
 	}
-
 #ifdef DEBUG
 	ret = mmc_read(&mmc, 0, 1, data);
 	if (ret != 0) {
@@ -468,7 +415,6 @@ static int do_format(u8 device)
 			printf("\n");
 		}
 #endif
-
 	printf("writing the GPT table to disk ... \n");
 	ret = mmc_write(&mmc, 1, 1, &ptbl->header);
 	if (ret != 0) {
@@ -514,45 +460,6 @@ static int do_format(u8 device)
 	ret = load_ptbl();
 	if (ret != 0) {
 		printf("Failed to load partition table\n");
-		return ret;
-	}
-
-	return 0;
-}
-
-int fastboot_oem(u8 device)
-{
-	int ret = 0;
-
-	DBG("fastboot_oem\n");
-
-	ret = do_format(device);
-	if (ret != 0)
-		printf("do_format() failed\n");
-
-	return ret;
-}
-
-int board_mmc_init(u8 device)
-{
-	int ret = 0;
-
-	DBG("board_mmc_init\n");
-
-	ret = mmc_open(device, &mmc);
-	if (ret != 0) {
-		printf("mmc init failed, retrying ...\n");
-		ret = mmc_open(device, &mmc);
-		if (ret != 0) {
-			printf("mmc init failed on retry, exiting!\n");
-			return ret;
-		}
-	}
-
-	DBG("efi partition table:\n");
-	ret =  load_ptbl();
-	if (ret != 0) {
-		printf("Failed to load the partition table\n");
 		return ret;
 	}
 
@@ -630,6 +537,32 @@ char *get_ptn_size(u8 device, char *buf, const char *ptn)
 
 	return buf;
 
+}
+
+int mmc_init(u8 device)
+{
+	int ret = 0;
+
+	printf("mmc_init\n");
+
+	ret = mmc_open(device, &mmc);
+	if (ret != 0) {
+		printf("mmc init failed, retrying ...\n");
+		ret = mmc_open(device, &mmc);
+		if (ret != 0) {
+			printf("mmc init failed on retry, exiting!\n");
+			return ret;
+		}
+	}
+
+	DBG("efi partition table:\n");
+	ret =  load_ptbl();
+	if (ret != 0) {
+		printf("Failed to load the partition table\n");
+		return ret;
+	}
+
+	return 0;
 }
 
 #endif

@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 
+#ifndef _SPARSE_FORMAT_H_
+#define _SPARSE_FORMAT_H_
+
+#define SPARSE_HEADER_MAGIC	0xed26ff3a
+
+#define CHUNK_TYPE_RAW		0xCAC1
+#define CHUNK_TYPE_FILL		0xCAC2
+#define CHUNK_TYPE_DONT_CARE	0xCAC3
+#define CHUNK_TYPE_CRC          0xCAC4
+
+
 typedef struct sparse_header {
 	u32	magic;		/* 0xed26ff3a */
 	u16	major_version;	/* (0x1) - reject images with higher major
@@ -36,13 +47,6 @@ typedef struct sparse_header {
 				/* table implementation */
 } sparse_header_t;
 
-#define SPARSE_HEADER_MAGIC	0xed26ff3a
-
-#define CHUNK_TYPE_RAW		0xCAC1
-#define CHUNK_TYPE_FILL		0xCAC2
-#define CHUNK_TYPE_DONT_CARE	0xCAC3
-#define CHUNK_TYPE_CRC          0xCAC4
-
 typedef struct chunk_header {
 	u16	chunk_type;	/* 0xCAC1 -> raw; 0xCAC2 -> fill;
 				0xCAC3 -> don't care */
@@ -51,8 +55,4 @@ typedef struct chunk_header {
 	u32	total_sz;	/* in bytes of chunk input file
 				including chunk header and data */
 } chunk_header_t;
-
-/*  Following a Raw or Fill chunk is data.  For a Raw chunk, it's
- *  the data in chunk_sz * blk_sz.
- *  For a Fill chunk, it's 4 bytes of the fill data.
- */
+#endif

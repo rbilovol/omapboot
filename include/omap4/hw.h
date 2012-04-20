@@ -62,6 +62,7 @@
 /* CONTROL */
 #define OMAP44XX_CTRL_GEN_BASE		(OMAP44XX_L4_IO_BASE+0x2000)
 #define OMAP44XX_CTRL_PADCONF_CORE_BASE	0x4a100000
+#define CONTROL_ID_CODE			(OMAP44XX_CTRL_GEN_BASE + 0x204)
 
 /* DIE ID */
 #define CONTROL_STD_FUSE_DIE_ID_0	(OMAP44XX_CTRL_GEN_BASE + 0x200)
@@ -620,6 +621,10 @@ struct dpll_param {
 
 void omap4_ddr_init(const struct ddr_regs *ddr1,
 		    const struct ddr_regs *ddr2);
+
+void configure_core_dpll_no_lock(void);
+void lock_core_dpll_shadow(void);
+
 #endif
 
 #endif

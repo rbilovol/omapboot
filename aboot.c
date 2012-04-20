@@ -38,6 +38,7 @@
 #endif
 
 #include <common/omap_rom.h>
+#include <common/usbboot_common.h>
 
 #define WITH_MEMORY_TEST	0
 #define WITH_FLASH_BOOT		0
@@ -73,6 +74,7 @@ struct usb usb;
 unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 
 u32 public_rom_base;
+struct bootloader_ops *boot_ops = (void *) 0x84000000;
 
 unsigned call_trusted(unsigned appid, unsigned procid, unsigned flag, void *args);
 
@@ -168,21 +170,31 @@ void aboot(unsigned *info)
 {
 	unsigned n, len;
 
-	if (get_omap_rev() >= OMAP_5430_ES1_DOT_0)
-		public_rom_base = PUBLIC_API_BASE_5430;
-	else if (get_omap_rev() >= OMAP_4460_ES1_DOT_1)
-		public_rom_base = PUBLIC_API_BASE_4460;
-	else
-		public_rom_base = PUBLIC_API_BASE_4430;
+	boot_ops->board_ops = init_board_funcs();
+	boot_ops->proc_ops = init_processor_id_funcs();
 
-	board_mux_init();
+	if (boot_ops->proc_ops->proc_get_api_base)
+		public_rom_base = boot_ops->proc_ops->proc_get_api_base();
+
+	if (boot_ops->board_ops->board_mux_init)
+		boot_ops->board_ops->board_mux_init();
+
 	sdelay(100);
 
-	scale_vcores();
-	prcm_init();
-	board_ddr_init();
-	gpmc_init();
-	board_late_init();
+	if (boot_ops->board_ops->board_scale_vcores)
+		boot_ops->board_ops->board_scale_vcores();
+
+	if(boot_ops->board_ops->board_prcm_init)
+		boot_ops->board_ops->board_prcm_init();
+
+	if (boot_ops->board_ops->board_ddr_init)
+		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
+
+	if (boot_ops->board_ops->board_gpmc_init)
+		boot_ops->board_ops->board_gpmc_init();
+
+	if (boot_ops->board_ops->board_late_init)
+		boot_ops->board_ops->board_late_init();
 
 	serial_init();
 
@@ -226,7 +238,7 @@ void aboot(unsigned *info)
 	if (n) {
 		serial_puts("*** IO ERROR ***\n");
 	} else {
-		if (OMAP_TYPE_SEC == get_omap_type()) {
+		if (OMAP_TYPE_SEC == boot_ops->proc_ops->proc_get_type()) {
 			void *data = (void *) (CONFIG_ADDR_DOWNLOAD);
 			void *sign = (void *) (CONFIG_ADDR_DOWNLOAD +
 								len - 280);

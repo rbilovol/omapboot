@@ -26,18 +26,42 @@
  * SUCH DAMAGE.
  */
 
+#include <config.h>
+
 #include <aboot/aboot.h>
 #include <aboot/io.h>
+
+#include <common/common_proc.h>
+#include <common/omap_rom.h>
+#include <common/usbboot_common.h>
+
 #include <omap5/hw.h>
 #include <omap5/mux.h>
-#include <config.h>
-#include <common/omap_rom.h>
 
-/* Use CH (configuration header) to do the settings */
+static struct partition partitions[] = {
+	{ "-", 128 },
+	{ "xloader", 256 },
+	{ "bootloader", 256 },
+	/* "misc" partition is required for recovery */
+	{ "misc", 128 },
+	{ "-", 384 },
+	{ "efs", 16384 },
+	{ "crypto", 16 },
+	{ "recovery", 8*1024 },
+	{ "boot", 8*1024 },
+	{ "system", 512*1024 },
+	{ "cache", 256*1024 },
+	{ "userdata", 0},
+	{ 0, 0 },
+};
 
-void board_mux_init(void)
+static struct partition * omap5evm_get_partition(void)
 {
+	return partitions;
+}
 
+static void omap5evm_mux_init(void)
+{
 	/* core padconf essential */
 	setup_core_padconf(CP(EMMC_CLK), (PTU | IEN | M0));
 	setup_core_padconf(CP(EMMC_CMD), (PTU | IEN | M0));
@@ -300,14 +324,13 @@ void board_mux_init(void)
 	setup_wakeup_padconf(WK(SYS_BOOT5), (IEN | M0));
 }
 
-void board_ddr_init(void) {}
-void board_late_init(void)
+static void omap5evm_late_init(void)
 {
 	/* enable uart3 console */
 	writel(2, 0x4A009550);
 }
 
-int user_fastboot_request()
+static int omap5evm_check_fastboot(void)
 {
 	u32 temp;
 	/* set the clock for the keypad */
@@ -325,7 +348,41 @@ int user_fastboot_request()
 	return 0;
 }
 
-u8 board_get_flash_slot()
+static u8 omap5evm_get_flash_slot(void)
 {
 	return DEVICE_EMMC;
+}
+
+static void omap5evm_scale_cores(void)
+{
+	/* Use default OMAP voltage */
+	scale_vcores();
+}
+
+static void omap5evm_gpmc_init(void)
+{
+	/* Use default OMAP gpmc init function */
+	gpmc_init();
+}
+
+static void omap5evm_prcm_init(void)
+{
+	/* Use default OMAP gpmc init function */
+	prcm_init();
+}
+
+static struct board_specific_functions omap5evm_funcs = {
+	.board_get_flash_slot = omap5evm_get_flash_slot,
+	.board_mux_init = omap5evm_mux_init,
+	.board_user_fastboot_request = omap5evm_check_fastboot,
+	.board_late_init = omap5evm_late_init,
+	.board_get_part_tbl = omap5evm_get_partition,
+	.board_scale_vcores = omap5evm_scale_cores,
+	.board_gpmc_init = omap5evm_gpmc_init,
+	.board_prcm_init = omap5evm_prcm_init,
+};
+
+void* init_board_funcs(void)
+{
+	return &omap5evm_funcs;
 }

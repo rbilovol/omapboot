@@ -36,10 +36,6 @@ void serial_init(void);
 void serial_putc(char c);
 void serial_puts(const char *s);
 
-void board_mux_init(void);
-void board_ddr_init(void);
-void setup_emif_config(void);
-
 int printf(const char *fmt, ...);
 int snprintf(char *str, size_t len, const char *fmt, ...);
 int vsprintf(char *str, const char *fmt, va_list ap);
@@ -61,22 +57,9 @@ void set_modify(u32 reg, u32 mask, u32 value);
 extern unsigned cfg_machine_type;
 extern unsigned cfg_uart_base;
 
-/* some extern functions */
-extern void scale_vcores(void);
-extern void prcm_init(void);
-extern void gpmc_init(void);
-extern void board_late_init(void);
-extern int board_mmc_init(u8 device);
-extern u8 board_get_flash_slot();
-extern void prcm_init(void);
-extern int do_booti(u8 device, char *info);
+int do_booti(u8 device, char *info);
 extern int boot_image(unsigned machtype, unsigned image, unsigned len);
-extern void configure_core_dpll_no_lock(void);
-extern void lock_core_dpll_shadow(void);
-extern int pmic_enable(void);
-extern int pbias_config(void);
-extern int pmic_disable(void);
-extern int user_fastboot_request(void);
+
 
 /* rev-id stuff */
 typedef enum {
@@ -93,8 +76,6 @@ typedef enum {
 	OMAP_5432_ES1_DOT_0,
 } omap_rev;
 
-extern omap_rev get_omap_rev(void);
-
 /* omap-type */
 typedef enum {
 	OMAP_TYPE_TEST,
@@ -103,7 +84,5 @@ typedef enum {
 	OMAP_TYPE_GP,
 	OMAP_TYPE_BAD,
 } omap_type;
-
-extern omap_type get_omap_type(void);
 
 #endif

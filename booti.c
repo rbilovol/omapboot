@@ -50,6 +50,7 @@
 
 struct mmc mmc;
 struct mmc_devicedata *dd;
+struct bootloader_ops *booti_ops = (void *)0x84100000;
 
 static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 {
@@ -104,7 +105,7 @@ void boot_settings(boot_img_hdr *hdr, u32 atag)
 	char boot_str[64];
 
 	serial_len = sprintf(serial_str, " androidboot.serialno=%s",
-		get_serial_number());
+		booti_ops->proc_ops->proc_get_serial_num());
 
 	strcpy((char *)hdr->cmdline, temp_cmdline);
 	if (sizeof(hdr->cmdline) >= (serial_len +
@@ -165,24 +166,29 @@ int do_booti(u8 device, char *info)
 		boot_from_mmc = 1;
 
 	addr = CONFIG_ADDR_DOWNLOAD;
-
 	hdr = (boot_img_hdr *) addr;
+	booti_ops->board_ops = init_board_funcs();
+	booti_ops->proc_ops = init_processor_id_funcs();
 
 	if (boot_from_mmc) {
 
 		struct fastboot_ptentry *pte;
 
 		/* Init the MMC and load the partition table */
-		ret = board_mmc_init(device);
+		if (booti_ops->board_ops->board_storage_init)
+			ret = booti_ops->board_ops->board_storage_init(device);
+		else
+			ret = -1;
+
 		if (ret != 0) {
-			printf("board_mmc_init() failed\n");
+			printf("board_storage_init() failed\n");
 			goto fail;
 		}
 
 		pte = fastboot_flash_find_ptn(ptn);
 		if (!pte) {
 			printf("booti: cannot find '%s' partition\n", ptn);
-			do_fastboot();
+			do_fastboot(booti_ops);
 		}
 
 		ret = mmc_read(&mmc, pte->start, sizeof(boot_img_hdr),
