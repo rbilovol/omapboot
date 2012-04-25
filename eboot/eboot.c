@@ -53,7 +53,6 @@ unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 
 u32 public_rom_base;
 
-static u8 device;
 struct bootloader_ops *boot_ops = (void *) 0x84000000;
 
 void eboot(unsigned *info)
@@ -82,11 +81,6 @@ void eboot(unsigned *info)
 
 	if (boot_ops->board_ops->board_ddr_init)
 		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
-
-	if (boot_ops->board_ops->board_get_flash_slot)
-		device = boot_ops->board_ops->board_get_flash_slot();
-	else
-		device = DEVICE_EMMC;
 
 	if (boot_ops->board_ops->board_gpmc_init)
 		boot_ops->board_ops->board_gpmc_init();
@@ -127,6 +121,14 @@ void eboot(unsigned *info)
 		goto fail;
 	}
 
+	if (boot_ops->board_ops->board_storage_init)
+		boot_ops->storage_ops =
+			boot_ops->board_ops->board_storage_init();
+	if (!boot_ops->storage_ops) {
+		printf("Storage driver init failed\n");
+		goto fail;
+	}
+
 	if (boot_ops->board_ops->board_user_fastboot_request) {
 		if (boot_ops->board_ops->board_user_fastboot_request())
 			do_fastboot(boot_ops);
@@ -138,12 +140,12 @@ void eboot(unsigned *info)
 	switch (bootdevice) {
 	case 0x05:
 		serial_puts("boot device: MMC1\n");
-		do_booti(device, "mmc");
+		do_booti("mmc");
 		break;
 	case 0x06:
 	case 0x07:
 		serial_puts("boot device: MMC2\n");
-		do_booti(device, "mmc");
+		do_booti("mmc");
 		break;
 	default:
 		serial_puts("boot device: unknown\n");

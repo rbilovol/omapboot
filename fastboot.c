@@ -49,8 +49,9 @@
 #include <common/fastboot.h>
 
 struct usb usb;
-struct mmc mmc;
-static struct fastboot_data *fb_data = (void *) 0x84001000;
+static struct fastboot_data fb_data_data;
+
+static struct fastboot_data *fb_data = &fb_data_data;
 static u8 *transfer_buffer = (void *) 0x82000000;
 static u8 *read_buffer = (void *) 0x83000000;
 
@@ -107,7 +108,7 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 		if (fb_data->getsize)
 			sprintf(tx_buffer + 4, "%08x", fb_data->getsize);
 	} else if (!strcmp(rx_buffer, "userdata_size")) {
-		strcpy(tx_buffer + 4, get_ptn_size(fb_data->device,
+		strcpy(tx_buffer + 4, get_ptn_size(fb_data,
 		     tx_buffer + strlen(tx_buffer), "userdata"));
 	} else if (!strcmp(rx_buffer, "all")) {
 		/* product name */
@@ -307,7 +308,7 @@ static int flash_sparse_formatted_image(void)
 		DBG("chunk_data_sz = %d\n", chunk_data_sz);
 
 		num_sectors = (chunk_data_sz/512);
-		printf("writing to sector %d and # of sectors %d\n",
+		DBG("writing to sector %d and # of sectors %d\n",
 			fb_data->sector, num_sectors);
 
 		switch (chunk_header->chunk_type) {
@@ -323,8 +324,8 @@ static int flash_sparse_formatted_image(void)
 
 			out_blocks += chunk_data_sz;
 
-			ret = mmc_write(&mmc, fb_data->sector, num_sectors,
-							transfer_buffer);
+			ret = fb_data->storage_ops->write(fb_data->sector,
+					num_sectors, transfer_buffer);
 			if (ret != 0) {
 				printf("mmc write failed\n");
 				return ret;
@@ -335,16 +336,17 @@ static int flash_sparse_formatted_image(void)
 			for (sector_count = 0; sector_count < num_sectors;
 							sector_count++) {
 
-				ret = mmc_read(&mmc, sector+sector_count, 1,
+				ret = fb_data->storage_ops->read(sector+
+					sector_count, 1,
 					read_buffer + (sector_count*512));
 				if (ret != 0) {
-					printf("mmc read failed\n");
+					printf("read failed\n");
 					return ret;
 				}
 				if (memcmp(read_buffer + (sector_count*512),
 				transfer_buffer + (sector_count*512), 512)) {
-					printf("mmc data mismatch sector %d\n",
-							sector + sector_count);
+					printf("data mismatch sector %d\n",
+						sector + sector_count);
 				}
 			}
 			#endif
@@ -415,7 +417,8 @@ static int fastboot_update_zimage(char *response)
 	}
 	/* Read the boot image header */
 	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
-	if (mmc_read(&mmc, fb_data->e->start, hdr_sectors, (void *)hdr)) {
+	if (fb_data->storage_ops->read(fb_data->e->start,
+			hdr_sectors, (void *)hdr)) {
 		sprintf(response, "FAILCannot read hdr from boot partition");
 		return (-1);
 	}
@@ -437,7 +440,7 @@ static int fastboot_update_zimage(char *response)
 
 	ramdisk_buffer = (u8 *)hdr;
 	ramdisk_buffer += hdr_sectors *512;
-	if (mmc_read(&mmc, ramdisk_sector_start,
+	if (fb_data->storage_ops->read(ramdisk_sector_start,
 		ramdisk_sectors, ramdisk_buffer)) {
 		sprintf(response, "FAILCannot read ramdisk from boot partition");
 		return (-1);
@@ -445,7 +448,7 @@ static int fastboot_update_zimage(char *response)
 
 	/* Change the boot img hdr */
 	hdr->kernel_size = fb_data->getsize;
-	if (mmc_write(&mmc, fb_data->e->start,
+	if (fb_data->storage_ops->write(fb_data->e->start,
 		hdr_sectors, (void *)hdr)) {
 		sprintf(response, "FAILCannot writeback boot img hdr");
 		return (-1);
@@ -455,7 +458,7 @@ static int fastboot_update_zimage(char *response)
 	kernel_sector_start = fb_data->e->start + sectors_per_page;
 	kernel_sectors = CEIL(hdr->kernel_size, hdr->page_size)*
 					sectors_per_page;
-	if (mmc_write(&mmc, kernel_sector_start, kernel_sectors,
+	if (fb_data->storage_ops->write(kernel_sector_start, kernel_sectors,
 			transfer_buffer)) {
 		sprintf(response, "FAILCannot write new kernel");
 		return (-1);
@@ -465,7 +468,7 @@ static int fastboot_update_zimage(char *response)
 	ramdisk_sector_start = fb_data->e->start + sectors_per_page;
 	ramdisk_sector_start += CEIL(hdr->kernel_size, hdr->page_size)*
 						sectors_per_page;
-	if (mmc_write(&mmc, ramdisk_sector_start, ramdisk_sectors,
+	if (fb_data->storage_ops->write(ramdisk_sector_start, ramdisk_sectors,
 						ramdisk_buffer)) {
 		sprintf(response, "FAILCannot write back original ramdisk");
 		return (-1);
@@ -490,7 +493,8 @@ static int fastboot_update_ramdisk(char *response)
 	}
 	/* Read the boot image header */
 	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
-	if (mmc_read(&mmc, fb_data->e->start, hdr_sectors, (void *)hdr)) {
+	if (fb_data->storage_ops->read(fb_data->e->start,
+			hdr_sectors, (void *)hdr)) {
 		sprintf(response, "FAILCannot read hdr from boot partition");
 		return -1;
 	}
@@ -519,14 +523,14 @@ static int fastboot_update_ramdisk(char *response)
 
 	/* Change the boot img hdr */
 	hdr->ramdisk_size = fb_data->getsize;
-	if (mmc_write(&mmc, fb_data->e->start,
+	if (fb_data->storage_ops->write(fb_data->e->start,
 		hdr_sectors, (void *)hdr)) {
 		sprintf(response, "FAILCannot writeback boot img hdr");
 		return -1;
 	}
 
 	/* Write the new ramdisk image */
-	if (mmc_write(&mmc, ramdisk_sector_start, ramdisk_sectors,
+	if (fb_data->storage_ops->write(ramdisk_sector_start, ramdisk_sectors,
 					transfer_buffer)) {
 		sprintf(response, "FAILCannot write new ramdisk");
 		return -1;
@@ -550,12 +554,13 @@ static int flash_non_sparse_formatted_image(void)
 	} else
 		num_sectors = (fb_data->getsize / 512);
 
-	printf("writing to sector %d\n and # of sectors = %d\n", fb_data->sector,
-		num_sectors);
+	printf("writing to sector %d\n and # of sectors = %d\n",
+		(int)fb_data->sector, (int)num_sectors);
 
-	ret = mmc_write(&mmc, fb_data->sector, num_sectors, transfer_buffer);
+	ret = fb_data->storage_ops->write(fb_data->sector,
+			num_sectors, transfer_buffer);
 	if (ret != 0) {
-		printf("mmc write failed\n");
+		printf("write failed\n");
 		return ret;
 	}
 
@@ -564,16 +569,17 @@ static int flash_non_sparse_formatted_image(void)
 			sector_count++) {
 
 			/*read back the data and compare */
-			ret = mmc_read(&mmc, fb_data->sector+sector_count, 1,
+			ret = fb_data->storage_ops->read(fb_data->sector+
+				sector_count, 1,
 				read_buffer + (sector_count*512));
 			if (ret != 0) {
-				printf("mmc read failed\n");
+				printf("read failed\n");
 				return ret;
 			}
 
 			if (memcmp(read_buffer + (sector_count*512),
 				transfer_buffer + (sector_count*512), 512)) {
-				printf("mmc data mismatch sector %d\n",
+				printf("data mismatch sector %d\n",
 							sector+sector_count);
 			}
 		}
@@ -598,13 +604,12 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 	fb_data->getsize = 0;
 	fb_data->proc_ops = boot_ops->proc_ops;
 	fb_data->board_ops = boot_ops->board_ops;
+	fb_data->storage_ops = boot_ops->storage_ops;
+
+	load_ptbl(fb_data->storage_ops, 1);
 
 	/* enable irqs */
 	enable_irqs();
-	if (fb_data->board_ops->board_get_flash_slot)
-		fb_data->device = boot_ops->board_ops->board_get_flash_slot();
-	else
-		fb_data->device = DEVICE_EMMC;
 
 	while (1) {
 
@@ -643,17 +648,6 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 			if (fb_data->getsize == 0)
 				goto fail;
 
-			/* Init the storage and load the partition table */
-			if (fb_data->board_ops->board_storage_init) {
-				ret = fb_data->board_ops->board_storage_init(fb_data->device);
-				if (ret != 0) {
-					printf("board_storage_init() failed\n");
-					sprintf(response,
-						"FAILUnable to init the MMC");
-					goto fail;
-				}
-			}
-
 			if ((memcmp(cmd+6, "zimage", 6) == 0) ||
 				(memcmp(cmd+6, "zImage", 6) == 0)){
 				fastboot_update_zimage(response);
@@ -687,8 +681,10 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 
 			} else
 				printf("writing to partition %s, begins at "
-					"sector%d and is %d long \n", fb_data->e->name,
-					fb_data->e->start, fb_data->e->length);
+					"sector: %d and is %d long\n",
+					fb_data->e->name,
+					(int)fb_data->e->start,
+					(int)fb_data->e->length);
 
 			/* store the start address of the partition */
 			fb_data->sector = fb_data->e->start;
@@ -726,7 +722,7 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 
 			printf("booting kernel...\n");
 
-			do_booti(fb_data->device, (char *)booti_args);
+			do_booti((char *)booti_args);
 
 		} /* "boot" if loop ends */
 

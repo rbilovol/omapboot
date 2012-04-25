@@ -120,6 +120,14 @@ void iboot(unsigned *info)
 
 	usb_write(&usb, &MSG, 4);
 
+	if (boot_ops->board_ops->board_storage_init)
+		boot_ops->storage_ops =
+			boot_ops->board_ops->board_storage_init();
+	if (!boot_ops->storage_ops) {
+		printf("Storage driver init failed\n");
+		goto fail;
+	}
+
 	serial_puts("Entering fastboot mode...\n");
 	do_fastboot(boot_ops);
 

@@ -381,6 +381,23 @@ static void blaze_prcm_init(void)
 	prcm_init();
 }
 
+static struct storage_specific_functions *blaze_storage_init(void)
+{
+	int ret;
+	struct storage_specific_functions *storage_ops;
+	storage_ops = init_rom_mmc_funcs(blaze_get_flash_slot());
+	if (!storage_ops) {
+		printf("Unable to get rom mmc functions\n");
+		return NULL;
+	}
+	ret = storage_ops->init();
+	if (ret) {
+		printf("Unable to init storage device\n");
+		return NULL;
+	}
+	return storage_ops;
+}
+
 static struct board_specific_functions blaze_funcs = {
 	.board_get_flash_slot = blaze_get_flash_slot,
 	.board_user_fastboot_request = blaze_check_fastboot,
@@ -391,6 +408,7 @@ static struct board_specific_functions blaze_funcs = {
 	.board_scale_vcores = blaze_scale_cores,
 	.board_gpmc_init = blaze_gpmc_init,
 	.board_prcm_init = blaze_prcm_init,
+	.board_storage_init = blaze_storage_init,
 };
 
 void* init_board_funcs(void)

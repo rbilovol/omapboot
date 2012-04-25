@@ -57,7 +57,7 @@ void set_modify(u32 reg, u32 mask, u32 value);
 extern unsigned cfg_machine_type;
 extern unsigned cfg_uart_base;
 
-int do_booti(u8 device, char *info);
+int do_booti(char *info);
 extern int boot_image(unsigned machtype, unsigned image, unsigned len);
 
 

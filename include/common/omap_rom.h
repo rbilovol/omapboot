@@ -180,12 +180,6 @@ struct mmc_devicedata {
 	u32 size;
 }; /* did not include the remaining fields */
 
-int mmc_open(u8 device, struct mmc *mmc);
-int mmc_read(struct mmc *mmc, u32 start, u32 count, void *data);
-int mmc_configure(struct mmc *mmc, u32 id, u32 value);
-int mmc_info(struct mmc *mmc);
-int mmc_write(struct mmc *mmc, u32 start, u32 count, void *data);
-
 /* Peripheral ROM interface */
 struct per_handle {
 	void *config_object;

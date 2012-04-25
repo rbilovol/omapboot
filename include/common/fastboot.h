@@ -59,8 +59,8 @@ struct fastboot_ptentry {
 struct fastboot_data {
 	struct board_specific_functions *board_ops;
 	struct proc_specific_functions *proc_ops;
+	struct storage_specific_functions *storage_ops;
 	struct fastboot_ptentry *e;
-	struct mmc_devicedata *dd;
 
 	struct fastboot_ptentry ptable[MAX_PTN];
 
@@ -68,8 +68,6 @@ struct fastboot_data {
 	u32 getsize;
 	u32 sector;
 	sparse_header_t *sparse_header;
-
-	u8 device;
 };
 
 #if defined CONFIG_FASTBOOT
@@ -80,7 +78,7 @@ void fastboot_flash_reset_ptn(void);
 void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count);
 unsigned int fastboot_flash_get_ptn_count(void);
 fastboot_ptentry *fastboot_flash_find_ptn(const char *name);
-extern char *get_ptn_size(u8 device, char *buf, const char *ptn);
+char *get_ptn_size(struct fastboot_data *fb_data, char *buf, const char *ptn) ;
 
 #else
 
@@ -91,10 +89,13 @@ static inline void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count) { re
 static inline unsigned int fastboot_flash_get_ptn_count(void) { return 0; };
 static inline fastboot_ptentry *fastboot_flash_find_ptn(const char *name) { return; };
 
-extern char *get_ptn_size(u8 device, char *buf, const char *ptn) { return 0; };
+static inline char *get_ptn_size(struct fastboot_data *fb_data, char *buf,
+					const char *ptn) { return 0; };
 
 #endif /* CONFIG_FASTBOOT */
 
 int do_gpt_format(struct fastboot_data *fb_data);
+int load_ptbl(struct storage_specific_functions *fb_data, u8 silent);
+
 
 #endif /* FASTBOOT_H */

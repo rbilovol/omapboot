@@ -63,14 +63,23 @@ struct board_specific_functions {
 	void (*board_late_init)(void);
 	void (*board_mux_init)(void);
 	void (*board_ddr_init)(struct proc_specific_functions *proc_ops);
-	int (*board_storage_init)(u8 device);
+	struct storage_specific_functions * (*board_storage_init)();
 	int (*board_user_fastboot_request)(void);
 	u8 (*board_get_flash_slot)(void);
+};
+
+struct storage_specific_functions {
+	int (*init)(void);
+	int (*get_sector_size)(void);
+	u64 (*get_total_sectors)(void);
+	int (*read)(u64 start_sec, u64 sectors, void *data);
+	int (*write)(u64 start_sec, u64 sectors, void *data);
 };
 
 struct bootloader_ops {
 	struct board_specific_functions *board_ops;
 	struct proc_specific_functions *proc_ops;
+	struct storage_specific_functions *storage_ops;
 };
 
 void* init_board_funcs(void);
@@ -80,5 +89,9 @@ unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);
 
 int get_downloadsize_from_string(int count, char *string);
+
+/* Storage drivers function inits */
+struct storage_specific_functions *init_rom_mmc_funcs(u8 device);
+
 
 #endif

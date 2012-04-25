@@ -95,50 +95,14 @@ int verify(void *data, unsigned len, void *signature, unsigned rights) {
 }
 
 #if WITH_FLASH_BOOT
-int load_image(unsigned device, unsigned start, unsigned count, void *data)
+static int load_from_mmc(struct storage_specific_functions *storage_ops,
+							unsigned *len)
 {
-	struct mem_driver *io = 0;
-	struct mem_device local_md_device, *md = 0;
-	struct read_desc rd;
-	u16 options;
-	u32 base;
-	int z;
-
-	z = rom_get_mem_driver(&io, device);
-	if (z)
-		return -1;
-
-	md = &local_md_device;
-	memset(md, 0, sizeof(struct mem_device));
-	options = 0; // 1 = init phoenix pmic?
-	md->initialized   = 0;
-	md->device_type   = device;
-	md->xip_device    = 0;
-	md->search_size   = 0;
-	md->base_address  = 0;
-	md->hs_toc_mask   = 0;
-	md->gp_toc_mask   = 0;
-	md->boot_options  = &options;
-	md->device_data   = (void*) 0x80000000;
-	memset(md->device_data, 0, 2500);
-
-	z = io->init(md);
-	if (z)
-		return -1;
-
-	rd.sector_start = start;
-	rd.sector_count = count;
-	rd.destination = data;
-	z = io->read(md, &rd);
-
-	return 0;
-}
-
-int load_from_mmc(unsigned device, unsigned *len)
-{
-	load_image(device, 512, 512, (void*) CONFIG_ADDR_DOWNLOAD);
+	int ret = 0;
+	/* FIX ME: Why are we hardcoding? */
+	ret = storage_ops->read(512, 512, (void *) CONFIG_ADDR_DOWNLOAD);
 	*len = 256 * 1024;
-	return 0;
+	return ret;
 }
 #endif
 
@@ -201,6 +165,10 @@ void aboot(unsigned *info)
 	printf("%s\n", ABOOT_VERSION);
 	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
 
+	if (boot_ops->board_ops->board_storage_init)
+		boot_ops->storage_ops =
+			boot_ops->board_ops->board_storage_init();
+
 	/* printf("MSV=%08x\n",*((unsigned*) 0x4A00213C)); */
 
 #if WITH_MEMORY_TEST
@@ -227,7 +195,7 @@ void aboot(unsigned *info)
 	case 0x05:
 	case 0x06:
 		serial_puts("boot device: MMC\n\n");
-		n = load_from_mmc(bootdevice, &len);
+		n = load_from_mmc(boot_ops->storage_ops, &len);
 		break;
 	default:
 		serial_puts("boot device: unknown\n");

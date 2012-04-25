@@ -74,11 +74,6 @@ static void omap5uevm_gpmc_init(void)
 	gpmc_init();
 }
 
-static int omap5uevm_mmc_init(u8 mmc_device)
-{
-	return mmc_init(mmc_device);
-}
-
 static int omap5uevm_check_fastboot(void)
 {
 	return 0;
@@ -94,6 +89,23 @@ static void omap5uevm_prcm_init(void)
 	return;
 }
 
+static struct storage_specific_functions *omap5uevm_storage_init(void)
+{
+	int ret;
+	struct storage_specific_functions *storage_ops;
+	storage_ops = init_rom_mmc_funcs(omap5uevm_get_flash_slot());
+	if (!storage_ops) {
+		printf("Unable to get rom mmc functions\n");
+		return NULL;
+	}
+	ret = storage_ops->init();
+	if (ret) {
+		printf("Unable to init storage device\n");
+		return NULL;
+	}
+	return storage_ops;
+}
+
 static struct board_specific_functions omap5uevm_funcs = {
 	.board_get_flash_slot = omap5uevm_get_flash_slot,
 	.board_user_fastboot_request = omap5uevm_check_fastboot,
@@ -102,7 +114,7 @@ static struct board_specific_functions omap5uevm_funcs = {
 	.board_prcm_init = omap5uevm_prcm_init,
 	.board_scale_vcores = omap5uevm_scale_cores,
 	.board_gpmc_init = omap5uevm_gpmc_init,
-	.board_storage_init = omap5uevm_mmc_init,
+	.board_storage_init = omap5uevm_storage_init,
 };
 
 void* init_board_funcs(void)

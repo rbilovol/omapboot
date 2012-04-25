@@ -355,6 +355,24 @@ static void panda_prcm_init(void)
 	/* Use default OMAP gpmc init function */
 	prcm_init();
 }
+
+static struct storage_specific_functions *panda_storage_init(void)
+{
+	int ret;
+	struct storage_specific_functions *storage_ops;
+	storage_ops = init_rom_mmc_funcs(panda_get_flash_slot());
+	if (!storage_ops) {
+		printf("Unable to get rom mmc functions\n");
+		return NULL;
+	}
+	ret = storage_ops->init();
+	if (ret) {
+		printf("Unable to init storage device\n");
+		return NULL;
+	}
+	return storage_ops;
+}
+
 static struct board_specific_functions panda_funcs = {
 	.board_get_flash_slot = panda_get_flash_slot,
 	.board_mux_init = panda_mux_init,
@@ -365,6 +383,7 @@ static struct board_specific_functions panda_funcs = {
 	.board_scale_vcores = panda_scale_cores,
 	.board_gpmc_init = panda_gpmc_init,
 	.board_prcm_init = panda_prcm_init,
+	.board_storage_init = panda_storage_init,
 };
 
 void* init_board_funcs(void)

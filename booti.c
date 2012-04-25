@@ -48,8 +48,6 @@
 #define EXTENDED_CMDLINE	""
 #endif
 
-struct mmc mmc;
-struct mmc_devicedata *dd;
 struct bootloader_ops *booti_ops = (void *)0x84100000;
 
 static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
@@ -153,13 +151,15 @@ void bootimg_print_image_hdr(boot_img_hdr *hdr)
 	return;
 }
 
-int do_booti(u8 device, char *info)
+int do_booti(char *info)
 {
 	boot_img_hdr *hdr;
-	u32 addr; u32 sector1; u32 sector2;
+	u32 addr;
+	u64 sector1, sector2;
 	char *ptn = "boot";
 	int boot_from_mmc = 0;
-	int sector_count = 0; int num_sectors = 0;
+	u64 num_sectors = 0;
+	int sector_sz = 0;
 	int ret = 0;
 
 	if (!(strcmp(info, "mmc")))
@@ -176,14 +176,13 @@ int do_booti(u8 device, char *info)
 
 		/* Init the MMC and load the partition table */
 		if (booti_ops->board_ops->board_storage_init)
-			ret = booti_ops->board_ops->board_storage_init(device);
-		else
-			ret = -1;
-
-		if (ret != 0) {
+			booti_ops->storage_ops = booti_ops->
+				board_ops->board_storage_init();
+		if (!booti_ops->storage_ops) {
 			printf("board_storage_init() failed\n");
 			goto fail;
 		}
+		ret = load_ptbl(booti_ops->storage_ops, 0);
 
 		pte = fastboot_flash_find_ptn(ptn);
 		if (!pte) {
@@ -191,7 +190,9 @@ int do_booti(u8 device, char *info)
 			do_fastboot(booti_ops);
 		}
 
-		ret = mmc_read(&mmc, pte->start, sizeof(boot_img_hdr),
+		sector_sz = booti_ops->storage_ops->get_sector_size();
+		num_sectors =  sizeof(boot_img_hdr) / sector_sz;
+		ret = booti_ops->storage_ops->read(pte->start, num_sectors,
 							(void *) hdr);
 		if (ret != 0) {
 			printf("booti: failed to read bootimg header\n");
@@ -205,49 +206,37 @@ int do_booti(u8 device, char *info)
 			goto fail;
 		}
 
-		sector1 = pte->start + (hdr->page_size / 512);
+		sector1 = pte->start + (hdr->page_size / sector_sz);
 
 		sector2 = sector1 +
-			ALIGN(hdr->kernel_size, hdr->page_size) / 512;
+			ALIGN(hdr->kernel_size, hdr->page_size) / sector_sz;
 
-		num_sectors = CEIL(hdr->kernel_size, 512);
-		if (num_sectors > (hdr->kernel_size / 512)) {
-			/* do nothing */
-		} else
-			num_sectors = (hdr->kernel_size / 512);
+		num_sectors = CEIL(hdr->kernel_size, sector_sz);
+		if (num_sectors <= (hdr->kernel_size / sector_sz))
+			num_sectors = (hdr->kernel_size / sector_sz);
 
 		printf("Reading kernel from start sector %d and reading %d "
-			"number of sectors %d\n", sector1, num_sectors);
-
-		for (sector_count = 0; sector_count < num_sectors;
-							sector_count++) {
-			ret = mmc_read(&mmc, sector1+sector_count, 1,
-			(void *) hdr->kernel_addr + (sector_count*512));
-			if (ret != 0) {
+			"number of sectors\n", (int)sector1, (int)num_sectors);
+		ret = booti_ops->storage_ops->read(sector1, num_sectors,
+					(void *) hdr->kernel_addr);
+		if (ret != 0) {
 				printf("mmc read failed\n");
 				goto fail;
-			}
 		}
 #ifdef DEBUG
 		printf("Done reading kernel from mmc\n");
 #endif
-		num_sectors = CEIL(hdr->ramdisk_size, 512);
-		if (num_sectors > (hdr->ramdisk_size / 512)) {
-			/* do nothing */
-		} else
-			num_sectors = (hdr->ramdisk_size / 512);
+		num_sectors = CEIL(hdr->ramdisk_size, sector_sz);
+		if (num_sectors <= (hdr->ramdisk_size / sector_sz))
+			num_sectors = (hdr->ramdisk_size / sector_sz);
 
 		printf("Reading ramdisk from start sector %d and reading %d "
-			"number of sectors %d\n", sector2, num_sectors);
-
-		for (sector_count = 0; sector_count < num_sectors;
-							sector_count++) {
-			ret = mmc_read(&mmc, sector2+sector_count, 1,
-			(void *) hdr->ramdisk_addr + (sector_count*512));
-			if (ret != 0) {
-				printf("mmc read failed\n");
-				goto fail;
-			}
+			"number of sectors\n", (int)sector2, (int)num_sectors);
+		ret = booti_ops->storage_ops->read(sector2, num_sectors,
+					(void *) hdr->ramdisk_addr);
+		if (ret != 0) {
+			printf("mmc read failed\n");
+			goto fail;
 		}
 #ifdef DEBUG
 		printf("Done reading ramdisk from mmc\n");
