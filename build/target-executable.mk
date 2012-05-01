@@ -20,7 +20,7 @@ $(OUT)/$(M_NAME): _LIBS := $(M_LIBS)
 $(OUT)/$(M_NAME): _BASE := $(M_BASE)
 $(OUT)/$(M_NAME): $(M_OBJS)
 	@echo link $@
-	$(QUIET)$(TARGET_LD) -Bstatic -T aboot.lds -Ttext $(_BASE) $(_OBJS) $(_LIBS) -o $@
+	$(QUIET)$(TARGET_LD) -Bstatic -T $(LDS) -Ttext $(_BASE) $(_OBJS) $(_LIBS) -o $@
 
 M_OBJS :=
 M_NAME :=
