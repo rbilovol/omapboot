@@ -61,24 +61,22 @@ struct dpll_param abe_dpll_params = {
 	750, 0, 1, 1, -1, -1, -1, -1, -1, -1
 };
 
-static void setup_clocks(void)
+void setup_clocks(void)
 {
-	int i;
-	for (i = 0; i < ARRAY_SIZE(omap5_clocks); i++) {
-		switch (omap5_clocks[i].ctrl) {
+	struct omap_clocks * oclock;
+	for (oclock = &omap5_clocks[0]; oclock->ad > 0; oclock++) {
+		switch (oclock->ctrl) {
 		case WRITEL:
-			writel(omap5_clocks[i].ad, omap5_clocks[i].value);
+			writel(oclock->ad, oclock->value);
 			break;
 		case MODIFY:
 		case MODIFY_WAIT:
-			set_modify(omap5_clocks[i].ad, omap5_clocks[i].mask,
-							omap5_clocks[i].value);
-			if (omap5_clocks[i].ctrl == MODIFY_WAIT) {
+			set_modify(oclock->ad, oclock->mask,
+						oclock->value);
+			if (oclock->ctrl == MODIFY_WAIT) {
 				if (!wait_on_value(BIT(16) | BIT(17), 0,
-						omap5_clocks[i].ad, LDELAY))
-					printf("Clock enable failed for 0x%p\n",
-						omap5_clocks[i].ad);
-					return;
+						oclock->ad, LDELAY))
+				;
 			}
 			break;
 		default:
@@ -86,7 +84,6 @@ static void setup_clocks(void)
 		}
 	}
 }
-
 
 void configure_core_dpll(dpll_param *dpll_param_p)
 {
