@@ -121,13 +121,6 @@ M_OBJS += pmic.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
-M_NAME := agent
-M_BASE := 0x82000000
-M_OBJS := arch/common/start.o
-M_OBJS += agent.o
-M_OBJS += arch/common/serial.o
-include build/target-executable.mk
-
 $(OUT)/eboot.ift: $(OUT)/eboot.bin $(OUT)/mkheader
 	@echo generate $@
 	@./$(OUT)/mkheader $(EBOOT_TEXT_BASE) `wc -c $(OUT)/eboot.bin` add_gp_hdr > $@
