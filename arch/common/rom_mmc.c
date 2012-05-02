@@ -48,6 +48,12 @@
 
 #include "config.h"
 
+#ifdef DEBUG
+#define DBG(x...) printf(x)
+#else
+#define DBG(x...)
+#endif /* DEBUG */
+
 /* MMC/SD driver specific data */
 struct mmc_storage_data {
 	struct storage_specific_functions mmc_functions;
@@ -306,6 +312,83 @@ static int mmc_write(u64 start_sec, u64 sectors, void *data)
 	return 0;
 }
 
+static int mmc_erase (u64 start_sec, u64 sectors)
+{
+	struct mmc_devicedata *dd;
+	struct mem_device *md;
+	u32 start_sector, end_sector;
+	u32 resp[4];
+	int n;
+	u32 reg;
+	u32 cmd_start, cmd_end, arg;
+
+	if ((start_sec > 0xFFFFFFFF) ||
+		(sectors > 0xFFFFFFFF)) {
+		printf("mmc_erase failed. start_sec or sectors too large.\n");
+		return -1;
+	}
+
+	start_sector = (u32) start_sec;
+	end_sector = (u32) (start_sec + sectors - 1);
+
+	/* Get the device data structure */
+	md = &mmcd.mmc.dread;
+	dd = md->device_data;
+
+	if (dd->addressing != MMCSD_ADDRESSING_SECTOR) {
+		start_sector = start_sector << MMCSD_SECTOR_SIZE_SHIFT;
+		end_sector = end_sector << MMCSD_SECTOR_SIZE_SHIFT;
+	}
+
+	if (mmcd.storage_device == DEVICE_SDCARD) {
+		cmd_start = MMCSD_CMD32;
+		cmd_end = MMCSD_CMD33;
+		arg = 0;
+	} else {
+		cmd_start = MMCSD_CMD35;
+		cmd_end = MMCSD_CMD36;
+		arg = 0x00000001;
+	}
+
+	n = mmcd.rom_hal_mmchs_sendcommand(dd->moduleid,
+				cmd_start, start_sector, resp);
+	if (n) {
+		printf("mmc_sendcommand failed\n");
+		return n;
+	}
+
+	n = mmcd.rom_hal_mmchs_sendcommand(dd->moduleid,
+				cmd_end, end_sector, resp);
+	if (n) {
+		printf("mmc_sendcommand failed\n");
+		return n;
+	}
+
+	n = mmcd.rom_hal_mmchs_sendcommand(dd->moduleid,
+				MMCSD_CMD38, arg, resp);
+	if (n) {
+		printf("mmc_sendcommand failed\n");
+		return n;
+	}
+	while (1) {
+		reg = mmc_reg_read(OMAP_HSMMC_PSTATE_OFFSET);
+		DBG("reg = 0x%08x\n", reg);
+		if (reg & MMCHS_WAIT_CARD_BUSY_DEASSERT) {
+			sdelay(100000000);
+			continue;
+		}
+		break;
+	}
+#ifdef DEBUG
+	u8 data[500];
+	mmc_read(start_sec, 1, (void *)data);
+	for (n = 0; n < 500; n++)
+		printf ("%02x ", data[n]);
+	printf("\n");
+#endif
+	return 0;
+}
+
 static int get_mmc_sector_size(void)
 {
 	return MMC_SECTOR_SZ;
@@ -340,5 +423,6 @@ struct storage_specific_functions *init_rom_mmc_funcs(u8 device)
 	mmcd.mmc_functions.read = mmc_read;
 	mmcd.mmc_functions.write = mmc_write;
 	mmcd.mmc_functions.get_total_sectors = get_mmc_total_sectors;
+	mmcd.mmc_functions.erase = mmc_erase;
 	return &mmcd.mmc_functions;
 }

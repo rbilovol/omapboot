@@ -74,6 +74,7 @@ struct storage_specific_functions {
 	u64 (*get_total_sectors)(void);
 	int (*read)(u64 start_sec, u64 sectors, void *data);
 	int (*write)(u64 start_sec, u64 sectors, void *data);
+	int (*erase)(u64 start_sec, u64 sectors);
 };
 
 struct bootloader_ops {

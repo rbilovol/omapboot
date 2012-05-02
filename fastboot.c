@@ -591,6 +591,17 @@ static int flash_non_sparse_formatted_image(void)
 	return ret;
 }
 
+static int erase_section(unsigned int start, u64 length)
+{
+	u64 sectors = 0;
+	int ret=0;
+
+	sectors = length / 512;
+
+	ret = fb_data->storage_ops->erase((u64)start, sectors);
+	return ret;
+}
+
 void do_fastboot(struct bootloader_ops *boot_ops)
 {
 	int ret = 0;
@@ -710,7 +721,24 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 					"formatted image to %s\n", fb_data->e->name);
 			}
 
-		} else if (memcmp(cmd, "boot", 4) == 0) {
+		} else if (memcmp(cmd, "erase:", 6) == 0) {
+			ret = 0;
+			fb_data->e = fastboot_flash_find_ptn(&cmd[6]);
+			if (fb_data->e == NULL)
+				sprintf(response, "FAILPartition %s "
+					"does not exist", &cmd[6]);
+			else {
+				ret = erase_section(fb_data->e->start, fb_data->e->length);
+				if (ret)
+					sprintf(response, "FAILUnable to "
+					"erase partition %s", &cmd[6]);
+
+				else
+					sprintf(response, "OKAY");
+			}
+			fastboot_tx_status(response, strlen(response));
+		}
+		else if (memcmp(cmd, "boot", 4) == 0) {
 
 			char start[32];
 			char *booti_args[4] = { "booti", NULL, "boot", NULL };
