@@ -70,8 +70,8 @@ static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 
 	*(atag++) = 4;
 	*(atag++) = _MEM;
-	*(atag++) = 0x80000000; /* memory start */
 	*(atag++) = 0x80000000; /* memory size */
+	*(atag++) = 0x80000000; /* memory start */
 
 	if (!cmdline)
 		goto _none;
