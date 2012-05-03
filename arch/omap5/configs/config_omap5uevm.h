@@ -66,8 +66,6 @@
 
 #define CONFIG_OMAP5_ANDROID_CMD_LINE
 
-#define EXTENDED_CMDLINE	" mem=1000M@0x80000000 " \
-				"mem=512M@0xA0000000 " \
-				"earlyprintk " ;
+#define EXTENDED_CMDLINE        "earlyprintk " ;
 
 #endif /* _CONFIG_OMAPU5EVM_H_ */
