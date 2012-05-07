@@ -67,7 +67,7 @@ void setup_clocks(void)
 	for (oclock = &omap5_clocks[0]; oclock->ad > 0; oclock++) {
 		switch (oclock->ctrl) {
 		case WRITEL:
-			writel(oclock->ad, oclock->value);
+			writel(oclock->value, oclock->ad);
 			break;
 		case MODIFY:
 		case MODIFY_WAIT:
