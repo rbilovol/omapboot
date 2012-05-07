@@ -66,7 +66,7 @@ static void setup_clocks(void)
 	for (i = 0; i < ARRAY_SIZE(omap5_clocks); i++) {
 		switch (omap5_clocks[i].ctrl) {
 		case WRITEL:
-			writel(omap5_clocks[i].ad, omap5_clocks[i].value);
+			writel(omap5_clocks[i].value, omap5_clocks[i].ad);
 			break;
 		case MODIFY:
 		case MODIFY_WAIT:
