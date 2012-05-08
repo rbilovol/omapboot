@@ -12,6 +12,9 @@ SECTIONS {
 	.data : { *(.data) }
 
 	. = ALIGN(4);
+	.mram : { *(.mram) }
+
+	. = ALIGN(4);
 	__bss_start = .;
 	.bss : { *(.bss) }
 	. = ALIGN(4);
