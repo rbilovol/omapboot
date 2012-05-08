@@ -84,7 +84,7 @@ COMMON_OBJS := 	crc32.o \
 		misc.o \
 
 M_NAME := aboot
-LDS :=  build/$(M_NAME).lds
+M_LDS :=  arch/$(ARCH)/$(M_NAME).lds
 M_BASE := $(ABOOT_TEXT_BASE)
 M_OBJS := arch/common/start_reloc.o
 M_OBJS += $(OMAP_COMMON_OBJS)
@@ -98,7 +98,6 @@ M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
 M_NAME := iboot
-LDS :=  build/$(M_NAME).lds
 M_BASE := $(IBOOT_TEXT_BASE)
 M_OBJS := iboot/start_reloc.o
 M_OBJS += $(OMAP_COMMON_OBJS)
@@ -113,7 +112,7 @@ M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
 M_NAME := eboot
-LDS :=  build/$(M_NAME).lds
+M_LDS :=  arch/$(ARCH)/$(M_NAME).lds
 M_BASE := $(EBOOT_TEXT_BASE)
 M_OBJS := eboot/start_reloc.o
 M_OBJS += $(OMAP_COMMON_OBJS)
