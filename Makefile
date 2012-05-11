@@ -172,11 +172,22 @@ $(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	$(QUIET)cat $(OUT)/iboot.bin >> $@
 	$(QUIET)./$(OUT)/bin2c iboot < $@ > $(OUT)/secondstage.c
 	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/secondstage.c
-clean::
-	@echo clean
+
+_clean_generic::
 	$(QUIET)rm -f include/config.h
 	$(QUIET)rm -f include/version.h
 	$(QUIET)rm -rf $(OUT)
+
+clean::
+	@echo clean
+	$(QUIET)make _clean_generic
+
+distclean::
+	@echo distclean
+	$(QUIET)make _clean_generic
+	$(QUIET)find . -iname "*~" -o -iname "*.d" -o -iname "*.rej" -o \
+		-iname "*.orig" |\
+		xargs rm -f
 
 all:: version $(ALL)
 
