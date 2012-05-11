@@ -28,6 +28,7 @@
 
 #include <aboot/aboot.h>
 #include <aboot/bootimg.h>
+#include <libc/string.h>
 
 int boot_image(unsigned machtype, unsigned image, unsigned len)
 {
@@ -90,7 +91,8 @@ int boot_image(unsigned machtype, unsigned image, unsigned len)
 	 * otherwise the ramdisk gets clobbered before it can be
 	 * uncompressed.
 	 */
-	memcpy((void*) CONFIG_ADDR_KERNEL, image + psize, kactual);
+	memcpy((void*) CONFIG_ADDR_KERNEL,(const char *) (image + psize),
+			kactual);
 	entry = (void*) CONFIG_ADDR_KERNEL;
 
 	printf("kernel:   0x%x (%d bytes)\n",
