@@ -44,7 +44,8 @@ else
 endif
 
 BOARD ?= panda
-ARCH ?= omap4
+ARCH ?= arm
+MACH ?= omap4
 EXTRAOPTS ?= -m32
 
 TARGET_CC := $(CROSS_COMPILE)gcc
@@ -52,7 +53,7 @@ TARGET_LD := $(CROSS_COMPILE)ld
 TARGET_OBJCOPY := $(CROSS_COMPILE)objcopy
 TARGET_OBJDUMP := $(CROSS_COMPILE)objdump
 
-$(shell cat arch/$(ARCH)/configs/config_$(BOARD).h > include/config.h)
+$(shell cat arch/$(MACH)/configs/config_$(BOARD).h > include/config.h)
 TARGET_CFLAGS := -g -Os  -Wall
 TARGET_CFLAGS +=  -march=armv7-a -fno-builtin -ffreestanding
 TARGET_CFLAGS += -I. -Iinclude
@@ -75,7 +76,7 @@ include build/rules.mk
 include tools/host_usbboot.mk
 
 # Build the target with it's dependencies
-include arch/$(ARCH)/board/$(BOARD).mk
+include arch/$(MACH)/board/$(BOARD).mk
 
 COMMON_OBJS := 	crc32.o \
 		libc/utils.o \
@@ -89,7 +90,7 @@ COMMON_OBJS := 	crc32.o \
 		misc.o \
 
 M_NAME := aboot
-M_LDS :=  arch/$(ARCH)/$(M_NAME).lds
+M_LDS :=  arch/$(MACH)/$(M_NAME).lds
 M_BASE := $(ABOOT_TEXT_BASE)
 M_OBJS := arch/common/start_reloc.o
 M_OBJS += $(OMAP_COMMON_OBJS)
@@ -117,7 +118,7 @@ M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
 M_NAME := eboot
-M_LDS :=  arch/$(ARCH)/$(M_NAME).lds
+M_LDS :=  arch/$(MACH)/$(M_NAME).lds
 M_BASE := $(EBOOT_TEXT_BASE)
 M_OBJS := eboot/start_reloc.o
 M_OBJS += $(OMAP_COMMON_OBJS)

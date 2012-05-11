@@ -30,6 +30,6 @@ IBOOT_TEXT_BASE = 0x40309000
 EBOOT_TEXT_BASE = 0x40309000
 
 include arch/common/common.mk
-include arch/$(ARCH)/$(ARCH).mk
+include arch/$(MACH)/$(MACH).mk
 
 BOARD_OBJS := arch/omap5/board/board_omap5evm.o \

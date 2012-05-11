@@ -30,6 +30,6 @@ IBOOT_TEXT_BASE = 0x40300200
 EBOOT_TEXT_BASE = 0x40300200
 
 include arch/common/common.mk
-include arch/$(ARCH)/$(ARCH).mk
+include arch/$(MACH)/$(MACH).mk
 
 BOARD_OBJS := arch/omap4/board/board_panda.o \
