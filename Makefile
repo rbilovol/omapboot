@@ -187,7 +187,9 @@ distclean::
 	$(QUIET)make _clean_generic
 	$(QUIET)find . -iname "*~" -o -iname "*.d" -o -iname "*.rej" -o \
 		-iname "*.orig" |\
-		xargs rm -f
+		xargs rm -f tags
+
+.PHONY:	tags
 
 all:: version $(ALL)
 
@@ -197,6 +199,11 @@ version:
 	echo -n $(shell $(CONFIG_SHELL) build/getgitinfo \
 		 $(TOPDIR)) >> $(VERSION_FILE); \
 		echo "\"" >> $(VERSION_FILE)
+
+tags:
+	@echo "Generating Tags"
+	$(QUIET)find . -type f -iname \*.h -o -iname \*.c -o -iname \*.S | \
+		xargs ctags
 
 # we generate .d as a side-effect of compiling. override generic rule:
 %.d:
