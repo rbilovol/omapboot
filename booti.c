@@ -186,9 +186,7 @@ int do_booti(char *info)
 		}
 		ret = load_ptbl(booti_ops->storage_ops, 0);
 
-		ret = load_dev_tree(booti_ops);
-		if (ret > 0)
-			dbt_addr = ret;
+		dbt_addr = load_dev_tree(booti_ops);
 
 		pte = fastboot_flash_find_ptn(ptn);
 		if (!pte) {
@@ -220,10 +218,10 @@ int do_booti(char *info)
 		num_sectors = CEIL(hdr->kernel_size, sector_sz);
 		if (num_sectors <= (hdr->kernel_size / sector_sz))
 			num_sectors = (hdr->kernel_size / sector_sz);
-
+#ifdef DEBUG
 		printf("Reading kernel from start sector %d and reading %d "
 			"number of sectors\n", (int)sector1, (int)num_sectors);
-
+#endif
 		ret = booti_ops->storage_ops->read(sector1, num_sectors,
 					(void *) hdr->kernel_addr);
 		if (ret != 0) {
@@ -237,10 +235,10 @@ int do_booti(char *info)
 		if (num_sectors <= (hdr->ramdisk_size / sector_sz))
 			num_sectors = (hdr->ramdisk_size / sector_sz);
 
-
+#ifdef DEBUG
 		printf("Reading ramdisk from start sector %d and reading %d "
 			"number of sectors\n", (int)sector2, (int)num_sectors);
-
+#endif
 		ret = booti_ops->storage_ops->read(sector2, num_sectors,
 					(void *) hdr->ramdisk_addr);
 		if (ret != 0) {

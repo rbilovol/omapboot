@@ -31,6 +31,7 @@
 
 #include <aboot/bootimg.h>
 
+#include <common/boot_settings.h>
 #include <common/device_tree.h>
 #include <common/fastboot.h>
 
@@ -181,10 +182,12 @@ void* load_dev_tree(struct bootloader_ops *boot_ops)
 	int num_sectors;
 	int sector_sz = 0;
 
+	dt_data->dev_tree_load_addr = ATAGS_ARGS;
+
 	ret = find_dev_tree(boot_ops);
 	if (ret < 0) {
 		printf("%s: Device tree not supported\n", __func__);
-		return 0;
+		goto out;
 	}
 
 	sector_sz = boot_ops->storage_ops->get_sector_size();
@@ -201,5 +204,6 @@ void* load_dev_tree(struct bootloader_ops *boot_ops)
 		dt_data->dev_tree_load_addr,
 		dt_data->dev_tree_sz);
 
+out:
 	return (void*)dt_data->dev_tree_load_addr;
 }
