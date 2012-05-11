@@ -36,16 +36,21 @@ what_to_build:: all
 
 -include local.mk
 
-TOOLCHAIN ?= arm-eabi-
+#if TOOLCHAIN is defined, override CROSS_COMPILE, else use CROSS_COMPILE
+ifneq ("$(TOOLCHAIN)", "")
+	CROSS_COMPILE := $(TOOLCHAIN)
+else
+	CROSS_COMPILE ?= arm-eabi-
+endif
 
 BOARD ?= panda
 ARCH ?= omap4
 EXTRAOPTS ?= -m32
 
-TARGET_CC := $(TOOLCHAIN)gcc
-TARGET_LD := $(TOOLCHAIN)ld
-TARGET_OBJCOPY := $(TOOLCHAIN)objcopy
-TARGET_OBJDUMP := $(TOOLCHAIN)objdump
+TARGET_CC := $(CROSS_COMPILE)gcc
+TARGET_LD := $(CROSS_COMPILE)ld
+TARGET_OBJCOPY := $(CROSS_COMPILE)objcopy
+TARGET_OBJDUMP := $(CROSS_COMPILE)objdump
 
 $(shell cat arch/$(ARCH)/configs/config_$(BOARD).h > include/config.h)
 TARGET_CFLAGS := -g -Os  -Wall
