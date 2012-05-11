@@ -62,10 +62,20 @@ TARGET_OBJCOPY := $(CROSS_COMPILE)objcopy
 TARGET_OBJDUMP := $(CROSS_COMPILE)objdump
 
 $(shell cat arch/$(MACH)/configs/config_$(BOARD).h > include/config.h)
-TARGET_CFLAGS := -g -Os  -Wall
-TARGET_CFLAGS +=  -march=armv7-a -fno-builtin -ffreestanding
-TARGET_CFLAGS += -I. -Iinclude
-TARGET_CFLAGS += -include include/config.h
+TARGET_FLAGS := -g -Os  -Wall
+TARGET_FLAGS += -fno-builtin -ffreestanding
+TARGET_FLAGS += -I. -Iinclude
+TARGET_FLAGS += -include include/config.h
+
+# Newer GCC require +sec postfix to build secure instructions
+plus_sec := $(shell set -e;						\
+		if (echo ".arch_extension sec" |			\
+		$(TARGET_CC) -c -x assembler -)>/dev/null 2>/dev/null;	\
+		then echo "+sec";					\
+		else echo "";						\
+		fi)
+TARGET_AFLAGS += $(TARGET_FLAGS) -Wa,-march=armv7-a$(plus_sec)
+TARGET_CFLAGS += $(TARGET_FLAGS) -march=armv7-a
 
 TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
 

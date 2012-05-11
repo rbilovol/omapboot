@@ -18,4 +18,4 @@ $(OUT_TARGET_OBJ)/%.o: %.c
 $(OUT_TARGET_OBJ)/%.o: %.S
 	@$(MKDIR)
 	@echo assemble $<
-	$(QUIET)$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
+	$(QUIET)$(TARGET_CC) $(TARGET_AFLAGS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
