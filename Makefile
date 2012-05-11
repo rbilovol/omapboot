@@ -36,6 +36,14 @@ what_to_build:: all
 
 -include local.mk
 
+ifeq ("$(origin V)", "command line")
+  VERBOSE = $(V)
+endif
+ifndef VERBOSE
+  VERBOSE = 0
+endif
+QUIET := $(if $(VERBOSE:1=),@)
+
 #if TOOLCHAIN is defined, override CROSS_COMPILE, else use CROSS_COMPILE
 ifneq ("$(TOOLCHAIN)", "")
 	CROSS_COMPILE := $(TOOLCHAIN)
@@ -134,46 +142,46 @@ include build/target-executable.mk
 
 $(OUT)/eboot.ift: $(OUT)/eboot.bin $(OUT)/mkheader
 	@echo generate $@
-	@./$(OUT)/mkheader $(EBOOT_TEXT_BASE) `wc -c $(OUT)/eboot.bin` add_gp_hdr > $@
-	@cat $(OUT)/eboot.bin >> $@
+	$(QUIET)./$(OUT)/mkheader $(EBOOT_TEXT_BASE) `wc -c $(OUT)/eboot.bin` add_gp_hdr > $@
+	$(QUIET)cat $(OUT)/eboot.bin >> $@
 	@echo Renaming eboot.ift to MLO ...Done!
-	@cp $(OUT)/eboot.ift $(OUT)/MLO
+	$(QUIET)cp $(OUT)/eboot.ift $(OUT)/MLO
 
 $(OUT)/iboot.ift: $(OUT)/iboot.bin $(OUT)/mkheader
 	@echo generate $@
-	@./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
-	@cat $(OUT)/iboot.bin >> $@
+	$(QUIET)./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
+	$(QUIET)cat $(OUT)/iboot.bin >> $@
 
 $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
 	@echo generate $@
-	@./$(OUT)/mkheader $(ABOOT_TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
-	@cat $(OUT)/aboot.bin >> $@
+	$(QUIET)./$(OUT)/mkheader $(ABOOT_TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
+	$(QUIET)cat $(OUT)/aboot.bin >> $@
 
 ALL += $(OUT)/aboot.ift $(OUT)/iboot.ift $(OUT)/eboot.ift
 
 $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@
-	@./$(OUT)/mkheader $(ABOOT_TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
-	@cat $(OUT)/aboot.bin >> $@
+	$(QUIET)./$(OUT)/mkheader $(ABOOT_TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
+	$(QUIET)cat $(OUT)/aboot.bin >> $@
 	$(QUIET)./$(OUT)/bin2c aboot < $@ > $(OUT)/2ndstage.c
-	gcc -c $(EXTRAOPTS) -o $@ $(OUT)/2ndstage.c
+	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/2ndstage.c
 
 $(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@
-	@./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
-	@cat $(OUT)/iboot.bin >> $@
+	$(QUIET)./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
+	$(QUIET)cat $(OUT)/iboot.bin >> $@
 	$(QUIET)./$(OUT)/bin2c iboot < $@ > $(OUT)/secondstage.c
-	gcc -c $(EXTRAOPTS) -o $@ $(OUT)/secondstage.c
+	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/secondstage.c
 clean::
 	@echo clean
-	@rm -f include/config.h
-	@rm -f include/version.h
-	@rm -rf $(OUT)
+	$(QUIET)rm -f include/config.h
+	$(QUIET)rm -f include/version.h
+	$(QUIET)rm -rf $(OUT)
 
 all:: version $(ALL)
 
 version:
-	@echo -n "#define ABOOT_VERSION \""$(ORGANIZATION)" Bootloader " > $(VERSION_FILE); \
+	$(QUIET)echo -n "#define ABOOT_VERSION \""$(ORGANIZATION)" Bootloader " > $(VERSION_FILE); \
 	echo -n "$(ABOOT_VERSION)" >> $(VERSION_FILE); \
 	echo -n $(shell $(CONFIG_SHELL) build/getgitinfo \
 		 $(TOPDIR)) >> $(VERSION_FILE); \
