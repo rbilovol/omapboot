@@ -190,11 +190,11 @@ _clean_generic::
 
 clean::
 	@echo clean
-	$(QUIET)make _clean_generic
+	$(QUIET)$(MAKE) _clean_generic
 
 distclean::
 	@echo distclean
-	$(QUIET)make _clean_generic
+	$(QUIET)$(MAKE) _clean_generic
 	$(QUIET)find . -iname "*~" -o -iname "*.d" -o -iname "*.rej" -o \
 		-iname "*.orig" |\
 		xargs rm -f tags
