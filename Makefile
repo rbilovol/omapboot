@@ -150,6 +150,8 @@ M_OBJS += device_tree.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
+.EXPORT_ALL_VARIABLES:
+
 $(OUT)/eboot.ift: $(OUT)/eboot.bin $(OUT)/mkheader
 	@echo generate $@
 	$(QUIET)./$(OUT)/mkheader $(EBOOT_TEXT_BASE) `wc -c $(OUT)/eboot.bin` add_gp_hdr > $@
