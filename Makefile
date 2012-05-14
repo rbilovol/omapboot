@@ -76,12 +76,42 @@ plus_sec := $(shell set -e;						\
 		fi)
 TARGET_AFLAGS += $(TARGET_FLAGS) -Wa,-march=armv7-a$(plus_sec)
 TARGET_CFLAGS += $(TARGET_FLAGS) -march=armv7-a
+TARGET_CC_LOC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-search-dirs|grep ^install|cut -d ':' -f2|tr -d ' ')
 
 TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
 
 HOST_CFLAGS := -g -O2 -Wall $(EXTRAOPTS)
 HOST_CFLAGS += -Itools
 HOST_CFLAGS += -include include/config.h
+HOST_CC_LOC := $(shell $(CC) $(HOST_CFLAGS) -print-search-dirs|grep ^install|cut -d ':' -f2|tr -d ' ')
+
+# C=1 to enable check of modified source for target build only
+# C=2 to enable check of modified source for Host build only
+# C=3 to enable check of modified source for target and Host build
+# C=0 or no define to not check (default)
+ifeq ("$(origin C)", "command line")
+	CHECKSRC := $(C)
+endif
+ifndef CHECKSRC
+	TCHECKSRC := 0
+	HCHECKSRC := 0
+endif
+ifeq ($(CHECKSRC), 1)
+	TCHECKSRC = 1
+	HCHECKSRC = 0
+endif
+ifeq ($(CHECKSRC), 2)
+	TCHECKSRC = 0
+	HCHECKSRC = 1
+endif
+ifeq ($(CHECKSRC), 3)
+	TCHECKSRC = 1
+	HCHECKSRC = 1
+endif
+CHECK ?= sparse
+CHECK_FLAGS +=  -Wbitwise -Wno-return-void -D__STDC__
+HOST_CHECK_FLAGS +=  $(CHECK_FLAGS) -I$(HOST_CC_LOC)/include
+TARGET_CHECK_FLAGS +=  $(CHECK_FLAGS) -I$(TARGET_CC_LOC)/include
 
 OUT := out/$(BOARD)
 OUT_HOST_OBJ := $(OUT)/host-obj
