@@ -150,6 +150,10 @@ M_OBJS += device_tree.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
+# Override this with non 0 value to make MAKEALL continue build ignoring
+# Failures - default behavior is to quit on detecting error
+MAKEALL_LENIENT ?= 0
+
 .EXPORT_ALL_VARIABLES:
 
 $(OUT)/eboot.ift: $(OUT)/eboot.bin $(OUT)/mkheader
@@ -216,6 +220,31 @@ tags:
 	@echo "Generating Tags"
 	$(QUIET)find . -type f -iname \*.h -o -iname \*.c -o -iname \*.S | \
 		xargs ctags
+
+MAKEALL:
+	@echo "checking available build platforms"
+	$(QUIET)TMP_FILE="/tmp/make-all.$$$$.tmp";			\
+		TMP_FILE2="/tmp/make-all-res.$$$$.tmp";			\
+		ls arch/*/configs/*.h|cut -d '.' -f1 |			\
+		sed -e "s/arch\//MACH=/g" |				\
+		sed -e "s/\/configs\/config_/ BOARD=/g">"$$TMP_FILE" &&	\
+		while read config; do 					\
+		echo "Building $$config"; $(MAKE) $$config;R="$$?";	\
+		if [ $$R -eq 0 ]; then					\
+			echo "$$config : BUILD OK" >> "$$TMP_FILE2";	\
+		else							\
+			echo "$$config : BUILD FAIL">> "$$TMP_FILE2";	\
+			if [ $(MAKEALL_LENIENT) -eq 0 ]; then		\
+				cat "$$TMP_FILE2";			\
+				echo "Further Builds stopped!";		\
+				echo "use MAKEALL_LENIENT=1 to go on";	\
+				rm -f "$$TMP_FILE" "$$TMP_FILE2";	\
+				exit 1;					\
+			fi;						\
+		fi;							\
+		done <"$$TMP_FILE";					\
+		echo "Build with configs:";cat "$$TMP_FILE2";		\
+		rm -f "$$TMP_FILE" "$$TMP_FILE2"
 
 # we generate .d as a side-effect of compiling. override generic rule:
 %.d:
