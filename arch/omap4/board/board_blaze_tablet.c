@@ -64,7 +64,6 @@ static struct partition * blaze_tablet_get_partition(void)
 static void blaze_tablet_late_init(void)
 {
 	cfg_machine_type = 3429;
-	cfg_uart_base = OMAP44XX_UART3;
 }
 
 static void blaze_tablet_mux_init(void)

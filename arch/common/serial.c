@@ -49,10 +49,8 @@
 #define OFF_SCR		0x1C
 #define OFF_MDR1	0x20
 
-#define WR(val, addr) writeb(val, cfg_uart_base + OFF_##addr)
-#define RD(addr) readb(cfg_uart_base + OFF_##addr)
-
-unsigned cfg_uart_base = CONFIG_SERIAL_BASE;
+#define WR(val, addr) writeb(val, CONFIG_SERIAL_BASE + OFF_##addr)
+#define RD(addr) readb(CONFIG_SERIAL_BASE + OFF_##addr)
 
 void serial_init(void)
 {
