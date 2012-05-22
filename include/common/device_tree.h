@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (C) 2012 Texas Instruments Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,46 +27,47 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _CONFIG_OMAPU5EVM_H_
-#define _CONFIG_OMAPU5EVM_H_
 
-#define CONFIG_OMAP5UEVM
-#define CONFIG_USE_CH_CONFIG		1
+#ifndef __DEVICE_TREE_H__
+#define __DEVICE_TREE_H__
 
-#define CONFIG_BOARD_MACH_TYPE		3777
-#define CONFIG_IS_OMAP5
+#include <common/usbboot_common.h>
 
-#define CONFIG_BAUDRATE			115200
+#define ENVIRO_MAGIC "ANDROID_ENV!"
+#define ENVIRO_MAGIC_SIZE 12
+#define ENVIRO_NAME_SIZE 16
+#define ENVIRO_ARGS_SIZE 512
 
-#define CONFIG_SERIAL_BASE		OMAP54XX_UART3
-#define CONFIG_SERIAL_CLK_HZ		48000000
+#define DEVICE_TREE	0x825f0000
 
-#define CONFIG_RAM_HANDLERS		0x4030D020
-#define CONFIG_RAM_VECTORS		0x4030D000
-#define CONFIG_STACK_TOP		0x4030D000
+typedef struct enviro_img_hdr enviro_img_hdr;
 
-#define CONFIG_ADDR_DOWNLOAD		0x82000000
+/* Probably should move this */
+struct enviro_img_hdr
+{
+    unsigned char magic[ENVIRO_MAGIC_SIZE];
 
-#define CONFIG_ADDR_ATAGS		0x80000100
-#define CONFIG_ADDR_KERNEL		0x80008000
-#define CONFIG_ADDR_RAMDISK		0x81000000
+    unsigned dev_tree_size;  /* size in bytes */
+    unsigned dev_tree_addr;  /* physical load addr */
 
-#define CONFIG_FASTBOOT			/* enable FASTBOOT for OMAP5 evm */
+    unsigned enviroment_size; /* size in bytes */
 
-#ifdef CONFIG_FASTBOOT
-	#define PRODUCT_NAME		"omap5uevm"
-	#define FASTBOOT_VERSION	"0.5"
-	#define MANUFACTURER_NAME	"Texas Instruments"
-	#define SERIALNO		"03210"
-#else
-	#define PRODUCT_NAME		""
-	#define FASTBOOT_VERSION	""
-	#define MANUFACTURER_NAME	""
-	#define SERIALNO		""
+    unsigned splash_img_size;  /* size in bytes */
+    unsigned splash_img_addr;  /* physical load addr */
+
+    unsigned fastboot_img_size;  /* size in bytes */
+    unsigned fastboot_img_addr;  /* physical load addr */
+
+    unsigned charger_img_size;  /* size in bytes */
+    unsigned charger_img_addr;  /* physical load addr */
+
+    unsigned page_size;    /* flash page size we assume */
+
+    unsigned char name[ENVIRO_NAME_SIZE]; /* asciiz product name */
+
+    unsigned id[8]; /* timestamp / checksum / sha1 / etc */
+};
+
+void* load_dev_tree(struct bootloader_ops *boot_ops);
+
 #endif
-
-#define CONFIG_OMAP5_ANDROID_CMD_LINE
-
-#define EXTENDED_CMDLINE        "earlyprintk " ;
-
-#endif /* _CONFIG_OMAPU5EVM_H_ */

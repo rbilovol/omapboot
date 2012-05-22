@@ -26,19 +26,98 @@
  * SUCH DAMAGE.
  */
 
+#include <aboot/aboot.h>
 #include <aboot/io.h>
 
-/* Use CH (configuration header) to do the settings */
+#include <common/common_proc.h>
+#include <common/omap_rom.h>
+#include <common/usbboot_common.h>
 
-void board_mux_init(void) {}
-void board_ddr_init(void) {}
-void board_late_init(void)
+static struct partition partitions[] = {
+	{ "-", 128 },
+	{ "bootloader", 256 },
+	{ "enviroment", 256 },
+	/* "misc" partition is required for recovery */
+	{ "misc", 128 },
+	{ "-", 384 },
+	{ "efs", 16384 },
+	{ "crypto", 16 },
+	{ "recovery", 8*1024 },
+	{ "boot", 8*1024 },
+	{ "system", 512*1024 },
+	{ "cache", 256*1024 },
+	{ "userdata", 0},
+	{ 0, 0 },
+};
+
+static struct partition * omap5uevm_get_partition(void)
+{
+	return partitions;
+}
+
+/* Use CH (configuration header) to do the settings */
+static void omap5uevm_late_init(void)
 {
 	/* enable uart3 console */
 	writel(2, 0x4A009550);
 }
 
-int user_fastboot_request()
+static void omap5uevm_scale_cores(void)
+{
+	/* Use default OMAP voltage */
+	scale_vcores();
+}
+
+static void omap5uevm_gpmc_init(void)
+{
+	/* Use default OMAP gpmc init function */
+	gpmc_init();
+}
+
+static int omap5uevm_check_fastboot(void)
 {
 	return 0;
+}
+
+static u8 omap5uevm_get_flash_slot(void)
+{
+	return DEVICE_EMMC;
+}
+
+static void omap5uevm_prcm_init(void)
+{
+	return;
+}
+
+static struct storage_specific_functions *omap5uevm_storage_init(void)
+{
+	int ret;
+	struct storage_specific_functions *storage_ops;
+	storage_ops = init_rom_mmc_funcs(omap5uevm_get_flash_slot());
+	if (!storage_ops) {
+		printf("Unable to get rom mmc functions\n");
+		return NULL;
+	}
+	ret = storage_ops->init();
+	if (ret) {
+		printf("Unable to init storage device\n");
+		return NULL;
+	}
+	return storage_ops;
+}
+
+static struct board_specific_functions omap5uevm_funcs = {
+	.board_get_flash_slot = omap5uevm_get_flash_slot,
+	.board_user_fastboot_request = omap5uevm_check_fastboot,
+	.board_late_init = omap5uevm_late_init,
+	.board_get_part_tbl = omap5uevm_get_partition,
+	.board_prcm_init = omap5uevm_prcm_init,
+	.board_scale_vcores = omap5uevm_scale_cores,
+	.board_gpmc_init = omap5uevm_gpmc_init,
+	.board_storage_init = omap5uevm_storage_init,
+};
+
+void* init_board_funcs(void)
+{
+	return &omap5uevm_funcs;
 }

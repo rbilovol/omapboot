@@ -28,13 +28,18 @@
 
 #ifndef _FASTBOOT_H_
 #define _FASTBOOT_H_
+#include <common/usbboot_common.h>
+#include <common/sparse_format.h>
 
 /* Write the file as a series of variable/value pairs
    using the setenv and saveenv commands */
 #define FASTBOOT_PTENTRY_FLAGS_WRITE_ENV	0x00000400
+/* To support the Android-style naming of flash */
+#define MAX_PTN 16
 
 /* Android-style flash naming */
 typedef struct fastboot_ptentry fastboot_ptentry;
+
 
 /* flash partitions are defined in terms of blocks
 ** (flash erase units)
@@ -51,32 +56,46 @@ struct fastboot_ptentry {
 	unsigned int flags;
 };
 
+struct fastboot_data {
+	struct board_specific_functions *board_ops;
+	struct proc_specific_functions *proc_ops;
+	struct storage_specific_functions *storage_ops;
+	struct fastboot_ptentry *e;
+
+	struct fastboot_ptentry ptable[MAX_PTN];
+
+	char *dsize;
+	u32 getsize;
+	u32 sector;
+	sparse_header_t *sparse_header;
+};
+
 #if defined CONFIG_FASTBOOT
 
-void do_fastboot(void);
+void do_fastboot(struct bootloader_ops *board_funcs);
 char *get_serial_number(void);
 void fastboot_flash_reset_ptn(void);
 void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count);
-void fastboot_flash_dump_ptn(int count);
 unsigned int fastboot_flash_get_ptn_count(void);
 fastboot_ptentry *fastboot_flash_find_ptn(const char *name);
-
-extern int fastboot_oem(void);
-extern char *get_ptn_size(char *buf, const char *ptn);
+char *get_ptn_size(struct fastboot_data *fb_data, char *buf, const char *ptn) ;
 
 #else
 
-void do_fastboot(void) { return; };
-char *get_serial_number(void) { return 0; };
-void fastboot_flash_reset_ptn(void) { return; };
-void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count) { return; };
-void fastboot_flash_dump_ptn(int count) { return; };
-unsigned int fastboot_flash_get_ptn_count(void) { return 0; };
-fastboot_ptentry *fastboot_flash_find_ptn(const char *name) { return; };
+static inline void do_fastboot(struct bootloader_ops *board_funcs) { return; };
+static inline char *get_serial_number(void) { return 0; };
+static inline void fastboot_flash_reset_ptn(void) { return; };
+static inline void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count) { return; };
+static inline unsigned int fastboot_flash_get_ptn_count(void) { return 0; };
+static inline fastboot_ptentry *fastboot_flash_find_ptn(const char *name) { return NULL; };
 
-extern int fastboot_oem(void) { return 0; }
-extern char *get_ptn_size(char *buf, const char *ptn) { return 0; };
+static inline char *get_ptn_size(struct fastboot_data *fb_data, char *buf,
+					const char *ptn) { return 0; };
 
 #endif /* CONFIG_FASTBOOT */
+
+int do_gpt_format(struct fastboot_data *fb_data);
+int load_ptbl(struct storage_specific_functions *fb_data, u8 silent);
+
 
 #endif /* FASTBOOT_H */

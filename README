@@ -27,3 +27,7 @@ usage: usbboot <2ndstage> [ <image> ]
 - if an image was also provided, it will wait for the 2ndstage to
   send the go-ahead response (0xaabbccdd) and then send that image
 
+COMPILE NOTES:
+-------------
+To get support for 32bit(-m32) build on 64bit machines(ubuntu):
+	sudo apt-get install libc6-dev-i386

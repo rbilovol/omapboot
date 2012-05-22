@@ -180,6 +180,7 @@ int usb_read(struct usb *usb, void *data, unsigned len)
 	unsigned xfer;
 	unsigned char *x = data;
 	int n;
+
 	while (len > 0) {
 		xfer = (len > USB_MAX_IO) ? USB_MAX_IO : len;
 		usb_queue_read(usb, x, xfer);

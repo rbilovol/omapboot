@@ -1,16 +1,73 @@
+/*
+ * Copyright (C) 2011 The Android Open Source Project
+ * All rights reserved.
+ *
+ * Copyright(c) 2012 Texas Instruments.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 #include <aboot/aboot.h>
 #include <aboot/io.h>
+
+#include <common/common_proc.h>
+#include <common/omap_rom.h>
+#include <common/usbboot_common.h>
+
 #include <omap4/mux.h>
 #include <omap4/hw.h>
 
-void board_late_init(void)
+static struct partition partitions[] = {
+	{ "-", 128 },
+	{ "xloader", 128 },
+	{ "bootloader", 256 },
+	/* "misc" partition is required for recovery */
+	{ "misc", 128 },
+	{ "-", 384 },
+	{ "efs", 16384 },
+	{ "crypto", 16 },
+	{ "recovery", 8*1024 },
+	{ "boot", 8*1024 },
+	{ "system", 512*1024 },
+	{ "cache", 256*1024 },
+	{ "userdata", 0},
+	{ 0, 0 },
+};
+
+static struct partition * blaze_tablet_get_partition(void)
+{
+	return partitions;
+}
+
+static void blaze_tablet_late_init(void)
 {
 	cfg_machine_type = 3429;
 	cfg_uart_base = OMAP44XX_UART3;
 }
 
-void board_mux_init(void)
+static void blaze_tablet_mux_init(void)
 {
 	MV(CP(GPMC_AD0) , ( PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1))  /* sdmmc2_dat0 */ \
 	MV(CP(GPMC_AD1) , ( PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1))  /* sdmmc2_dat1 */ \
@@ -255,7 +312,7 @@ static struct ddr_regs elpida2G_400mhz_2cs = {
 	.mr2		= 0x4
 };
 
-const struct ddr_regs elpida4G_400_mhz_1cs = {
+static struct ddr_regs elpida4G_400_mhz_1cs = {
 	.tim1		= 0x10eb0662,
 	.tim2		= 0x20370dd2,
 	.tim3		= 0x00b1c33f,
@@ -268,7 +325,7 @@ const struct ddr_regs elpida4G_400_mhz_1cs = {
 	.mr2		= 0x4
 };
 
-void board_ddr_init(void)
+static void blaze_tablet_ddr_init(struct proc_specific_functions *proc_ops)
 {
 	const struct ddr_regs *ddr_regs = 0;
 	int omap_rev = OMAP_REV_INVALID;
@@ -277,7 +334,7 @@ void board_ddr_init(void)
 	writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
 	writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
 
-	omap_rev = get_omap_rev();
+	omap_rev = proc_ops->proc_get_proc_id();
 	if (omap_rev >= OMAP_4460_ES1_DOT_0 && omap_rev <= OMAP_4460_ES1_DOT_1) {
 		writel(0x80640300, MA_BASE + DMM_LISA_MAP_0);
 		elpida2G_400mhz_2cs.phy_ctrl_1	= 0x449FF408;
@@ -292,7 +349,65 @@ void board_ddr_init(void)
 	omap4_ddr_init(ddr_regs, ddr_regs);
 }
 
-int user_fastboot_request(void)
+static int blaze_tablet_check_fastboot(void)
 {
 	return 0;
+}
+
+static u8 blaze_tablet_get_flash_slot(void)
+{
+	return DEVICE_EMMC;
+}
+
+static void blaze_tablet_scale_cores(void)
+{
+	/* Use default OMAP voltage */
+	scale_vcores();
+}
+
+static void blaze_tablet_gpmc_init(void)
+{
+	/* Use default OMAP gpmc init function */
+	gpmc_init();
+}
+
+static void blaze_tablet_prcm_init(void)
+{
+	/* Use default OMAP gpmc init function */
+	prcm_init();
+}
+
+static struct storage_specific_functions *blaze_tablet_storage_init(void)
+{
+	int ret;
+	struct storage_specific_functions *storage_ops;
+	storage_ops = init_rom_mmc_funcs(blaze_tablet_get_flash_slot());
+	if (!storage_ops) {
+		printf("Unable to get rom mmc functions\n");
+		return NULL;
+	}
+	ret = storage_ops->init();
+	if (ret) {
+		printf("Unable to init storage device\n");
+		return NULL;
+	}
+	return storage_ops;
+}
+
+static struct board_specific_functions blaze_tablet_funcs = {
+	.board_get_flash_slot = blaze_tablet_get_flash_slot,
+	.board_user_fastboot_request = blaze_tablet_check_fastboot,
+	.board_late_init = blaze_tablet_late_init,
+	.board_get_part_tbl = blaze_tablet_get_partition,
+	.board_ddr_init = blaze_tablet_ddr_init,
+	.board_mux_init = blaze_tablet_mux_init,
+	.board_scale_vcores = blaze_tablet_scale_cores,
+	.board_gpmc_init = blaze_tablet_gpmc_init,
+	.board_prcm_init = blaze_tablet_prcm_init,
+	.board_storage_init = blaze_tablet_storage_init,
+};
+
+void* init_board_funcs(void)
+{
+	return &blaze_tablet_funcs;
 }

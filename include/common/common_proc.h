@@ -1,5 +1,8 @@
 /*
- * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (C) 2012, Texas Instruments, Inc.
+ * Texas Instruments, <www.ti.com>
+ *
+ * Copyright (C) 2012 The Android Open Source Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,20 +29,18 @@
  * SUCH DAMAGE.
  */
 
-#define CONFIG_BOARD_MACH_TYPE		3458
-#define CONFIG_IS_OMAP4
+#ifndef __COMMON_PROC_H_
+#define __COMMON_PROC_H_
 
-#define CONFIG_BAUDRATE			115200
+/* OMAP default configuration functions */
+void scale_vcores(void);
+void prcm_init(void);
+void gpmc_init(void);
+int mmc_init(u8 device);
+void prcm_init(void);
+void setup_emif_config(void);
+int pmic_enable(void);
+int pbias_config(void);
+int pmic_disable(void);
 
-#define CONFIG_SERIAL_BASE		OMAP44XX_UART3
-#define CONFIG_SERIAL_CLK_HZ		48000000
-
-#define CONFIG_RAM_HANDLERS		0x4030D020
-#define CONFIG_RAM_VECTORS		0x4030D000
-#define CONFIG_STACK_TOP		0x4030D000
-
-#define CONFIG_ADDR_DOWNLOAD		0x82000000
-
-#define CONFIG_ADDR_ATAGS		0x80000100
-#define CONFIG_ADDR_KERNEL		0x80008000
-#define CONFIG_ADDR_RAMDISK		0x81000000
+#endif

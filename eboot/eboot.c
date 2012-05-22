@@ -31,23 +31,15 @@
 
 #include <aboot/aboot.h>
 #include <aboot/io.h>
-#include <common/omap_rom.h>
+
+#include <common/common_proc.h>
 #include <common/fastboot.h>
+#include <common/omap_rom.h>
+#include <common/usbboot_common.h>
+
 #include <version.h>
 
-#if defined CONFIG_IS_OMAP4
-#include <omap4/mux.h>
-#include <omap4/hw.h>
-#elif defined CONFIG_IS_OMAP5
-#include <omap5/mux.h>
-#include <omap5/hw.h>
-#endif
-
 #include "config.h"
-
-#ifndef CONFIG_USE_CH_CONFIG
-#define CONFIG_USE_CH_CONFIG 0
-#endif
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)
@@ -61,37 +53,42 @@ unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 
 u32 public_rom_base;
 
-#if defined CONFIG_PANDA
-u8 device = DEVICE_SDCARD;
-#elif defined CONFIG_BLAZE || defined CONFIG_OMAP5EVM || \
-	defined CONFIG_BLAZE_TABLET || defined CONFIG_OMAP5UEVM
-u8 device = DEVICE_EMMC;
-#endif
+__attribute__((__section__(".mram")))
+struct bootloader_ops boot_operations;
+struct bootloader_ops* boot_ops = &boot_operations;
 
 void eboot(unsigned *info)
 {
 	int ret = 0;
 	unsigned bootdevice = -1;
-	int use_config_header = CONFIG_USE_CH_CONFIG;
 
-	if (get_omap_rev() >= OMAP_5430_ES1_DOT_0)
-		public_rom_base = PUBLIC_API_BASE_5430;
-	else if (get_omap_rev() >= OMAP_4460_ES1_DOT_1)
-		public_rom_base = PUBLIC_API_BASE_4460;
-	else
-		public_rom_base = PUBLIC_API_BASE_4430;
+	boot_ops->board_ops = init_board_funcs();
+	boot_ops->proc_ops = init_processor_id_funcs();
+
+	if (boot_ops->proc_ops->proc_get_api_base)
+		public_rom_base = boot_ops->proc_ops->proc_get_api_base();
 
 	watchdog_disable();
 
-	board_mux_init();
+	if (boot_ops->board_ops->board_mux_init)
+		boot_ops->board_ops->board_mux_init();
+
 	sdelay(100);
 
-	scale_vcores();
-	if (!use_config_header)
-		prcm_init();
-	board_ddr_init();
-	gpmc_init();
-	board_late_init();
+	if (boot_ops->board_ops->board_scale_vcores)
+		boot_ops->board_ops->board_scale_vcores();
+
+	if(boot_ops->board_ops->board_prcm_init)
+		boot_ops->board_ops->board_prcm_init();
+
+	if (boot_ops->board_ops->board_ddr_init)
+		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
+
+	if (boot_ops->board_ops->board_gpmc_init)
+		boot_ops->board_ops->board_gpmc_init();
+
+	if (boot_ops->board_ops->board_late_init)
+		boot_ops->board_ops->board_late_init();
 
 	serial_init();
 
@@ -126,8 +123,18 @@ void eboot(unsigned *info)
 		goto fail;
 	}
 
-	if (user_fastboot_request())
-		do_fastboot();
+	if (boot_ops->board_ops->board_storage_init)
+		boot_ops->storage_ops =
+			boot_ops->board_ops->board_storage_init();
+	if (!boot_ops->storage_ops) {
+		printf("Storage driver init failed\n");
+		goto fail;
+	}
+
+	if (boot_ops->board_ops->board_user_fastboot_request) {
+		if (boot_ops->board_ops->board_user_fastboot_request())
+			do_fastboot(boot_ops);
+	}
 
 	if (info)
 		bootdevice = info[2] & 0xFF;
@@ -147,7 +154,7 @@ void eboot(unsigned *info)
 	}
 
 	serial_puts("\nstay in SRAM and enter FASTBOOT mode\n");
-	do_fastboot();
+	do_fastboot(boot_ops);
 
 fail:
 	while (1)

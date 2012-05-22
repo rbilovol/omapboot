@@ -38,6 +38,7 @@
 #endif
 
 #include <common/omap_rom.h>
+#include <common/usbboot_common.h>
 
 #define WITH_MEMORY_TEST	0
 #define WITH_FLASH_BOOT		0
@@ -73,6 +74,7 @@ struct usb usb;
 unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 
 u32 public_rom_base;
+struct bootloader_ops *boot_ops = (void *) 0x84000000;
 
 unsigned call_trusted(unsigned appid, unsigned procid, unsigned flag, void *args);
 
@@ -93,50 +95,14 @@ int verify(void *data, unsigned len, void *signature, unsigned rights) {
 }
 
 #if WITH_FLASH_BOOT
-int load_image(unsigned device, unsigned start, unsigned count, void *data)
+static int load_from_mmc(struct storage_specific_functions *storage_ops,
+							unsigned *len)
 {
-	struct mem_driver *io = 0;
-	struct mem_device local_md_device, *md = 0;
-	struct read_desc rd;
-	u16 options;
-	u32 base;
-	int z;
-
-	z = rom_get_mem_driver(&io, device);
-	if (z)
-		return -1;
-
-	md = &local_md_device;
-	memset(md, 0, sizeof(struct mem_device));
-	options = 0; // 1 = init phoenix pmic?
-	md->initialized   = 0;
-	md->device_type   = device;
-	md->xip_device    = 0;
-	md->search_size   = 0;
-	md->base_address  = 0;
-	md->hs_toc_mask   = 0;
-	md->gp_toc_mask   = 0;
-	md->boot_options  = &options;
-	md->device_data   = (void*) 0x80000000;
-	memset(md->device_data, 0, 2500);
-
-	z = io->init(md);
-	if (z)
-		return -1;
-
-	rd.sector_start = start;
-	rd.sector_count = count;
-	rd.destination = data;
-	z = io->read(md, &rd);
-
-	return 0;
-}
-
-int load_from_mmc(unsigned device, unsigned *len)
-{
-	load_image(device, 512, 512, (void*) CONFIG_ADDR_DOWNLOAD);
+	int ret = 0;
+	/* FIX ME: Why are we hardcoding? */
+	ret = storage_ops->read(512, 512, (void *) CONFIG_ADDR_DOWNLOAD);
 	*len = 256 * 1024;
-	return 0;
+	return ret;
 }
 #endif
 
@@ -168,26 +134,40 @@ void aboot(unsigned *info)
 {
 	unsigned n, len;
 
-	if (get_omap_rev() >= OMAP_5430_ES1_DOT_0)
-		public_rom_base = PUBLIC_API_BASE_5430;
-	else if (get_omap_rev() >= OMAP_4460_ES1_DOT_1)
-		public_rom_base = PUBLIC_API_BASE_4460;
-	else
-		public_rom_base = PUBLIC_API_BASE_4430;
+	boot_ops->board_ops = init_board_funcs();
+	boot_ops->proc_ops = init_processor_id_funcs();
 
-	board_mux_init();
+	if (boot_ops->proc_ops->proc_get_api_base)
+		public_rom_base = boot_ops->proc_ops->proc_get_api_base();
+
+	if (boot_ops->board_ops->board_mux_init)
+		boot_ops->board_ops->board_mux_init();
+
 	sdelay(100);
 
-	scale_vcores();
-	prcm_init();
-	board_ddr_init();
-	gpmc_init();
-	board_late_init();
+	if (boot_ops->board_ops->board_scale_vcores)
+		boot_ops->board_ops->board_scale_vcores();
+
+	if(boot_ops->board_ops->board_prcm_init)
+		boot_ops->board_ops->board_prcm_init();
+
+	if (boot_ops->board_ops->board_ddr_init)
+		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
+
+	if (boot_ops->board_ops->board_gpmc_init)
+		boot_ops->board_ops->board_gpmc_init();
+
+	if (boot_ops->board_ops->board_late_init)
+		boot_ops->board_ops->board_late_init();
 
 	serial_init();
 
 	printf("%s\n", ABOOT_VERSION);
 	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
+
+	if (boot_ops->board_ops->board_storage_init)
+		boot_ops->storage_ops =
+			boot_ops->board_ops->board_storage_init();
 
 	/* printf("MSV=%08x\n",*((unsigned*) 0x4A00213C)); */
 
@@ -215,7 +195,7 @@ void aboot(unsigned *info)
 	case 0x05:
 	case 0x06:
 		serial_puts("boot device: MMC\n\n");
-		n = load_from_mmc(bootdevice, &len);
+		n = load_from_mmc(boot_ops->storage_ops, &len);
 		break;
 	default:
 		serial_puts("boot device: unknown\n");
@@ -226,7 +206,7 @@ void aboot(unsigned *info)
 	if (n) {
 		serial_puts("*** IO ERROR ***\n");
 	} else {
-		if (OMAP_TYPE_SEC == get_omap_type()) {
+		if (OMAP_TYPE_SEC == boot_ops->proc_ops->proc_get_type()) {
 			void *data = (void *) (CONFIG_ADDR_DOWNLOAD);
 			void *sign = (void *) (CONFIG_ADDR_DOWNLOAD +
 								len - 280);

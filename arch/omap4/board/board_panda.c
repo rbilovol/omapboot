@@ -29,16 +29,42 @@
  * SUCH DAMAGE.
  */
 
+
 #include <aboot/aboot.h>
 #include <aboot/io.h>
+
+#include <common/common_proc.h>
+#include <common/omap_rom.h>
+#include <common/usbboot_common.h>
+
 #include <omap4/mux.h>
 #include <omap4/hw.h>
 
-void board_late_init(void)
+static struct partition partitions[] = {
+	{ "-", 128 },
+	{ "xloader", 128 },
+	{ "bootloader", 256 },
+	{ "-", 512 },
+	{ "recovery", 8*1024 },
+	{ "boot", 8*1024 },
+	{ "system", 512*1024 },
+	{ "cache", 256*1024 },
+	{ "userdata", 0},
+	{ 0, 0 },
+};
+
+static struct partition * panda_get_partition(void)
 {
+	return partitions;
 }
 
-void board_mux_init(void)
+static void panda_late_init(void)
+{
+	cfg_machine_type = 3429;
+	cfg_uart_base = OMAP44XX_UART3;
+}
+
+static void panda_mux_init(void)
 {
 	MV(CP(GPMC_AD0) , (PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1));  /* sdmmc2_dat0 */
 	MV(CP(GPMC_AD1) , (PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1));  /* sdmmc2_dat1 */
@@ -285,14 +311,14 @@ static struct ddr_regs elpida2G_400mhz_2cs = {
 	.mr2		= 0x4
 };
 
-void board_ddr_init(void)
+static void panda_ddr_init(struct proc_specific_functions *proc_ops)
 {
 	/* 1GB, 128B interleaved */
 	writel(0x80640300, DMM_BASE + DMM_LISA_MAP_0);
 	writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
 	writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
 
-	if (get_omap_rev() >= OMAP_4460_ES1_DOT_0) {
+	if (proc_ops->proc_get_proc_id() >= OMAP_4460_ES1_DOT_0) {
 		writel(0x80640300, MA_BASE + DMM_LISA_MAP_0);
 		elpida2G_400mhz_2cs.phy_ctrl_1	= 0x449FF408;
 	}
@@ -302,7 +328,65 @@ void board_ddr_init(void)
 
 }
 
-int user_fastboot_request(void)
+static int panda_check_fastboot(void)
 {
 	return 0;
+}
+
+static u8 panda_get_flash_slot()
+{
+	return DEVICE_SDCARD;
+}
+
+static void panda_scale_cores(void)
+{
+	/* Use default OMAP voltage */
+	scale_vcores();
+}
+
+static void panda_gpmc_init(void)
+{
+	/* Use default OMAP gpmc init function */
+	gpmc_init();
+}
+
+static void panda_prcm_init(void)
+{
+	/* Use default OMAP gpmc init function */
+	prcm_init();
+}
+
+static struct storage_specific_functions *panda_storage_init(void)
+{
+	int ret;
+	struct storage_specific_functions *storage_ops;
+	storage_ops = init_rom_mmc_funcs(panda_get_flash_slot());
+	if (!storage_ops) {
+		printf("Unable to get rom mmc functions\n");
+		return NULL;
+	}
+	ret = storage_ops->init();
+	if (ret) {
+		printf("Unable to init storage device\n");
+		return NULL;
+	}
+	return storage_ops;
+}
+
+static struct board_specific_functions panda_funcs = {
+	.board_get_flash_slot = panda_get_flash_slot,
+	.board_mux_init = panda_mux_init,
+	.board_ddr_init = panda_ddr_init,
+	.board_user_fastboot_request = panda_check_fastboot,
+	.board_late_init = panda_late_init,
+	.board_get_part_tbl = panda_get_partition,
+	.board_scale_vcores = panda_scale_cores,
+	.board_gpmc_init = panda_gpmc_init,
+	.board_prcm_init = panda_prcm_init,
+	.board_storage_init = panda_storage_init,
+};
+
+void* init_board_funcs(void)
+{
+	return &panda_funcs;
 }

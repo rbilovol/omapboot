@@ -35,6 +35,7 @@
  */
 
 #include <aboot/aboot.h>
+#include <common/common_proc.h>
 #include <aboot/io.h>
 #include <omap4/hw.h>
 
