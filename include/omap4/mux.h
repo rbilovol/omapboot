@@ -402,12 +402,11 @@
 #define CONTROL_WKUP_CONTROL_SPARE_R		0x0618
 #define CONTROL_WKUP_CONTROL_SPARE_R_C0		0x061C
 
-#define MV(OFFSET, VALUE)\
-	writew((VALUE), OMAP44XX_CTRL_PADCONF_CORE_BASE + (OFFSET));
-#define MV1(OFFSET, VALUE)\
-	writew((VALUE), OMAP44XX_WKUP_CTRL_BASE + (OFFSET));
 
-#define CP(x) (CONTROL_PADCONF_##x)
-#define WK(x) (CONTROL_WKUP_##x)
+#define setup_core(OFFSET, VALUE)\
+        writew((VALUE), OMAP44XX_CTRL_PADCONF_CORE_BASE + (OFFSET));
+
+#define setup_wakeup(OFFSET, VALUE)\
+        writew((VALUE), OMAP44XX_WKUP_CTRL_BASE + (OFFSET));
 
 #endif

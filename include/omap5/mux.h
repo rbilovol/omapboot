@@ -58,13 +58,10 @@
 #define OFF_OUT_PD      0
 #define OFF_OUT_PU      0
 
-#define setup_core_padconf(OFFSET, VALUE)\
+#define setup_core(OFFSET, VALUE)\
 	writew((VALUE), CONTROL_PADCONF_CORE + (OFFSET));
-#define setup_wakeup_padconf(OFFSET, VALUE)\
+#define setup_wakeup(OFFSET, VALUE)\
 	writew((VALUE), CONTROL_PADCONF_WKUP + (OFFSET));
-
-#define CP(x) (CONTROL_PADCONF_##x)
-#define WK(x) (CONTROL_WAKEUP_##x)
 
 #define CONTROL_PADCONF_CORE_REVISION		0x0000
 #define CONTROL_PADCONF_CORE_HWINFO		0x0004
