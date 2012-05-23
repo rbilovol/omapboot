@@ -135,7 +135,7 @@ COMMON_OBJS := 	crc32.o \
 		libc/string.o \
 		trusted.o \
 		boot.o \
-		misc.o \
+		arch/common/misc.o \
 
 M_NAME := aboot
 M_LDS :=  arch/$(MACH)/$(M_NAME).lds
