@@ -263,8 +263,8 @@ void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 	/* Reprogram the DDR PYHY Control register */
 	/* PHY control values */
 
-	sr32(CM_MEMIF_EMIF_1_CLKCTRL, 0, 32, 0x1);
-        sr32(CM_MEMIF_EMIF_2_CLKCTRL, 0, 32, 0x1);
+	set_modify(CM_MEMIF_EMIF_1_CLKCTRL, 0x00000000, 0x1);
+	set_modify(CM_MEMIF_EMIF_2_CLKCTRL, 0x00000000, 0x1);
 
 	/* Put the Core Subsystem PD to ON State */
 

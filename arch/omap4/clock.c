@@ -39,9 +39,6 @@
 #include <aboot/io.h>
 #include <omap4/hw.h>
 
-
-//#include <omap4/clocks.h>
-
 #define LDELAY      12000000
 
 #define PLL_STOP		1 /* PER & IVA */
@@ -109,133 +106,136 @@ typedef struct dpll_param dpll_param;
 static void configure_mpu_dpll(dpll_param *dpll_param_p)
 {
 	/* Unlock the MPU dpll */
-	sr32(CM_CLKMODE_DPLL_MPU, 0, 3, PLL_MN_POWER_BYPASS);
+	set_modify(CM_CLKMODE_DPLL_MPU, 0x00000007, PLL_MN_POWER_BYPASS);
 	wait_on_value(BIT0, 0, CM_IDLEST_DPLL_MPU, LDELAY);
 
 	/* Disable DPLL autoidle */
-	sr32(CM_AUTOIDLE_DPLL_MPU, 0, 3, 0x0);
+	set_modify(CM_AUTOIDLE_DPLL_MPU, 0x00000007, 0x0);
 
 	/* Set M,N,M2 values */
-	sr32(CM_CLKSEL_DPLL_MPU, 8, 11, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_MPU, 0, 6, dpll_param_p->n);
-	sr32(CM_DIV_M2_DPLL_MPU, 0, 5, dpll_param_p->m2);
-	sr32(CM_DIV_M2_DPLL_MPU, 8, 1, 0x1);
+	set_modify(CM_CLKSEL_DPLL_MPU, 0x0007ff00, dpll_param_p->m << 8);
+
+	set_modify(CM_CLKSEL_DPLL_MPU, 0x0000003f, dpll_param_p->n);
+
+	set_modify(CM_DIV_M2_DPLL_MPU, 0x0000001f, dpll_param_p->m2);
+
+	set_modify(CM_DIV_M2_DPLL_MPU, 0x00000100, 0x1 << 8);
 
 	/* Lock the mpu dpll */
-	sr32(CM_CLKMODE_DPLL_MPU, 0, 3, PLL_LOCK | 0x10);
+	set_modify(CM_CLKMODE_DPLL_MPU, 0x00000007, (PLL_LOCK | 10));
 	wait_on_value(BIT0, 1, CM_IDLEST_DPLL_MPU, LDELAY);
 }
 
 static void configure_iva_dpll(dpll_param *dpll_param_p)
 {
 	/* Unlock the IVA dpll */
-	sr32(CM_CLKMODE_DPLL_IVA, 0, 3, PLL_MN_POWER_BYPASS);
+	set_modify(CM_CLKMODE_DPLL_IVA, 0x00000007, PLL_MN_POWER_BYPASS);
+
 	wait_on_value(BIT0, 0, CM_IDLEST_DPLL_IVA, LDELAY);
 
 	/* CM_BYPCLK_DPLL_IVA = CORE_X2_CLK/2 */
-	sr32(CM_BYPCLK_DPLL_IVA, 0, 2, 0x1);
+	set_modify(CM_BYPCLK_DPLL_IVA, 0x00000003, 0x1);
 
 	/* Disable DPLL autoidle */
-	sr32(CM_AUTOIDLE_DPLL_IVA, 0, 3, 0x0);
+	set_modify(CM_AUTOIDLE_DPLL_IVA, 0x00000007, 0x0);
 
 	/* Set M,N,M4,M5 */
-	sr32(CM_CLKSEL_DPLL_IVA, 8, 11, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_IVA, 0, 7, dpll_param_p->n);
-	sr32(CM_DIV_M4_DPLL_IVA, 0, 5, dpll_param_p->m4);
-	sr32(CM_DIV_M4_DPLL_IVA, 8, 1, 0x1);
-	sr32(CM_DIV_M5_DPLL_IVA, 0, 5, dpll_param_p->m5);
-	sr32(CM_DIV_M5_DPLL_IVA, 8, 1, 0x1);
+	set_modify(CM_CLKSEL_DPLL_IVA, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_IVA, 0x0000007f, dpll_param_p->n);
+	set_modify(CM_DIV_M4_DPLL_IVA, 0x0000001f, dpll_param_p->m4);
+	set_modify(CM_DIV_M4_DPLL_IVA, 0x00000100, 0x1 << 8);
+	set_modify(CM_DIV_M5_DPLL_IVA, 0x0000001f, dpll_param_p->m5);
+	set_modify(CM_DIV_M5_DPLL_IVA, 0x00000100, 0x1 << 8);
 
 	/* Lock the iva dpll */
-	sr32(CM_CLKMODE_DPLL_IVA, 0, 3, PLL_LOCK);
+	set_modify(CM_CLKMODE_DPLL_IVA, 0x00000007, PLL_LOCK);
 	wait_on_value(BIT0, 1, CM_IDLEST_DPLL_IVA, LDELAY);
 }
 
 static void configure_per_dpll(const dpll_param *dpll_param_p)
 {
 	/* Unlock the PER dpll */
-	sr32(CM_CLKMODE_DPLL_PER, 0, 3, PLL_MN_POWER_BYPASS);
+	set_modify(CM_CLKMODE_DPLL_PER, 0x00000007, PLL_MN_POWER_BYPASS);
 	wait_on_value(BIT0, 0, CM_IDLEST_DPLL_PER, LDELAY);
 
 	/* Disable autoidle */
-	sr32(CM_AUTOIDLE_DPLL_PER, 0, 3, 0x0);
-
-	sr32(CM_CLKSEL_DPLL_PER, 8, 11, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_PER, 0, 6, dpll_param_p->n);
-	sr32(CM_DIV_M2_DPLL_PER, 0, 5, dpll_param_p->m2);
-	sr32(CM_DIV_M2_DPLL_PER, 8, 1, 0x1);
-	sr32(CM_DIV_M3_DPLL_PER, 0, 5, dpll_param_p->m3);
-	sr32(CM_DIV_M3_DPLL_PER, 8, 1, 0x1);
-	sr32(CM_DIV_M4_DPLL_PER, 0, 5, dpll_param_p->m4);
-	sr32(CM_DIV_M4_DPLL_PER, 8, 1, 0x1);
-	sr32(CM_DIV_M5_DPLL_PER, 0, 5, dpll_param_p->m5);
-	sr32(CM_DIV_M5_DPLL_PER, 8, 1, 0x1);
-	sr32(CM_DIV_M6_DPLL_PER, 0, 5, dpll_param_p->m6);
-	sr32(CM_DIV_M6_DPLL_PER, 8, 1, 0x1);
-	sr32(CM_DIV_M7_DPLL_PER, 0, 5, dpll_param_p->m7);
-	sr32(CM_DIV_M7_DPLL_PER, 8, 1, 0x1);
+	set_modify(CM_AUTOIDLE_DPLL_PER, 0x00000007, 0x0);
+	set_modify(CM_CLKSEL_DPLL_PER, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_PER, 0x0000003f, dpll_param_p->n);
+	set_modify(CM_DIV_M2_DPLL_PER, 0x0000001f, dpll_param_p->m2);
+	set_modify(CM_DIV_M2_DPLL_PER, 0x00000100, 0x1 << 8);
+	set_modify(CM_DIV_M3_DPLL_PER, 0x0000001f, dpll_param_p->m3);
+	set_modify(CM_DIV_M3_DPLL_PER, 0x00000100, 0x1 << 8);
+	set_modify(CM_DIV_M4_DPLL_PER, 0x0000001f, dpll_param_p->m4);
+	set_modify(CM_DIV_M4_DPLL_PER, 0x00000100, 0x1 << 8);
+	set_modify(CM_DIV_M5_DPLL_PER, 0x0000001f, dpll_param_p->m5);
+	set_modify(CM_DIV_M5_DPLL_PER, 0x00000100, 0x1 << 8);
+	set_modify(CM_DIV_M6_DPLL_PER, 0x0000001f, dpll_param_p->m6);
+	set_modify(CM_DIV_M6_DPLL_PER, 0x00000100, 0x1 << 8);
+	set_modify(CM_DIV_M7_DPLL_PER, 0x0000001f, dpll_param_p->m7);
+	set_modify(CM_DIV_M7_DPLL_PER, 0x00000100, 0x1 << 8);
 
 	/* Lock the per dpll */
-	sr32(CM_CLKMODE_DPLL_PER, 0, 3, PLL_LOCK);
+	set_modify(CM_CLKMODE_DPLL_PER, 0x00000007, PLL_LOCK);
 	wait_on_value(BIT0, 1, CM_IDLEST_DPLL_PER, LDELAY);
 }
 
 static void configure_abe_dpll(dpll_param *dpll_param_p)
 {
 	/* Select sys_clk as ref clk for ABE dpll */
-	sr32(CM_ABE_PLL_REF_CLKSEL, 0, 32, 0x0);
+	set_modify(CM_ABE_PLL_REF_CLKSEL, 0x00000000, 0x0);
 
 	/* Unlock the ABE dpll */
-	sr32(CM_CLKMODE_DPLL_ABE, 0, 3, PLL_MN_POWER_BYPASS);
+	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, PLL_MN_POWER_BYPASS);
 	wait_on_value(BIT0, 0, CM_IDLEST_DPLL_ABE, LDELAY);
 
 	/* Disable autoidle */
-	sr32(CM_AUTOIDLE_DPLL_ABE, 0, 3, 0x0);
+	set_modify(CM_AUTOIDLE_DPLL_ABE, 0x00000007, 0x0);
 
-	sr32(CM_CLKSEL_DPLL_ABE, 8, 11, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_ABE, 0, 6, dpll_param_p->n);
+	set_modify(CM_CLKSEL_DPLL_ABE, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_ABE, 0x0000003f, dpll_param_p->n);
 
 	/* Force DPLL CLKOUTHIF to stay enabled */
-	sr32(CM_DIV_M2_DPLL_ABE, 0, 32, 0x500);
-	sr32(CM_DIV_M2_DPLL_ABE, 0, 5, dpll_param_p->m2);
-	sr32(CM_DIV_M2_DPLL_ABE, 8, 1, 0x1);
+	set_modify(CM_DIV_M2_DPLL_ABE, 0x00000000, 0x500);
+	set_modify(CM_DIV_M2_DPLL_ABE, 0x0000001f, dpll_param_p->m2);
+	set_modify(CM_DIV_M2_DPLL_ABE, 0x00000100, 0x1 << 8);
 	/* Force DPLL CLKOUTHIF to stay enabled */
-	sr32(CM_DIV_M3_DPLL_ABE, 0, 32, 0x100);
-	sr32(CM_DIV_M3_DPLL_ABE, 0, 5, dpll_param_p->m3);
-	sr32(CM_DIV_M3_DPLL_ABE, 8, 1, 0x1);
+	set_modify(CM_DIV_M3_DPLL_ABE, 0x00000000, 0x100);
+	set_modify(CM_DIV_M3_DPLL_ABE, 0x0000001f, dpll_param_p->m3);
+	set_modify(CM_DIV_M3_DPLL_ABE, 0x00000100, 0x1 << 8);
 
 	/* Lock the abe dpll */
-	sr32(CM_CLKMODE_DPLL_ABE, 0, 3, PLL_LOCK);
+	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, PLL_LOCK);
 	wait_on_value(BIT0, 1, CM_IDLEST_DPLL_ABE, LDELAY);
 }
 
 static void configure_usb_dpll(dpll_param *dpll_param_p)
 {
 	/* Select the 60Mhz clock 480/8 = 60*/
-	sr32(CM_CLKSEL_USB_60MHz, 0, 32, 0x1);
+	set_modify(CM_CLKSEL_USB_60MHz, 0x00000000, 0x1);
 
 	/* Unlock the USB dpll */
-	sr32(CM_CLKMODE_DPLL_USB, 0, 3, PLL_MN_POWER_BYPASS);
+	set_modify(CM_CLKMODE_DPLL_USB, 0x00000007, PLL_MN_POWER_BYPASS);
 	wait_on_value(BIT0, 0, CM_IDLEST_DPLL_USB, LDELAY);
 
 	/* Disable autoidle */
-	sr32(CM_AUTOIDLE_DPLL_USB, 0, 3, 0x0);
-
-	sr32(CM_CLKSEL_DPLL_USB, 8, 11, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_USB, 0, 6, dpll_param_p->n);
+	set_modify(CM_AUTOIDLE_DPLL_USB, 0x00000007, 0x0);
+	set_modify(CM_CLKSEL_DPLL_USB, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_USB, 0x0000003f, dpll_param_p->n);
 
 	/* Force DPLL CLKOUT to stay active */
-	sr32(CM_DIV_M2_DPLL_USB, 0, 32, 0x100);
-	sr32(CM_DIV_M2_DPLL_USB, 0, 5, dpll_param_p->m2);
-	sr32(CM_DIV_M2_DPLL_USB, 8, 1, 0x1);
-	sr32(CM_CLKDCOLDO_DPLL_USB, 8, 1, 0x1);
+	set_modify(CM_DIV_M2_DPLL_USB, 0x00000000, 0x100);
+	set_modify(CM_DIV_M2_DPLL_USB, 0x0000001f, dpll_param_p->m2);
+	set_modify(CM_DIV_M2_DPLL_USB, 0x00000100, 0x1 << 8);
+	set_modify(CM_CLKDCOLDO_DPLL_USB, 0x00000100, 0x1 << 8);
 
 	/* Lock the usb dpll */
-	sr32(CM_CLKMODE_DPLL_USB, 0, 3, PLL_LOCK);
+	set_modify(CM_CLKMODE_DPLL_USB, 0x00000007, PLL_LOCK);
 	wait_on_value(BIT0, 1, CM_IDLEST_DPLL_USB, LDELAY);
 
 	/* force enable the CLKDCOLDO clock */
-	sr32(CM_CLKDCOLDO_DPLL_USB, 0, 32, 0x100);
+	set_modify(CM_CLKDCOLDO_DPLL_USB, 0x00000000, 0x100);
+
 }
 
 void configure_core_dpll_no_lock(void)
@@ -248,29 +248,28 @@ void configure_core_dpll_no_lock(void)
 	writel(0x7,CM_SYS_CLKSEL);
 
 	/* CORE_CLK=CORE_X2_CLK/2, L3_CLK=CORE_CLK/2, L4_CLK=L3_CLK/2 */
-	sr32(CM_CLKSEL_CORE, 0, 32, 0x110);
+	set_modify(CM_CLKSEL_CORE, 0x00000000, 0x110);
 
 	/* Unlock the CORE dpll */
-	sr32(CM_CLKMODE_DPLL_CORE, 0, 3, PLL_MN_POWER_BYPASS);
+	set_modify(CM_CLKMODE_DPLL_CORE, 0x00000007, PLL_MN_POWER_BYPASS);
 	wait_on_value(BIT0, 0, CM_IDLEST_DPLL_CORE, LDELAY);
 
 	/* Disable autoidle */
-	sr32(CM_AUTOIDLE_DPLL_CORE, 0, 3, 0x0);
-
-	sr32(CM_CLKSEL_DPLL_CORE, 8, 11, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_CORE, 0, 6, dpll_param_p->n);
-	sr32(CM_DIV_M2_DPLL_CORE, 0, 5, dpll_param_p->m2);
-	sr32(CM_DIV_M3_DPLL_CORE, 0, 5, dpll_param_p->m3);
-	sr32(CM_DIV_M4_DPLL_CORE, 0, 5, dpll_param_p->m4);
-	sr32(CM_DIV_M5_DPLL_CORE, 0, 5, dpll_param_p->m5);
-	sr32(CM_DIV_M6_DPLL_CORE, 0, 5, dpll_param_p->m6);
-	sr32(CM_DIV_M7_DPLL_CORE, 0, 5, dpll_param_p->m7);
+	set_modify(CM_AUTOIDLE_DPLL_CORE, 0x00000007, 0x0);
+	set_modify(CM_CLKSEL_DPLL_CORE, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_CORE, 0x0000003f, dpll_param_p->n);
+	set_modify(CM_DIV_M2_DPLL_CORE, 0x0000001f, dpll_param_p->m2);
+	set_modify(CM_DIV_M3_DPLL_CORE, 0x0000001f, dpll_param_p->m3);
+	set_modify(CM_DIV_M4_DPLL_CORE, 0x0000001f, dpll_param_p->m4);
+	set_modify(CM_DIV_M5_DPLL_CORE, 0x0000001f, dpll_param_p->m5);
+	set_modify(CM_DIV_M6_DPLL_CORE, 0x0000001f, dpll_param_p->m6);
+	set_modify(CM_DIV_M7_DPLL_CORE, 0x0000001f, dpll_param_p->m7);
 }
 
 void lock_core_dpll(void)
 {
 	/* Lock the core dpll */
-	sr32(CM_CLKMODE_DPLL_CORE, 0, 3, PLL_LOCK);
+	set_modify(CM_CLKMODE_DPLL_CORE, 0x00000007, PLL_LOCK);
 	wait_on_value(BIT0, 1, CM_IDLEST_DPLL_CORE, LDELAY);
 }
 
@@ -318,117 +317,145 @@ void lock_core_dpll_shadow(void)
 static void enable_all_clocks(void)
 {
 	/* L4PER clocks */
-	sr32(CM_L4PER_CLKSTCTRL, 0, 32, 0x2);
-	sr32(CM_L4PER_DMTIMER10_CLKCTRL, 0, 32, 0x2);
+	set_modify(CM_L4PER_CLKSTCTRL, 0x00000000, 0x2);
+	set_modify(CM_L4PER_DMTIMER10_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_DMTIMER10_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_DMTIMER11_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_DMTIMER11_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_DMTIMER11_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_DMTIMER2_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_DMTIMER2_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_DMTIMER2_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_DMTIMER3_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_DMTIMER3_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_DMTIMER3_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_DMTIMER4_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_DMTIMER4_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_DMTIMER4_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_DMTIMER9_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_DMTIMER9_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_DMTIMER9_CLKCTRL, LDELAY);
 
 	/* GPIO clocks */
-	sr32(CM_L4PER_GPIO2_CLKCTRL, 0 ,32, 0x1);
+	set_modify(CM_L4PER_GPIO2_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_GPIO2_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_GPIO3_CLKCTRL, 0, 32, 0x1);
+
+	set_modify(CM_L4PER_GPIO3_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_GPIO3_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_GPIO4_CLKCTRL, 0, 32, 0x1);
+
+	set_modify(CM_L4PER_GPIO4_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_GPIO4_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_GPIO4_CLKCTRL, 8, 1, 0x1);
-	sr32(CM_L4PER_GPIO5_CLKCTRL, 0, 32, 0x1);
+
+	set_modify(CM_L4PER_GPIO4_CLKCTRL, 0x00000100, 0x1 << 8);
+
+	set_modify(CM_L4PER_GPIO5_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_GPIO5_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_GPIO6_CLKCTRL, 0, 32, 0x1);
+
+	set_modify(CM_L4PER_GPIO6_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_GPIO6_CLKCTRL, LDELAY);
 
-	sr32(CM_L4PER_HDQ1W_CLKCTRL, 0, 32, 0x2);
+	set_modify(CM_L4PER_HDQ1W_CLKCTRL, 0x00000000, 0x2);
 
 	/* I2C clocks */
-	sr32(CM_L4PER_I2C1_CLKCTRL, 0, 32, 0x2);
+	set_modify(CM_L4PER_I2C1_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_I2C1_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_I2C2_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_I2C2_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_I2C2_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_I2C3_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_I2C3_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_I2C3_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_I2C4_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_I2C4_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_I2C4_CLKCTRL, LDELAY);
 
-	sr32(CM_L4PER_MCBSP4_CLKCTRL, 0, 32, 0x2);
+	set_modify(CM_L4PER_MCBSP4_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_MCBSP4_CLKCTRL, LDELAY);
 
 	/* MCSPI clocks */
-	sr32(CM_L4PER_MCSPI1_CLKCTRL, 0, 32, 0x2);
+	set_modify(CM_L4PER_MCSPI1_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_MCSPI1_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_MCSPI2_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_MCSPI2_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_MCSPI2_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_MCSPI3_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_MCSPI3_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_MCSPI3_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_MCSPI4_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_MCSPI4_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_MCSPI4_CLKCTRL, LDELAY);
 
 	/* MMC clocks */
-	sr32(CM_L3INIT_HSMMC1_CLKCTRL, 0, 2, 0x2);
-	sr32(CM_L3INIT_HSMMC1_CLKCTRL, 24, 1, 0x1);
-	//wait_on_value(BIT18|BIT17|BIT16, 0, CM_L3INIT_HSMMC1_CLKCTRL, LDELAY);
-	sr32(CM_L3INIT_HSMMC2_CLKCTRL, 0, 2, 0x2);
-	sr32(CM_L3INIT_HSMMC2_CLKCTRL, 24, 1, 0x1);
-	//wait_on_value(BIT18|BIT17|BIT16, 0, CM_L3INIT_HSMMC2_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_MMCSD3_CLKCTRL, 0, 32, 0x2);
+	set_modify(CM_L3INIT_HSMMC1_CLKCTRL, 0x00000003, 0x2);
+	set_modify(CM_L3INIT_HSMMC1_CLKCTRL, 0x01000000, 0x1 << 24);
+	set_modify(CM_L3INIT_HSMMC2_CLKCTRL, 0x00000003, 0x2);
+	set_modify(CM_L3INIT_HSMMC2_CLKCTRL, 0x01000000, 0x1 << 24);
+
+	set_modify(CM_L4PER_MMCSD3_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT18|BIT17|BIT16, 0, CM_L4PER_MMCSD3_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_MMCSD4_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_MMCSD4_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT18|BIT17|BIT16, 0, CM_L4PER_MMCSD4_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_MMCSD5_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_MMCSD5_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_MMCSD5_CLKCTRL, LDELAY);
 
 	/* UART clocks */
-	sr32(CM_L4PER_UART1_CLKCTRL, 0, 32, 0x2);
+	set_modify(CM_L4PER_UART1_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_UART1_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_UART2_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_UART2_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_UART2_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_UART3_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_UART3_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_UART3_CLKCTRL, LDELAY);
-	sr32(CM_L4PER_UART4_CLKCTRL, 0, 32, 0x2);
+
+	set_modify(CM_L4PER_UART4_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_L4PER_UART4_CLKCTRL, LDELAY);
 
 	/* WKUP clocks */
-	sr32(CM_WKUP_GPIO1_CLKCTRL, 0, 32, 0x1);
+	set_modify(CM_WKUP_GPIO1_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_WKUP_GPIO1_CLKCTRL, LDELAY);
-	sr32(CM_WKUP_TIMER1_CLKCTRL, 0, 32, 0x01000002);
+
+	set_modify(CM_WKUP_TIMER1_CLKCTRL, 0x00000000, 0x01000002);
 	wait_on_value(BIT17|BIT16, 0, CM_WKUP_TIMER1_CLKCTRL, LDELAY);
 
-	sr32(CM_WKUP_KEYBOARD_CLKCTRL, 0, 32, 0x2);
+	set_modify(CM_WKUP_KEYBOARD_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_WKUP_KEYBOARD_CLKCTRL, LDELAY);
 
-	sr32(CM_SDMA_CLKSTCTRL, 0, 32, 0x0);
-	sr32(CM_MEMIF_CLKSTCTRL, 0, 32, 0x3);
-	sr32(CM_MEMIF_EMIF_1_CLKCTRL, 0, 32, 0x1);
+	set_modify(CM_SDMA_CLKSTCTRL, 0x00000000, 0x0);
+	set_modify(CM_MEMIF_CLKSTCTRL, 0x00000000, 0x3);
+
+	set_modify(CM_MEMIF_EMIF_1_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_MEMIF_EMIF_1_CLKCTRL, LDELAY);
-	sr32(CM_MEMIF_EMIF_2_CLKCTRL, 0, 32, 0x1);
+
+	set_modify(CM_MEMIF_EMIF_2_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_MEMIF_EMIF_2_CLKCTRL, LDELAY);
-	sr32(CM_D2D_CLKSTCTRL, 0, 32, 0x3);
-	sr32(CM_L3_2_GPMC_CLKCTRL, 0, 32, 0x1);
+
+	set_modify(CM_D2D_CLKSTCTRL, 0x00000000, 0x3);
+
+	set_modify(CM_L3_2_GPMC_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_L3_2_GPMC_CLKCTRL, LDELAY);
-	sr32(CM_L3INSTR_L3_3_CLKCTRL, 0, 32, 0x1);
+
+	set_modify(CM_L3INSTR_L3_3_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_L3INSTR_L3_3_CLKCTRL, LDELAY);
-	sr32(CM_L3INSTR_L3_INSTR_CLKCTRL, 0, 32, 0x1);
+
+	set_modify(CM_L3INSTR_L3_INSTR_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_L3INSTR_L3_INSTR_CLKCTRL, LDELAY);
-	sr32(CM_L3INSTR_OCP_WP1_CLKCTRL, 0, 32, 0x1);
+
+	set_modify(CM_L3INSTR_OCP_WP1_CLKCTRL, 0x00000000, 0x1);
 	wait_on_value(BIT17|BIT16, 0, CM_L3INSTR_OCP_WP1_CLKCTRL, LDELAY);
 
 	/* WDT clocks */
-	sr32(CM_WKUP_WDT2_CLKCTRL, 0, 32, 0x2);
+	set_modify(CM_WKUP_WDT2_CLKCTRL, 0x00000000, 0x2);
 	wait_on_value(BIT17|BIT16, 0, CM_WKUP_WDT2_CLKCTRL, LDELAY);
 
 	/* Select DPLL PER CLOCK as source for SGX FCLK */
-	sr32(CM_SGX_SGX_CLKCTRL, 24, 1, 0x1);
+	set_modify(CM_SGX_SGX_CLKCTRL, 0x01000000, 0x1 << 24);
 
 	/* Enable clocks for USB fast boot to work */
-	sr32(CM_L3INIT_USBPHY_CLKCTRL, 0, 32, 0x301);
-	sr32(CM_L3INIT_HSUSBOTG_CLKCTRL, 0, 32, 0x1);
+	set_modify(CM_L3INIT_USBPHY_CLKCTRL, 0x00000000, 0x301);
+	set_modify(CM_L3INIT_HSUSBOTG_CLKCTRL, 0x00000000, 0x1);
 
 	return;
 }

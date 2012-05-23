@@ -88,13 +88,13 @@ void setup_clocks(void)
 void configure_core_dpll(dpll_param *dpll_param_p)
 {
 	/* Unlock the CORE dpll */
-	sr32(CM_CLKMODE_DPLL_CORE, 0, 4, IDLE_BYPASS_FAST_RELOCK_MODE);
+	set_modify(CM_CLKMODE_DPLL_CORE, 0x0000000f, IDLE_BYPASS_FAST_RELOCK_MODE);
 	if (!wait_on_value(BIT(0), 0, CM_IDLEST_DPLL_CORE, LDELAY)) {
 		/* do nothing */
 	}
 
-	sr32(CM_CLKSEL_DPLL_CORE, 8, 11, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_CORE, 0, 7, dpll_param_p->n);
+	set_modify(CM_CLKSEL_DPLL_CORE, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_CORE, 0x0000007f, dpll_param_p->n);
 
 
 	/* Setup post-dividers */
@@ -122,7 +122,6 @@ void configure_per_dpll(void)
 {
 	/* Put DPLL into bypass mode */
 	set_modify(CM_CLKMODE_DPLL_PER, 0x00000007, 0x00000005);
-
 	if (!wait_on_value(BIT(0), 0, CM_IDLEST_DPLL_PER, LDELAY)) {
 		/* do nothing */
 	}
@@ -183,26 +182,24 @@ void configure_mpu_dpll(void)
 void configure_iva_dpll(dpll_param *dpll_param_p)
 {
 	/* Unlock the IVA dpll */
-	sr32(CM_CLKMODE_DPLL_IVA, 0, 3, IDLE_BYPASS_FAST_RELOCK_MODE);
+	set_modify(CM_CLKMODE_DPLL_IVA, 0x00000007, IDLE_BYPASS_FAST_RELOCK_MODE);
 	if (!wait_on_value(BIT(0), 0, CM_IDLEST_DPLL_IVA, LDELAY)) {
 		/* do nothing */
 	}
 
 	/* CM_BYPCLK_DPLL_IVA = CORE_X2_CLK/2 */
-	sr32(CM_BYPCLK_DPLL_IVA, 0, 2, 0x1);
-
+	set_modify(CM_BYPCLK_DPLL_IVA, 0x00000003, 0x1);
 	/* Disable DPLL autoidle */
-	sr32(CM_AUTOIDLE_DPLL_IVA, 0, 3, 0x0);
-
-	sr32(CM_CLKSEL_DPLL_IVA, 8, 11, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_IVA, 0, 7, dpll_param_p->n);
-	sr32(CM_DIV_H11_DPLL_IVA, 0, 6, dpll_param_p->h11);
-	sr32(CM_DIV_H11_DPLL_IVA, 9, 1, 0x1);
-	sr32(CM_DIV_H12_DPLL_IVA, 0, 6, dpll_param_p->h12);
-	sr32(CM_DIV_H12_DPLL_IVA, 9, 1, 0x1);
+	set_modify(CM_AUTOIDLE_DPLL_IVA, 0x00000007, 0x0);
+	set_modify(CM_CLKSEL_DPLL_IVA, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_IVA, 0x0000007f, dpll_param_p->n);
+	set_modify(CM_DIV_H11_DPLL_IVA, 0x0000003f, dpll_param_p->h11);
+	set_modify(CM_DIV_H11_DPLL_IVA, 0x00000200, 0x1 << 9);
+	set_modify(CM_DIV_H12_DPLL_IVA, 0x0000003f, dpll_param_p->h12);
+	set_modify(CM_DIV_H12_DPLL_IVA, 0x00000200, 0x1 << 9);
 
 	/* Lock the iva dpll */
-	sr32(CM_CLKMODE_DPLL_IVA, 0, 3, PLL_LOCK);
+	set_modify(CM_CLKMODE_DPLL_IVA, 0x00000007, PLL_LOCK);
 	if (!wait_on_value(BIT(0), 1, CM_IDLEST_DPLL_IVA, LDELAY)) {
 		/* do nothing */
 	}
@@ -229,16 +226,14 @@ void configure_abe_dpll(dpll_param *dpll_param_p)
 	value = readl(CM_CLKSEL_ABE_PLL_REF);
 	writel((value & ~(0x1)) | (0x1 << 0), CM_CLKSEL_ABE_PLL_REF);
 
-	sr32(CM_CLKMODE_DPLL_ABE, 0, 3, IDLE_BYPASS_FAST_RELOCK_MODE);
+	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, IDLE_BYPASS_FAST_RELOCK_MODE);
 	if (!wait_on_value(BIT(1), 0, CM_IDLEST_DPLL_ABE, LDELAY)) {
 		/* do nothing */
 	}
 
-	sr32(CM_CLKSEL_DPLL_ABE, 8, 11, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_ABE, 0, 7, dpll_param_p->n);
-
-	sr32(CM_CLKMODE_DPLL_ABE, 0, 3, PLL_LOCK);
-
+	set_modify(CM_CLKSEL_DPLL_ABE, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_ABE, 0x0000007f, dpll_param_p->n);
+	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, PLL_LOCK);
 	if (!wait_on_value(BIT(0), 1, CM_IDLEST_DPLL_ABE, LDELAY)) {
 		/* do nothing */
 	}
@@ -256,16 +251,16 @@ void configure_usb_dpll(dpll_param *dpll_param_p)
 	num += den - 1;
 	u32 sd_div = num / den;
 
-	sr32(CM_CLKSEL_DPLL_USB, 24, 8, sd_div);
+	set_modify(CM_CLKSEL_DPLL_USB, 0xff000000, sd_div << 24);
 
 	/* Unlock the USB dpll */
-	sr32(CM_CLKMODE_DPLL_USB, 0, 3, IDLE_BYPASS_LOW_POWER_MODE);
+	set_modify(CM_CLKMODE_DPLL_USB, 0x00000007, IDLE_BYPASS_LOW_POWER_MODE);
 	if (!wait_on_value(BIT(0), 0, CM_IDLEST_DPLL_USB, LDELAY)) {
 		/* do nothing */
 	}
 
-	sr32(CM_CLKSEL_DPLL_USB, 8, 12, dpll_param_p->m);
-	sr32(CM_CLKSEL_DPLL_USB, 0, 7, dpll_param_p->n);
+	set_modify(CM_CLKSEL_DPLL_USB, 0x000fff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_USB, 0x0000007f, dpll_param_p->n);
 
 	/* lock the dpll */
 	writel(0x00000007, CM_CLKMODE_DPLL_USB);

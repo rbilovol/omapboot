@@ -45,7 +45,7 @@ void gpmc_init(void)
 	 * no device on gpmc right now
 	 */
 	for (i = 0; i < 8; i++)
-		sr32(cs_base + GPMC_CONFIG7 + 0x30*i, 6, 1, 0);
+		set_modify(cs_base + GPMC_CONFIG7 + 0x30*i, 0x00000040, 0 << 6);
 
 	return;
 }

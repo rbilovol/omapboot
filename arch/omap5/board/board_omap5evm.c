@@ -334,7 +334,7 @@ static int omap5evm_check_fastboot(void)
 {
 	u32 temp;
 	/* set the clock for the keypad */
-	sr32(CM_WKUPAON_KBD_CLKCTRL, 0, 2, 0x02);
+	set_modify(CM_WKUPAON_KBD_CLKCTRL, 0x00000003, 0x02);
 	/* any key pressed ? */
 	temp = readl(KBD_STATEMACHINE);
 	if (temp == 0)
