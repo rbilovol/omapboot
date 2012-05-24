@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _MUX_H_
+#define _MUX_H_
+
 #define OFF_PD          (0 << 12)
 #define OFF_PU          (0 << 12)
 #define OFF_OUT_PTD     (0 << 10)
@@ -318,3 +321,4 @@
 #define CONTROL_WAKEUP_SYS_BOOT4		0x0078
 #define CONTROL_WAKEUP_SYS_BOOT5		0x007a
 
+#endif

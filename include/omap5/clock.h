@@ -28,6 +28,8 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#ifndef _CLOCK_H_
+#define _CLOCK_H_
 
 #define MODULE_CLKCTRL_IDLEST_TRANSITIONING     1
 #define MODULE_CLKCTRL_IDLEST_IDLE              2
@@ -104,3 +106,4 @@ struct omap_clocks omap5_clocks[] = {
 	{0,0,0,0},
 	/* do_enable_clocks(1) passed late domain setup */
 };
+#endif

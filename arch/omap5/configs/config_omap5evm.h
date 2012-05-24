@@ -26,6 +26,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
 #define CONFIG_OMAP5EVM
 
 #define CONFIG_BOARD_MACH_TYPE		3777
@@ -65,3 +68,4 @@
 #define EXTENDED_CMDLINE        "earlyprintk ";
 
 #define USER_FASTBOOT_RQ	(KEY_VOLUME_UP | KEY_VOLUME_DOWN)
+#endif
