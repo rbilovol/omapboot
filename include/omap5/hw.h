@@ -35,7 +35,6 @@
 
 #define LDELAY 200
 #define BIT(x)	(1<<(x))
-#define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
 
 #define OMAP54XX_L4_CORE_BASE		0x4A000000
 #define OMAP54XX_L4_WKUP_BASE		0x4Ae00000
