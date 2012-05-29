@@ -152,6 +152,7 @@ M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
 M_NAME := iboot
+M_LDS :=  arch/$(MACH)/$(M_NAME).lds
 M_BASE := $(IBOOT_TEXT_BASE)
 M_OBJS := iboot/start_reloc.o
 M_OBJS += $(OMAP_COMMON_OBJS)
