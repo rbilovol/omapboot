@@ -316,8 +316,8 @@ int usb_write(usb_handle *h, const void *_data, int len)
 
 	/* Send ZLP only for OMAP5. */
 	if (h->dev_product == 0xd011) {
-		/* ZLP: after every 64K or 512*n */
-		if ((!(count % (1024*64))) || (!len && (!(count % 512)))) {
+		/* ZLP: needed only if image size is modulo 512 */
+		if (!len && (!(count % 512))) {
 			DBG("Sending ZLP\n");
 			usb_write(h, data, 0);
 		}
