@@ -187,7 +187,7 @@ static void emif_config(unsigned int base, const struct ddr_regs *ddr_regs)
 	writel(MR10_ZQINIT, base + EMIF_LPDDR2_MODE_REG_DATA);
 
 	/* wait for tZQINIT=1us  */
-	sdelay(10);
+	ldelay(10);
 
 	/* set MR1 register */
 	writel(MR1_ADDR, base + EMIF_LPDDR2_MODE_REG_CFG);
@@ -254,7 +254,7 @@ void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 	/* Set DLL_OVERRIDE = 0 */
 	writel(0x0, CM_DLL_CTRL);
 
-	sdelay(200);
+	ldelay(200);
 
 	/* Check for DDR PHY ready for EMIF1 & EMIF2 */
 	while(((readl(EMIF1_BASE + EMIF_STATUS) & 0x04) != 0x04)

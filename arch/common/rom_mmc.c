@@ -374,7 +374,7 @@ static int mmc_erase (u64 start_sec, u64 sectors)
 		reg = mmc_reg_read(OMAP_HSMMC_PSTATE_OFFSET);
 		DBG("reg = 0x%08x\n", reg);
 		if (reg & MMCHS_WAIT_CARD_BUSY_DEASSERT) {
-			sdelay(100000000);
+			ldelay(100000000);
 			continue;
 		}
 		break;

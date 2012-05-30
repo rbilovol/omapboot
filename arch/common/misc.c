@@ -45,12 +45,6 @@ u32 wait_on_value(u32 read_bit_mask, u32 match_value, u32 read_addr, u32 bound)
 	} while (1);
 }
 
-void sdelay(unsigned long loops)
-{
-	__asm__ volatile ("1:\n" "subs %0, %1, #1\n"
-			  "bne 1b":"=r" (loops):"0"(loops));
-}
-
 void set_modify(u32 reg, u32 mask, u32 value)
 {
 	u32 read = readl(reg);

@@ -24,6 +24,12 @@ copy:
 		bx r8
 		b .
 
+.global ldelay
+ldelay:
+       subs r0, r0, #1
+       bne ldelay
+       bx lr
+
 size:
 		.word __bss_end - _start
 

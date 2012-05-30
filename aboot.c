@@ -143,7 +143,7 @@ void aboot(unsigned *info)
 	if (boot_ops->board_ops->board_mux_init)
 		boot_ops->board_ops->board_mux_init();
 
-	sdelay(100);
+	ldelay(100);
 
 	if (boot_ops->board_ops->board_scale_vcores)
 		boot_ops->board_ops->board_scale_vcores();

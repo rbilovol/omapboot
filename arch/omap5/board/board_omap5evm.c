@@ -339,7 +339,7 @@ static int omap5evm_check_fastboot(void)
 	temp = readl(KBD_STATEMACHINE);
 	if (temp == 0)
 		return 0;
-	sdelay(200000);
+	ldelay(200000);
 	temp = readl(KBD_FULLCODE31_0);
 	if ((temp & USER_FASTBOOT_RQ) == USER_FASTBOOT_RQ) {
 		printf("Keypress detected: going to fastboot mode\n");
