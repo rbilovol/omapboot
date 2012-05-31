@@ -253,6 +253,7 @@ tags:
 		xargs ctags
 
 MAKEALL:
+	$(QUIET)rm -rf out
 	@echo "checking available build platforms"
 	$(QUIET)TMP_FILE="/tmp/make-all.$$$$.tmp";			\
 		TMP_FILE2="/tmp/make-all-res.$$$$.tmp";			\
