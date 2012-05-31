@@ -74,8 +74,8 @@ void setup_clocks(void)
 			set_modify(oclock->ad, oclock->mask,
 						oclock->value);
 			if (oclock->ctrl == MODIFY_WAIT) {
-				if (!wait_on_value(BIT(16) | BIT(17), 0,
-						oclock->ad, LDELAY))
+				if (!check_loop(BIT(16) | BIT(17), 0,
+						oclock->ad))
 				;
 			}
 			break;
@@ -89,7 +89,7 @@ void configure_core_dpll(dpll_param *dpll_param_p)
 {
 	/* Unlock the CORE dpll */
 	set_modify(CM_CLKMODE_DPLL_CORE, 0x0000000f, IDLE_BYPASS_FAST_RELOCK_MODE);
-	if (!wait_on_value(BIT(0), 0, CM_IDLEST_DPLL_CORE, LDELAY)) {
+	if (!check_loop(BIT(0), 0, CM_IDLEST_DPLL_CORE)) {
 		/* do nothing */
 	}
 
@@ -122,7 +122,7 @@ void configure_per_dpll(void)
 {
 	/* Put DPLL into bypass mode */
 	set_modify(CM_CLKMODE_DPLL_PER, 0x00000007, 0x00000005);
-	if (!wait_on_value(BIT(0), 0, CM_IDLEST_DPLL_PER, LDELAY)) {
+	if (!check_loop(BIT(0), 0, CM_IDLEST_DPLL_PER)) {
 		/* do nothing */
 	}
 
@@ -139,7 +139,7 @@ void configure_per_dpll(void)
 	writel(0x00000007, CM_CLKMODE_DPLL_PER);
 
 	/* Wait for DPLL to be locked */
-	if (!wait_on_value(BIT(0), 1, CM_IDLEST_DPLL_PER, LDELAY)) {
+	if (!check_loop(BIT(0), 1, CM_IDLEST_DPLL_PER)) {
 		/* do nothing */
 	}
 
@@ -158,7 +158,7 @@ void configure_mpu_dpll(void)
 	/* Put DPLL into bypass mode */
 	set_modify(CM_CLKMODE_DPLL_MPU, 0x00000007, 0x00000005);
 
-	if (!wait_on_value(BIT(0), 0, CM_IDLEST_DPLL_MPU, LDELAY)) {
+	if (!check_loop(BIT(0), 0, CM_IDLEST_DPLL_MPU)) {
 		/* do nothing */
 	}
 
@@ -172,7 +172,7 @@ void configure_mpu_dpll(void)
 	writel(0x00000007, CM_CLKMODE_DPLL_MPU);
 
 	/* Wait for DPLL to be locked */
-	if (!wait_on_value(BIT(0), 1, CM_IDLEST_DPLL_MPU, LDELAY)) {
+	if (!check_loop(BIT(0), 1, CM_IDLEST_DPLL_MPU)) {
 		/* do nothing */
 	}
 
@@ -183,7 +183,7 @@ void configure_iva_dpll(dpll_param *dpll_param_p)
 {
 	/* Unlock the IVA dpll */
 	set_modify(CM_CLKMODE_DPLL_IVA, 0x00000007, IDLE_BYPASS_FAST_RELOCK_MODE);
-	if (!wait_on_value(BIT(0), 0, CM_IDLEST_DPLL_IVA, LDELAY)) {
+	if (!check_loop(BIT(0), 0, CM_IDLEST_DPLL_IVA)) {
 		/* do nothing */
 	}
 
@@ -200,7 +200,7 @@ void configure_iva_dpll(dpll_param *dpll_param_p)
 
 	/* Lock the iva dpll */
 	set_modify(CM_CLKMODE_DPLL_IVA, 0x00000007, PLL_LOCK);
-	if (!wait_on_value(BIT(0), 1, CM_IDLEST_DPLL_IVA, LDELAY)) {
+	if (!check_loop(BIT(0), 1, CM_IDLEST_DPLL_IVA)) {
 		/* do nothing */
 	}
 
@@ -227,14 +227,14 @@ void configure_abe_dpll(dpll_param *dpll_param_p)
 	writel((value & ~(0x1)) | (0x1 << 0), CM_CLKSEL_ABE_PLL_REF);
 
 	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, IDLE_BYPASS_FAST_RELOCK_MODE);
-	if (!wait_on_value(BIT(1), 0, CM_IDLEST_DPLL_ABE, LDELAY)) {
+	if (!check_loop(BIT(1), 0, CM_IDLEST_DPLL_ABE)) {
 		/* do nothing */
 	}
 
 	set_modify(CM_CLKSEL_DPLL_ABE, 0x0007ff00, dpll_param_p->m << 8);
 	set_modify(CM_CLKSEL_DPLL_ABE, 0x0000007f, dpll_param_p->n);
 	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, PLL_LOCK);
-	if (!wait_on_value(BIT(0), 1, CM_IDLEST_DPLL_ABE, LDELAY)) {
+	if (!check_loop(BIT(0), 1, CM_IDLEST_DPLL_ABE)) {
 		/* do nothing */
 	}
 
@@ -255,7 +255,7 @@ void configure_usb_dpll(dpll_param *dpll_param_p)
 
 	/* Unlock the USB dpll */
 	set_modify(CM_CLKMODE_DPLL_USB, 0x00000007, IDLE_BYPASS_LOW_POWER_MODE);
-	if (!wait_on_value(BIT(0), 0, CM_IDLEST_DPLL_USB, LDELAY)) {
+	if (!check_loop(BIT(0), 0, CM_IDLEST_DPLL_USB)) {
 		/* do nothing */
 	}
 
@@ -264,7 +264,7 @@ void configure_usb_dpll(dpll_param *dpll_param_p)
 
 	/* lock the dpll */
 	writel(0x00000007, CM_CLKMODE_DPLL_USB);
-	if (!wait_on_value(BIT(0), 1, CM_IDLEST_DPLL_USB, LDELAY)) {
+	if (!check_loop(BIT(0), 1, CM_IDLEST_DPLL_USB)) {
 		/* do nothing */
 	}
 
@@ -287,21 +287,21 @@ void scale_vcores(void)
 
 	/* VDD_CORE - SMPS8_VOLTAGE */
 	writel(0x013C3712, PRM_VC_VAL_BYPASS);
-	if (!wait_on_value(0x01000000, 0, PRM_VC_VAL_BYPASS, LDELAY)) {
+	if (!check_loop(0x01000000, 0, PRM_VC_VAL_BYPASS)) {
 		/* do nothing */
 	}
 	set_modify(PRM_IRQSTATUS_MPU, 0x00000000, 0x00000000);
 
 	/* VDD_MM:  SMPS45_VOLTAGE */
 	writel(0x01382B12, PRM_VC_VAL_BYPASS);
-	if (!wait_on_value(0x01000000, 0, PRM_VC_VAL_BYPASS, LDELAY)) {
+	if (!check_loop(0x01000000, 0, PRM_VC_VAL_BYPASS)) {
 		/* do nothing */
 	}
 	set_modify(PRM_IRQSTATUS_MPU, 0x00000000, 0x00000000);
 
 	/* VDD_MPU:  SMPS12_VOLTAGE */
 	writel(0x01382312, PRM_VC_VAL_BYPASS);
-	if (!wait_on_value(0x01000000, 0, PRM_VC_VAL_BYPASS, LDELAY)) {
+	if (!check_loop(0x01000000, 0, PRM_VC_VAL_BYPASS)) {
 		/* do nothing */
 	}
 	set_modify(PRM_IRQSTATUS_MPU, 0x00000000, 0x00000000);
@@ -335,7 +335,7 @@ void prcm_init(void)
 	/* Put EMIF clock domain in sw wakeup mode */
 	writel(0x00000002, CM_EMIF_CLKSTCTRL);
 	writel(0x00001709, CM_SHADOW_FREQ_CONFIG1);
-	if (!wait_on_value(BIT(0), 1, CM_SHADOW_FREQ_CONFIG1, LDELAY)) {
+	if (!check_loop(BIT(0), 1, CM_SHADOW_FREQ_CONFIG1)) {
 		/* do nothing */
 	}
 	/* core dpll has now been locked */

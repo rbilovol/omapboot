@@ -32,17 +32,19 @@
 #include <aboot/aboot.h>
 #include <aboot/io.h>
 
-u32 wait_on_value(u32 read_bit_mask, u32 match_value, u32 read_addr, u32 bound)
+#define LOOP_MAX      2000
+u32 check_loop(u32 mask, u32 match, u32 addr)
 {
 	u32 i = 0, val;
-	do {
+	while(1) {
 		++i;
-		val = readl(read_addr) & read_bit_mask;
-		if (val == match_value)
+		val = readl(addr) & mask;
+		if (val == match)
 			return (1);
-		if (i == bound)
+		if (i == LOOP_MAX)
 			return (0);
-	} while (1);
+	}
+	return(0);
 }
 
 void set_modify(u32 reg, u32 mask, u32 value)

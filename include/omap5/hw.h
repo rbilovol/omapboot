@@ -33,7 +33,6 @@
 #ifndef _OMAP54XX_HW_H
 #define  _OMAP54XX_HW_H
 
-#define LDELAY 200
 #define BIT(x)	(1<<(x))
 
 #define OMAP54XX_L4_CORE_BASE		0x4A000000

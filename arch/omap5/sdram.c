@@ -38,8 +38,7 @@ void setup_emif_config(void)
 {
 	writel(0x00000001, CM_EMIF_EMIF1_CLKCTRL);
 	writel(0x00000001, CM_EMIF_EMIF2_CLKCTRL);
-	if (!wait_on_value(0x00000700, 0x00000700, CM_EMIF_CLKSTCTRL,
-		LDELAY)) {
+	if (!check_loop(0x00000700, 0x00000700, CM_EMIF_CLKSTCTRL)) {
 		/* do nothing */
 	}
 
