@@ -37,12 +37,12 @@ int i2c_init(hal_i2c i2c_id)
 	int n;
 
 	/* configure mux and pull ups */
-	n = rom_hal_ctrl_configurepads(HAL_MODULE_I2C, HAL_I2C1);
+	n = rom_hal_ctrl_configurepads(HAL_MODULE_I2C, i2c_id);
 	if (n)
 		return n; /* returns when n!=STATUS_OKAY */
 
 	/* enables all interface and functional clocks */
-	n = rom_hal_cm_enablemoduleclocks(HAL_MODULE_I2C, HAL_I2C1);
+	n = rom_hal_cm_enablemoduleclocks(HAL_MODULE_I2C, i2c_id);
 	if (n)
 		return n; /* returns when n!=STATUS_OKAY */
 
@@ -95,7 +95,7 @@ int i2c_close(hal_i2c i2c_id)
 		return n; /* returns when n!=STATUS_OKAY */
 
 	/* disables all interface and functional clocks */
-	n = rom_hal_cm_disablemoduleclocks(HAL_MODULE_I2C, HAL_I2C1);
+	n = rom_hal_cm_disablemoduleclocks(HAL_MODULE_I2C, i2c_id);
 	if (n)
 		return n; /* returns when n!=STATUS_OKAY */
 
