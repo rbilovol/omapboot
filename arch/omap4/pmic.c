@@ -46,6 +46,14 @@ int pmic_enable(void)
 	u32 value;
 	u16 cmd;
 
+	ret = i2c_init(i2c_id);
+	if (ret != 0) {
+		printf("\nFailed to init I2C-%d\n", i2c_id);
+		return ret;
+	} else {
+		printf("\nInitialized I2C-%d\n", i2c_id);
+	}
+
 	reg_addr = 0x98; value = 0x01;
 	cmd = (reg_addr & 0xFF) | ((value & 0xFF) << 8);
 	clk32 = readl(CLK32K_COUNTER_REGISTER);

@@ -92,25 +92,8 @@ void iboot(unsigned *info)
 	printf("%s\n", ABOOT_VERSION);
 	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
 
-#if defined CONFIG_IS_OMAP4
-	hal_i2c i2c_id = HAL_I2C1;
-
-	ret = i2c_init(i2c_id);
-	if (ret != 0) {
-		printf("\nFailed to init I2C-%d\n", i2c_id);
-		goto fail;
-	} else
-		printf("\nInitialized I2C-%d\n", i2c_id);
-
-	ret = pmic_enable();
-	if (ret != 0) {
-		printf("could not enable the pmic\n");
-		goto fail;
-	} else {
-		printf("Configure the pbias\n");
-		pbias_config();
-	}
-#endif
+	if (boot_ops->board_ops->board_pmic_enable)
+		boot_ops->board_ops->board_pmic_enable();
 
 	enable_irqs();
 

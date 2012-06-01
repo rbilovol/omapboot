@@ -377,6 +377,32 @@ static void blaze_prcm_init(void)
 	prcm_init();
 }
 
+static int blaze_pmic_enable(void)
+{
+	int ret = 0;
+
+	ret = pmic_enable();
+	if (ret != 0) {
+		printf("could not enable the pmic\n");
+		return ret;
+	} else {
+		printf("Configure the pbias\n");
+		ret = pbias_config();
+		return ret;
+	}
+}
+
+static int blaze_pmic_disable(void)
+{
+	int ret = 0;
+
+	ret = pmic_disable();
+	if (ret != 0)
+		printf("Unable to disable the pmic\n");
+
+	return ret;
+}
+
 static struct storage_specific_functions *blaze_storage_init(void)
 {
 	int ret;
@@ -405,6 +431,8 @@ static struct board_specific_functions blaze_funcs = {
 	.board_gpmc_init = blaze_gpmc_init,
 	.board_prcm_init = blaze_prcm_init,
 	.board_storage_init = blaze_storage_init,
+	.board_pmic_enable = blaze_pmic_enable,
+	.board_pmic_disable = blaze_pmic_disable,
 };
 
 void* init_board_funcs(void)

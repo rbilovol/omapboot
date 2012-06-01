@@ -63,6 +63,8 @@ struct board_specific_functions {
 	struct storage_specific_functions * (*board_storage_init)();
 	int (*board_user_fastboot_request)(void);
 	u8 (*board_get_flash_slot)(void);
+	int (*board_pmic_enable)(void);
+	int (*board_pmic_disable)(void);
 };
 
 struct storage_specific_functions {
