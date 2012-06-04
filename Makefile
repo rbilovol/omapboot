@@ -81,7 +81,8 @@ TARGET_CC_LOC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-search-dirs|grep ^
 TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
 
 HOST_CFLAGS := -g -O2 -Wall $(EXTRAOPTS)
-HOST_CFLAGS += -Itools
+HOST_CFLAGS += -Ihost/include/common
+HOST_CFLAGS += -Ihost/include/$(MACH)
 HOST_CFLAGS += -include include/config.h
 HOST_CC_LOC := $(shell $(CC) $(HOST_CFLAGS) -print-search-dirs|grep ^install|cut -d ':' -f2|tr -d ' ')
 
@@ -121,7 +122,7 @@ ALL :=
 
 # Build the usbboot host tool
 include build/rules.mk
-include tools/host_usbboot.mk
+include host/tools/host_usbboot.mk
 
 # Build the target with it's dependencies
 include arch/$(MACH)/board/$(BOARD).mk

@@ -1,5 +1,8 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2012, Texas Instruments, Inc.
+ * Texas Instruments, <www.ti.com>
+ *
+ * Copyright (C) 2012 The Android Open Source Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,7 +12,7 @@
  *    notice, this list of conditions and the following disclaimer.
  *  * Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the 
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -19,34 +22,13 @@
  * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
  * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
  * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-
-#if defined CONFIG_IS_OMAP4
-unsigned char basic_header[512] = {
-	0x40, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x43, 0x48, 0x53, 0x45,
-	0x54, 0x54, 0x49, 0x4e, 0x47, 0x53, 0x00, 0x00,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xc1, 0xc0, 0xc0, 0xc0, 0x00, 0x01, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
-#endif
-
-#if defined CONFIG_IS_OMAP5
 unsigned char basic_header[512] = {
 	/* CHSETTINGS(empty) + OPPLOW CHRAM */
 	0xa0, 0x00, 0x00, 0x00, 0x8c, 0x00, 0x00, 0x00,
@@ -140,24 +122,3 @@ unsigned char basic_header[512] = {
 	0x03, 0x74, 0x80, 0x0f,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
-#endif
-
-int main(int argc, char **argv)
-{
-	unsigned x[2];
-
-	if (argc < 4)
-		return -1;
-
-	x[1] = strtoul(argv[1], 0, 0);
-	x[0] = strtoul(argv[2], 0, 0);
-	
-	if (write(1, basic_header, sizeof(basic_header)) < 0)
-		return -1;
-	if (!strcmp(argv[4], "add_gp_hdr")) {
-		if (write(1, x, sizeof(x)) < 0)
-			return -1;
-	}
-
-	return 0;
-}

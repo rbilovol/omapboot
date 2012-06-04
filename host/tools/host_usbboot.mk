@@ -28,16 +28,16 @@
 include build/rules.mk
 
 M_NAME := usbboot
-M_OBJS := tools/usbboot.o
-M_OBJS += tools/usb_linux.o
+M_OBJS := host/tools/usbboot.o
+M_OBJS += host/tools/usb_linux.o
 M_OBJS += 2ndstage.o
 M_OBJS += secondstage.o
 include build/host-executable.mk
 
 M_NAME := mkheader
-M_OBJS := tools/mkheader.o
+M_OBJS := host/tools/mkheader.o
 include build/host-executable.mk
 
 M_NAME := bin2c
-M_OBJS := tools/bin2c.o
+M_OBJS := host/tools/bin2c.o
 include build/host-executable.mk
