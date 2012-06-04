@@ -118,8 +118,10 @@ void eboot(unsigned *info)
 	}
 
 	if (boot_ops->board_ops->board_user_fastboot_request) {
-		if (boot_ops->board_ops->board_user_fastboot_request())
+		if (boot_ops->board_ops->board_user_fastboot_request()) {
+			usb_init(&usb);
 			do_fastboot(boot_ops);
+		}
 	}
 
 	if (info)

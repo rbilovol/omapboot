@@ -750,6 +750,8 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 			strcpy(response, "OKAY");
 			fastboot_tx_status(response, strlen(response));
 
+			usb_close(&usb);
+
 			printf("booting kernel...\n");
 
 			do_booti((char *)booti_args);

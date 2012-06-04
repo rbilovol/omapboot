@@ -74,7 +74,7 @@ int usb_open(struct usb *usb)
 
 	usb->dread.options = boot->options;
 	usb->dread.device_type = boot->device_type;
-	usb->dread.device_data = 0;
+	usb->dread.device_data = boot->device_data;
 
 #if defined(CONFIG_IS_OMAP4)
 	usb->dwrite.xfer_mode = boot->xfer_mode;
@@ -82,7 +82,7 @@ int usb_open(struct usb *usb)
 	usb->dwrite.config_object = boot->config_object;
 	usb->dwrite.options = boot->options;
 	usb->dwrite.device_type = boot->device_type;
-	usb->dwrite.device_data = 0;
+	usb->dwrite.device_data = boot->device_data;
 
 	return 0;
 }

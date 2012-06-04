@@ -49,6 +49,8 @@
 #define EXTENDED_CMDLINE	""
 #endif
 
+struct usb usb;
+
 static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 {
 	u32 *atag_start = atag;
@@ -285,5 +287,6 @@ int do_booti(char *info)
 	theKernel(0, cfg_machine_type, (void *)dbt_addr);
 
 fail:
+	usb_init(&usb);
 	do_fastboot(boot_ops);
 }
