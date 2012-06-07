@@ -49,8 +49,6 @@
 #define EXTENDED_CMDLINE	""
 #endif
 
-struct bootloader_ops *booti_ops = (void *)0x84100000;
-
 static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 {
 	u32 *atag_start = atag;
@@ -104,7 +102,7 @@ void boot_settings(boot_img_hdr *hdr, u32 atag)
 	char boot_str[64];
 
 	serial_len = sprintf(serial_str, " androidboot.serialno=%s",
-		booti_ops->proc_ops->proc_get_serial_num());
+		boot_ops->proc_ops->proc_get_serial_num());
 
 	strcpy((char *)hdr->cmdline, temp_cmdline);
 	if (sizeof(hdr->cmdline) >= (serial_len +
@@ -169,34 +167,34 @@ int do_booti(char *info)
 
 	addr = CONFIG_ADDR_DOWNLOAD;
 	hdr = (boot_img_hdr *) addr;
-	booti_ops->board_ops = init_board_funcs();
-	booti_ops->proc_ops = init_processor_id_funcs();
+	boot_ops->board_ops = init_board_funcs();
+	boot_ops->proc_ops = init_processor_id_funcs();
 
 	if (boot_from_mmc) {
 
 		struct fastboot_ptentry *pte;
 
 		/* Init the MMC and load the partition table */
-		if (booti_ops->board_ops->board_storage_init)
-			booti_ops->storage_ops = booti_ops->
+		if (boot_ops->board_ops->board_storage_init)
+			boot_ops->storage_ops = boot_ops->
 				board_ops->board_storage_init();
-		if (!booti_ops->storage_ops) {
+		if (!boot_ops->storage_ops) {
 			printf("board_storage_init() failed\n");
 			goto fail;
 		}
-		ret = load_ptbl(booti_ops->storage_ops, 0);
+		ret = load_ptbl(boot_ops->storage_ops, 0);
 
-		dbt_addr = load_dev_tree(booti_ops);
+		dbt_addr = load_dev_tree(boot_ops);
 
 		pte = fastboot_flash_find_ptn(ptn);
 		if (!pte) {
 			printf("booti: cannot find '%s' partition\n", ptn);
-			do_fastboot(booti_ops);
+			do_fastboot(boot_ops);
 		}
 
-		sector_sz = booti_ops->storage_ops->get_sector_size();
+		sector_sz = boot_ops->storage_ops->get_sector_size();
 		num_sectors =  sizeof(boot_img_hdr) / sector_sz;
-		ret = booti_ops->storage_ops->read(pte->start, num_sectors,
+		ret = boot_ops->storage_ops->read(pte->start, num_sectors,
 							(void *) hdr);
 		if (ret != 0) {
 			printf("booti: failed to read bootimg header\n");
@@ -222,7 +220,7 @@ int do_booti(char *info)
 		printf("Reading kernel from start sector %d and reading %d "
 			"number of sectors\n", (int)sector1, (int)num_sectors);
 #endif
-		ret = booti_ops->storage_ops->read(sector1, num_sectors,
+		ret = boot_ops->storage_ops->read(sector1, num_sectors,
 					(void *) hdr->kernel_addr);
 		if (ret != 0) {
 				printf("mmc read failed\n");
@@ -239,7 +237,7 @@ int do_booti(char *info)
 		printf("Reading ramdisk from start sector %d and reading %d "
 			"number of sectors\n", (int)sector2, (int)num_sectors);
 #endif
-		ret = booti_ops->storage_ops->read(sector2, num_sectors,
+		ret = boot_ops->storage_ops->read(sector2, num_sectors,
 					(void *) hdr->ramdisk_addr);
 		if (ret != 0) {
 			printf("mmc read failed\n");

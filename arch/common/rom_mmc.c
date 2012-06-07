@@ -400,7 +400,6 @@ static u64 get_mmc_total_sectors(void)
 
 struct storage_specific_functions *init_rom_mmc_funcs(u8 device)
 {
-	struct bootloader_ops *boot_ops = (void *) 0x84100000;
 	if ((device == DEVICE_SDCARD) || (device == DEVICE_EMMC))
 		mmcd.storage_device = device;
 	else

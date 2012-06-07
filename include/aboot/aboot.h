@@ -60,6 +60,7 @@ extern unsigned cfg_machine_type;
 int do_booti(char *info);
 extern int boot_image(unsigned machtype, unsigned image, unsigned len);
 
+extern struct bootloader_ops *boot_ops;
 
 /* rev-id stuff */
 typedef enum {
