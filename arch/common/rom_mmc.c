@@ -32,6 +32,7 @@
 #include <aboot/io.h>
 
 #include <common/usbboot_common.h>
+#include <common/alloc.h>
 #include <common/omap_rom.h>
 #include <common/mmc.h>
 
@@ -132,6 +133,7 @@ static int mmc_init(void)
 {
 	struct mem_device *md;
 	struct mmc_devicedata *dd;
+	void *dd_ptr;
 	u16 options;
 	int n;
 
@@ -152,7 +154,13 @@ static int mmc_init(void)
 	memset(md, 0, sizeof(struct mem_device));
 
 	/*initialize device data buffer*/
-	dd = (void *) 0x80000000;
+	dd_ptr = (void *) alloc_memory(2500);
+	if (dd_ptr == NULL) {
+		printf("unable to allocate memory for the mmc device data\n");
+		return -1;
+	}
+
+	dd = (void *) dd_ptr;
 	memset(dd, 0, 2500);
 
 	options			= 1;
