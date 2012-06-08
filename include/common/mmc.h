@@ -2,9 +2,6 @@
  * Copyright (C) 2012, Texas Instruments, Inc.
  * Texas Instruments, <www.ti.com>
  *
- * Copyright (C) 2012 The Android Open Source Project
- * All rights reserved.
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
