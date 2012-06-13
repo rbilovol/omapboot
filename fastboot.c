@@ -631,24 +631,21 @@ static int flash_non_sparse_formatted_image(void)
 	#ifdef DEBUG
 	int sector_count;
 
-		for (sector_count = 0; sector_count < num_sectors;
-			sector_count++) {
-
-			/*read back the data and compare */
-			ret = fb_data->storage_ops->read(fb_data->sector+
-				sector_count, 1,
-				read_buffer + (sector_count*512));
-			if (ret != 0) {
-				printf("read failed\n");
-				return ret;
-			}
-
-			if (memcmp(read_buffer + (sector_count*512),
-				transfer_buffer + (sector_count*512), 512)) {
-				printf("data mismatch sector %d\n",
-						fb_data->sector+sector_count);
-			}
+	for (sector_count = 0; sector_count < num_sectors; sector_count++) {
+		/*read back the data and compare */
+		ret = fb_data->storage_ops->read(fb_data->sector +
+			sector_count, 1, read_buffer + (sector_count*512));
+		if (ret != 0) {
+			printf("read failed\n");
+			return ret;
 		}
+
+		if (memcmp(read_buffer + (sector_count*512),
+			transfer_buffer + (sector_count*512), 512)) {
+			printf("data mismatch sector %d\n",
+				fb_data->sector+sector_count);
+		}
+	}
 	#endif
 
 	strcpy(response, "OKAY");
