@@ -394,12 +394,14 @@ static int flash_sparse_formatted_image(void)
 			}
 
 			#ifdef DEBUG
+			int sector_count;
+
 			/*read back the data and compare */
 			for (sector_count = 0; sector_count < num_sectors;
 							sector_count++) {
 
-				ret = fb_data->storage_ops->read(sector+
-					sector_count, 1,
+				ret = fb_data->storage_ops->read
+				(fb_data->sector + sector_count, 1,
 					read_buffer + (sector_count*512));
 				if (ret != 0) {
 					printf("read failed\n");
@@ -408,7 +410,7 @@ static int flash_sparse_formatted_image(void)
 				if (memcmp(read_buffer + (sector_count*512),
 				transfer_buffer + (sector_count*512), 512)) {
 					printf("data mismatch sector %d\n",
-						sector + sector_count);
+					fb_data->sector + sector_count);
 				}
 			}
 			#endif
@@ -627,6 +629,8 @@ static int flash_non_sparse_formatted_image(void)
 	}
 
 	#ifdef DEBUG
+	int sector_count;
+
 		for (sector_count = 0; sector_count < num_sectors;
 			sector_count++) {
 
@@ -642,7 +646,7 @@ static int flash_non_sparse_formatted_image(void)
 			if (memcmp(read_buffer + (sector_count*512),
 				transfer_buffer + (sector_count*512), 512)) {
 				printf("data mismatch sector %d\n",
-							sector+sector_count);
+						fb_data->sector+sector_count);
 			}
 		}
 	#endif
