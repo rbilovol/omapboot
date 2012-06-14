@@ -23,6 +23,7 @@
 #include <aboot/aboot.h>
 #include <aboot/types.h>
 #include <stdarg.h>
+#include <libc/string.h>
 
 int printf(const char *fmt, ...)
 {
@@ -176,7 +177,7 @@ next_format:
 			break;
 		case 's':
 			s = va_arg(ap, const char *);
-			if(s == 0)
+			if (s == NULL)
 				s = "<null>";
 			goto _output_string;
 		case '-':

@@ -171,4 +171,6 @@ int vsnprintf(char *str, size_t len, const char *fmt, va_list ap);
 
 int sprintf(char *buf, const char *fmt, ...);
 
+void raise(void);
+
 #endif  /* __STRING_H_ */
