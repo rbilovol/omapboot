@@ -56,7 +56,7 @@ static struct fastboot_data *fb_data = &fb_data_data;
 static void *transfer_buffer;
 static void *read_buffer;
 
-char *get_rom_version(void)
+static char *get_rom_version(void)
 {
 	if (!fb_data->proc_ops->proc_get_rom_version)
 		return "not supported";
@@ -283,7 +283,8 @@ fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
 				return fb_data->ptable + n;
 		}
 	}
-	return 0;
+
+	return NULL;
 }
 
 fastboot_ptentry *fastboot_flash_get_ptn(unsigned int n, int count)
@@ -291,7 +292,7 @@ fastboot_ptentry *fastboot_flash_get_ptn(unsigned int n, int count)
 	if (n < count)
 		return fb_data->ptable + n;
 	else
-		return 0;
+		return NULL;
 }
 
 static int download_image(void)
@@ -921,7 +922,7 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 
 			fb_data->e = fastboot_flash_find_ptn(&cmd[6]);
 
-			if (fb_data->e == 0) {
+			if (fb_data->e == NULL) {
 				char ptn_name[20];
 				strncpy(ptn_name, cmd+6, cmdsize-6);
 
