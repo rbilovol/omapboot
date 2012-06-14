@@ -179,11 +179,11 @@ static void end_ptbl(struct ptable *ptbl)
 
 	DBG("end_ptbl\n");
 
-	n = crc32(0, 0, 0);
+	n = crc32(0, NULL, 0);
 	n = crc32(n, (void *) ptbl->entry, sizeof(ptbl->entry));
 	hdr->entries_crc32 = n;
 
-	n = crc32(0, 0, 0);
+	n = crc32(0, NULL, 0);
 	n = crc32(0, (void *) &ptbl->header, sizeof(ptbl->header));
 	hdr->crc32 = n;
 }
