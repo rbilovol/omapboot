@@ -65,9 +65,9 @@ struct mmc_storage_data {
 
 #define MMC_SECTOR_SZ 512
 
-struct mmc_storage_data mmcd;
+static struct mmc_storage_data mmcd;
 
-const u32 rom_hal_mmchs_writedata_addr[] = {
+static const u32 rom_hal_mmchs_writedata_addr[] = {
 	0,           /*OMAP_REV_INVALID*/
 	(0x25c2c|1), /*OMAP_4430_ES1_DOT_0*/
 	(0x2ddd8|1), /*OMAP_4430_ES2_DOT_0*/
@@ -81,7 +81,7 @@ const u32 rom_hal_mmchs_writedata_addr[] = {
 	(0x3ee18|1)  /*OMAP_5432_ES1_DOT_0*/
 };
 
-const u32 rom_hal_mmchs_sendcommand_addr[] = {
+static const u32 rom_hal_mmchs_sendcommand_addr[] = {
 	0,           /*OMAP_REV_INVALID*/
 	(0x25aa8|1), /*OMAP_4430_ES1_DOT_0*/
 	(0x2dc54|1), /*OMAP_4430_ES2_DOT_0*/
@@ -115,10 +115,10 @@ static u32 mmc_reg_read(u32 reg_offset)
 
 static int mmc_configure(struct mmc *mmc, u32 id, u32 value)
 {
+	int n;
 	struct mmc_config config;
 	config.configid = id;
 	config.value = value;
-	int n;
 
 	n = mmc->io->configure(&mmc->dread, &config);
 	if (n) {
