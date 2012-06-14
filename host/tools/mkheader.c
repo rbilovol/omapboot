@@ -39,8 +39,8 @@ int main(int argc, char **argv)
 	if (argc < 4)
 		return -1;
 
-	x[1] = strtoul(argv[1], 0, 0);
-	x[0] = strtoul(argv[2], 0, 0);
+	x[1] = strtoul(argv[1], NULL, 0);
+	x[0] = strtoul(argv[2], NULL, 0);
 	
 	if (write(1, basic_header, sizeof(basic_header)) < 0)
 		return -1;
