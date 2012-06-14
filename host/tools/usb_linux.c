@@ -101,7 +101,7 @@ static int filter_usb_device(int fd, char *ptr, int len, int writable,
     struct usb_ifc_info info;
     
     int in, out;
-    unsigned i;
+    int i;
     unsigned e;
     
     if(check(ptr, len, USB_DT_DEVICE, USB_DT_DEVICE_SIZE))
@@ -142,7 +142,6 @@ static int filter_usb_device(int fd, char *ptr, int len, int writable,
 
         result = ioctl(fd, USBDEVFS_CONTROL, &ctrl);
         if (result > 0) {
-            int i;
             // skip first word, and copy the rest to the serial string, changing shorts to bytes.
             result /= 2;
             for (i = 1; i < result; i++)
@@ -198,7 +197,7 @@ static int filter_usb_device(int fd, char *ptr, int len, int writable,
 
 static usb_handle *find_usb_device(const char *base, ifc_match_func callback)
 {
-    usb_handle *usb = 0;
+    usb_handle *usb = NULL;
     char busname[64], devname[64];
     char desc[1024];
     int n, in, out, ifc, dev_product = 0;
@@ -209,17 +208,17 @@ static usb_handle *find_usb_device(const char *base, ifc_match_func callback)
     int writable;
     
     busdir = opendir(base);
-    if(busdir == 0) return 0;
+    if(busdir == NULL) return NULL;
 
-    while((de = readdir(busdir)) && (usb == 0)) {
+    while((de = readdir(busdir)) && (usb == NULL)) {
         if(badname(de->d_name)) continue;
         
         sprintf(busname, "%s/%s", base, de->d_name);
         devdir = opendir(busname);
-        if(devdir == 0) continue;
+        if(devdir == NULL) continue;
         
 //        DBG("[ scanning %s ]\n", busname);
-        while((de = readdir(devdir)) && (usb == 0)) {
+        while((de = readdir(devdir)) && (usb == NULL)) {
             
             if(badname(de->d_name)) continue;
             sprintf(devname, "%s/%s", busname, de->d_name);
@@ -254,7 +253,7 @@ static usb_handle *find_usb_device(const char *base, ifc_match_func callback)
                 if(n != 0) {
                     close(fd);
                     free(usb);
-                    usb = 0;
+                    usb = NULL;
                     continue;
                 }
             } else {

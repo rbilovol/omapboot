@@ -61,6 +61,6 @@ usb_handle *usb_open(ifc_match_func callback);
 int usb_close(usb_handle *h);
 int usb_read(usb_handle *h, void *_data, int len);
 int usb_write(usb_handle *h, const void *_data, int len);
-
+void usb_kick(usb_handle *h);
 
 #endif
