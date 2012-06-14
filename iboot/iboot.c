@@ -87,6 +87,8 @@ void iboot(unsigned *info)
 	if (boot_ops->board_ops->board_late_init)
 		boot_ops->board_ops->board_late_init();
 
+	enable_irqs();
+
 	serial_init();
 
 	printf("%s\n", ABOOT_VERSION);
@@ -97,8 +99,6 @@ void iboot(unsigned *info)
 
 	if (boot_ops->board_ops->board_configure_pwm_mode)
 		boot_ops->board_ops->board_configure_pwm_mode();
-
-	enable_irqs();
 
 	ret = usb_open(&usb);
 	if (ret != 0) {
