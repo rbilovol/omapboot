@@ -76,7 +76,7 @@ int boot_image(unsigned machtype, unsigned image, unsigned len)
 
 	if (hdr->cmdline && hdr->cmdline[0]) {
 		/* include terminating 0 and word align */
-		unsigned n = (strlen((void*) hdr->cmdline) + 4) & (~3);
+		n = (strlen((void *) hdr->cmdline) + 4) & (~3);
 		*tag++ = (n / 4) + 2;
 		*tag++ = 0x54410009;
 		memcpy(tag, hdr->cmdline, n);
