@@ -50,7 +50,7 @@ static struct partition partitions[] = {
 	{ "system", 512*1024 },
 	{ "cache", 256*1024 },
 	{ "userdata", 0},
-	{ 0, 0 },
+	{ NULL, 0 },
 };
 
 static struct partition * panda_get_partition(void)
