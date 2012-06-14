@@ -33,7 +33,7 @@
 #include <version.h>
 
 char aboot_version_string[20];
-#define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))
+
 unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);
 int get_downloadsize_from_string(int count, char *string);
