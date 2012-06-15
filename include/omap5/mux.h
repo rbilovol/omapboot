@@ -63,6 +63,17 @@
 #define setup_wakeup(OFFSET, VALUE)\
 	writew((VALUE), CONTROL_PADCONF_WKUP + (OFFSET));
 
+#define DS_120		0
+#define DS_60		1
+#define DS_30		3
+#define DS_45		2
+
+#define EMMC_DS_SHIFT	8
+
+#define setup_smartio_padconf(OFFSET, VALUE, SHIFT)\
+	writew(((readw(CONTROL_PADCONF_CORE + OFFSET) & ~(3 << SHIFT)) |\
+		(VALUE << SHIFT)), (CONTROL_PADCONF_CORE + OFFSET))
+
 #define CONTROL_PADCONF_CORE_REVISION		0x0000
 #define CONTROL_PADCONF_CORE_HWINFO		0x0004
 #define CONTROL_PADCONF_CORE_SYSCONFIG		0x0010
@@ -317,5 +328,7 @@
 #define CONTROL_WAKEUP_SYS_BOOT3		0x0076
 #define CONTROL_WAKEUP_SYS_BOOT4		0x0078
 #define CONTROL_WAKEUP_SYS_BOOT5		0x007a
+
+#define CONTROL_SMART1IO_PADCONF_0		0x05A8
 
 #endif

@@ -322,6 +322,9 @@ static void omap5evm_mux_init(void)
 	setup_wakeup(CONTROL_WAKEUP_SYS_BOOT3, (IEN | M0));
 	setup_wakeup(CONTROL_WAKEUP_SYS_BOOT4, (IEN | M0));
 	setup_wakeup(CONTROL_WAKEUP_SYS_BOOT5, (IEN | M0));
+
+	/* Setup Drive Strengths */
+	setup_smartio_padconf(CONTROL_SMART1IO_PADCONF_0, DS_60, EMMC_DS_SHIFT);
 }
 
 static void omap5evm_late_init(void)
