@@ -60,6 +60,11 @@ struct dpll_param abe_dpll_params = {
 	750, 0, 1, 1, -1, -1, -1, -1, -1, -1
 };
 
+/* OPP NOM */
+struct dpll_param mpu_dpll_params[2] = {
+	{375, 8, 1, -1, -1, -1, -1, -1, -1, -1},	/* 19.2 MHz */
+	{375, 17, 1, -1, -1, -1, -1, -1, -1, -1}	/* 38.4 MHz */
+};
 #define MPU_VOLTAGE	1040000
 
 void setup_clocks(void)
@@ -154,7 +159,7 @@ void configure_per_dpll(void)
 	return;
 }
 
-void configure_mpu_dpll(void)
+void configure_mpu_dpll(dpll_param *dpll_param_p)
 {
 	/* Put DPLL into bypass mode */
 	set_modify(CM_CLKMODE_DPLL_MPU, 0x00000007, 0x00000005);
@@ -164,10 +169,12 @@ void configure_mpu_dpll(void)
 	}
 
 	/* Program DPLL frequency (M and N) */
-	set_modify(CM_CLKSEL_DPLL_MPU, 0x0007FF7F, 0x00017708);
+	set_modify(CM_CLKSEL_DPLL_MPU, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_MPU, 0x0000007f, dpll_param_p->n);
 
 	/* Program DPLL_CLKOUT divider (M2 = 1) */
-	writel(0x00000001, CM_DIV_M2_DPLL_MPU);
+	if (dpll_param_p->m2 >= 0)
+		writel(dpll_param_p->m2, CM_DIV_M2_DPLL_MPU);
 
 	/* Put DPLL into lock mode */
 	writel(0x00000007, CM_CLKMODE_DPLL_MPU);
@@ -373,7 +380,7 @@ void prcm_init(void)
 	configure_per_dpll();
 	/* PER DPLL has been configured and LOCKED */
 
-	configure_mpu_dpll();
+	configure_mpu_dpll(&mpu_dpll_params[0]);
 	/* MPU DPLL has been configured and LOCKED */
 
 	configure_iva_dpll(&iva_dpll_params[0]);
