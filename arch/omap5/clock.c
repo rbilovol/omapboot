@@ -40,6 +40,7 @@ struct dpll_param core_dpll_params[2] = {
 	{665, 11,  2,  5,  8,  4, 62,  5,   5,  7},	/* 19.2 MHz */
 	{665, 23,  2,  5,  8,  4, 62,  5,  5,   7}	/* 38.4 MHz */
 };
+#define CORE_VOLTAGE	1040000
 
 /* OPP NOM */
 struct dpll_param usb_dpll_params[2] = {
@@ -52,11 +53,14 @@ struct dpll_param iva_dpll_params[2] = {
 	{1881, 30, -1, -1,  5,  6,  -1, -1, -1, -1},	/* 19.2 MHz */
 	{1972, 64, -1, -1,  5,  6,  -1, -1, -1, -1}	/* 38.4 MHz */
 };
+#define IVA_VOLTAGE	1040000
 
 /* OPP NOM */
 struct dpll_param abe_dpll_params = {
 	750, 0, 1, 1, -1, -1, -1, -1, -1, -1
 };
+
+#define MPU_VOLTAGE	1040000
 
 void setup_clocks(void)
 {
@@ -272,36 +276,86 @@ void configure_usb_dpll(dpll_param *dpll_param_p)
 	return;
 }
 
+static u8 get_twl6035_voltage(u32 uv)
+{
+	/* format the desired voltage for palmas */
+	return (u8)((uv - 500000) / 10000) + 6;
+}
+
+static u32 get_twl6035_slewdelay(u32 opp_uv)
+{
+	/*
+	 * compute the delay for voltage to stabilize
+	 * depending upon the voltage transition
+	 * Current levels with TWL6035 palmas for ES1.0:
+	 * opp_boot: 1050000 uv
+	 * slew rate = 5 mv per ms
+	 * Revisit when ES2.0 is out
+	 */
+	u32 slew_rate = 5;
+	u32 opp_boot_uv = 1050000;
+	u32 delta_uv;
+	u32 sdelay;
+
+	if (opp_boot_uv > opp_uv)
+		delta_uv = opp_boot_uv - opp_uv;
+	else
+		delta_uv = opp_uv - opp_boot_uv;
+
+	sdelay = (delta_uv / slew_rate) / 1000;
+
+	return sdelay;
+}
+
+static void set_vcore(u8 regaddr, u8 slaveaddr, u32 voltage)
+{
+	u8 valid = 0x1;
+	u8  data;
+	u32 cmd;
+
+	/* Compute and send i2c command */
+	data = get_twl6035_voltage(voltage);
+
+	cmd = (valid << 24) | (data << 16) | (regaddr << 8) | slaveaddr;
+	writel(cmd, PRM_VC_VAL_BYPASS);
+
+	/* check if voltage Controller did not send out command */
+	if (!check_loop(0x01000000, 0, PRM_VC_VAL_BYPASS)) {
+		/* do nothing, serial not setup yet */
+	}
+
+	/* make sure voltage stabilized */
+	ldelay(TIME_LOOP_RATIO * get_twl6035_slewdelay(voltage));
+
+	/* clean up irq status */
+	set_modify(PRM_IRQSTATUS_MPU, 0x00000000, 0x00000000);
+}
+
 void scale_vcores(void)
 {
-	/* Configure SR I2C Mode */
+	u32 regaddr;
+	u32 slaveaddr;
+
+	/* Configure SR I2C Mode - FS mode */
 	writel(0x00000000, PRM_VC_CFG_I2C_MODE);
 
-	/* Configure SR I2C Clock */
+	/* Configure SR I2C Clock - TOBEFIXED! */
 	writel(0xfffffffb, PRM_VC_CFG_I2C_CLK);
 
 	/* Configure Palmas TWL6035 */
+	slaveaddr = 0x12;
 
 	/* VDD_CORE - SMPS8_VOLTAGE */
-	writel(0x013C3712, PRM_VC_VAL_BYPASS);
-	if (!check_loop(0x01000000, 0, PRM_VC_VAL_BYPASS)) {
-		/* do nothing */
-	}
-	set_modify(PRM_IRQSTATUS_MPU, 0x00000000, 0x00000000);
+	regaddr = 0x37;
+	set_vcore(regaddr, slaveaddr, CORE_VOLTAGE);
 
 	/* VDD_MM:  SMPS45_VOLTAGE */
-	writel(0x01382B12, PRM_VC_VAL_BYPASS);
-	if (!check_loop(0x01000000, 0, PRM_VC_VAL_BYPASS)) {
-		/* do nothing */
-	}
-	set_modify(PRM_IRQSTATUS_MPU, 0x00000000, 0x00000000);
+	regaddr = 0x2B;
+	set_vcore(regaddr, slaveaddr, IVA_VOLTAGE);
 
 	/* VDD_MPU:  SMPS12_VOLTAGE */
-	writel(0x01382312, PRM_VC_VAL_BYPASS);
-	if (!check_loop(0x01000000, 0, PRM_VC_VAL_BYPASS)) {
-		/* do nothing */
-	}
-	set_modify(PRM_IRQSTATUS_MPU, 0x00000000, 0x00000000);
+	regaddr = 0x23;
+	set_vcore(regaddr, slaveaddr, MPU_VOLTAGE);
 
 	return;
 }
