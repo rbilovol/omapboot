@@ -76,6 +76,12 @@ struct dpll_param mpu_dpll_params[2] = {
 };
 #define MPU_VOLTAGE	1040000
 
+/* OPP NOM */
+struct dpll_param per_dpll_params[2] = {
+	{20, 0, 4, 3, 6, 4, -1, 2, -1, -1},	/* 19.2 MHz */
+	{10, 0, 4, 3, 6, 4, -1, 2, -1, -1}	/* 38.4 MHz */
+};
+
 void setup_clocks(void)
 {
 	struct omap_clocks * oclock;
@@ -133,7 +139,7 @@ void configure_core_dpll(dpll_param *dpll_param_p)
 	return;
 }
 
-void configure_per_dpll(void)
+void configure_per_dpll(dpll_param *dpll_param_p)
 {
 	/* Put DPLL into bypass mode */
 	set_modify(CM_CLKMODE_DPLL_PER, 0x00000007, 0x00000005);
@@ -141,14 +147,23 @@ void configure_per_dpll(void)
 		/* do nothing */
 	}
 
-	writel(0x00000004, CM_DIV_M2_DPLL_PER);
-	writel(0x00000003, CM_DIV_M3_DPLL_PER);
-	writel(0x00000006, CM_DIV_H11_DPLL_PER);
-	writel(0x00000004, CM_DIV_H12_DPLL_PER);
-	writel(0x00000000, CM_DIV_H14_DPLL_PER);
+	/* Setup post-dividers */
+	if (dpll_param_p->m2 >= 0)
+		writel(dpll_param_p->m2, CM_DIV_M2_DPLL_PER);
+	if (dpll_param_p->m3 >= 0)
+		writel(dpll_param_p->m3, CM_DIV_M3_DPLL_PER);
+	if (dpll_param_p->h11 >= 0)
+		writel(dpll_param_p->h11, CM_DIV_H11_DPLL_PER);
+	if (dpll_param_p->h12 >= 0)
+		writel(dpll_param_p->h12, CM_DIV_H12_DPLL_PER);
+	if (dpll_param_p->h13 >= 0)
+		writel(dpll_param_p->h14, CM_DIV_H14_DPLL_PER);
+
 	writel(0x00000002, CM_L4PER_CLKSTCTRL);
 
-	set_modify(CM_CLKSEL_DPLL_PER, 0x0007FF7F, 0x00001400);
+	/* Program DPLL frequency (M and N) */
+	set_modify(CM_CLKSEL_DPLL_PER, 0x0007ff00, dpll_param_p->m << 8);
+	set_modify(CM_CLKSEL_DPLL_PER, 0x0000007f, dpll_param_p->n);
 
 	/* Put DPLL into lock mode */
 	writel(0x00000007, CM_CLKMODE_DPLL_PER);
@@ -386,7 +401,7 @@ void prcm_init(void)
 	writel(temp, CM_CLKSEL_CORE);
 	/* CORE DPLL has been configured but not locked */
 
-	configure_per_dpll();
+	configure_per_dpll(&per_dpll_params[0]);
 	/* PER DPLL has been configured and LOCKED */
 
 	configure_mpu_dpll(&mpu_dpll_params[0]);
