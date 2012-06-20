@@ -48,12 +48,21 @@ struct dpll_param usb_dpll_params[2] = {
 	{400, 15, 2, -1, -1, -1, -1, -1, -1, -1}	/* 38.4 MHz */
 };
 
-/* OPP NOM */
+#ifndef CONFIG_FORCE_IVA_OPPNOM
+/* OPP_LOW */
+struct dpll_param iva_dpll_params[2] = {
+	{1881, 30, -1, -1, 10, 12, -1, -1, -1, -1},	/* 19.2 MHz */
+	{1972, 64, -1, -1, 10, 12, -1, -1, -1, -1}	/* 38.4 MHz */
+};
+#define IVA_VOLTAGE	950000
+#else
+/* OPP_NOM: in the customer specific need of having to go to OPP NOM */
 struct dpll_param iva_dpll_params[2] = {
 	{1881, 30, -1, -1,  5,  6,  -1, -1, -1, -1},	/* 19.2 MHz */
 	{1972, 64, -1, -1,  5,  6,  -1, -1, -1, -1}	/* 38.4 MHz */
 };
 #define IVA_VOLTAGE	1040000
+#endif
 
 /* OPP NOM */
 struct dpll_param abe_dpll_params = {
