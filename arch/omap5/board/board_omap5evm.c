@@ -371,6 +371,28 @@ static void omap5evm_prcm_init(void)
 	prcm_init();
 }
 
+static int omap5evm_read_sw_revision(void)
+{
+	int ret = 0;
+
+	ret = palmas_read_sw_revision();
+	if (ret != 0)
+		printf("unable to read palmas sw revision\n");
+
+	return ret;
+}
+
+static int omap5evm_configure_pwm_mode(void)
+{
+	int ret = 0;
+
+	ret = palmas_configure_pwm_mode();
+	if (ret != 0)
+		printf("unable to configure PWM mode\n");
+
+	return ret;
+}
+
 static struct storage_specific_functions *omap5evm_storage_init(void)
 {
 	int ret;
@@ -398,6 +420,8 @@ static struct board_specific_functions omap5evm_funcs = {
 	.board_gpmc_init = omap5evm_gpmc_init,
 	.board_prcm_init = omap5evm_prcm_init,
 	.board_storage_init = omap5evm_storage_init,
+	.board_read_sw_revision = omap5evm_read_sw_revision,
+	.board_configure_pwm_mode = omap5evm_configure_pwm_mode,
 };
 
 void* init_board_funcs(void)

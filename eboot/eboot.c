@@ -98,6 +98,9 @@ void eboot(unsigned *info)
 	if (boot_ops->board_ops->board_pmic_enable)
 		boot_ops->board_ops->board_pmic_enable();
 
+	if (boot_ops->board_ops->board_configure_pwm_mode)
+		boot_ops->board_ops->board_configure_pwm_mode();
+
 	enable_irqs();
 
 	ret = usb_open(&usb);

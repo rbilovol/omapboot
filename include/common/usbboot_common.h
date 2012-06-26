@@ -65,6 +65,8 @@ struct board_specific_functions {
 	u8 (*board_get_flash_slot)(void);
 	int (*board_pmic_enable)(void);
 	int (*board_pmic_disable)(void);
+	int (*board_read_sw_revision)(void);
+	int (*board_configure_pwm_mode)(void);
 };
 
 struct storage_specific_functions {

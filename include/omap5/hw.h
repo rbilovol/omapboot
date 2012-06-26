@@ -34,6 +34,7 @@
 /* Empirical approximation of how long one loop might take for 1usec */
 #define TIME_LOOP_RATIO			2500
 
+#define CLK32K_COUNTER_REGISTER		0x4AE04030
 #define OMAP54XX_L4_CORE_BASE		0x4A000000
 #define OMAP54XX_L4_WKUP_BASE		0x4Ae00000
 #define OMAP54XX_L4_PER_BASE		0x48000000
