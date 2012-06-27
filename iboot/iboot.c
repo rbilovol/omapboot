@@ -116,7 +116,6 @@ void iboot(unsigned *info)
 		goto fail;
 	}
 
-	serial_puts("Entering fastboot mode...\n");
 	do_fastboot(boot_ops);
 
 fail:

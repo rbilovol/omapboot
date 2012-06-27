@@ -139,7 +139,6 @@ void eboot(unsigned *info)
 		serial_puts("boot device: unknown\n");
 	}
 
-	serial_puts("\nstay in SRAM and enter FASTBOOT mode\n");
 	do_fastboot(boot_ops);
 
 fail:

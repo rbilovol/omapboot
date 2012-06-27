@@ -189,7 +189,7 @@ int do_booti(char *info)
 		pte = fastboot_flash_find_ptn(ptn);
 		if (!pte) {
 			printf("booti: cannot find '%s' partition\n", ptn);
-			do_fastboot(boot_ops);
+			goto fail;
 		}
 
 		sector_sz = boot_ops->storage_ops->get_sector_size();
@@ -285,7 +285,5 @@ int do_booti(char *info)
 	theKernel(0, cfg_machine_type, (void *)dbt_addr);
 
 fail:
-	printf("do_booti failed, stay here\n");
-	while (1)
-		;
+	do_fastboot(boot_ops);
 }

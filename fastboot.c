@@ -622,6 +622,8 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 	/* enable irqs */
 	enable_irqs();
 
+	serial_puts("Entering fastboot mode...\n");
+
 	while (1) {
 
 		cmdsize = 64;
