@@ -65,6 +65,9 @@ void eboot(unsigned *info)
 	boot_ops->board_ops = init_board_funcs();
 	boot_ops->proc_ops = init_processor_id_funcs();
 
+	if (boot_ops->proc_ops->proc_check_lpddr2_temp)
+		boot_ops->proc_ops->proc_check_lpddr2_temp();
+
 	if (boot_ops->proc_ops->proc_get_api_base)
 		public_rom_base = boot_ops->proc_ops->proc_get_api_base();
 

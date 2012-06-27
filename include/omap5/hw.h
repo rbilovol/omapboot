@@ -433,6 +433,9 @@
 #define KEY_VOLUME_UP				0x40000
 #define KEY_VOLUME_DOWN				0x80000
 
+/* LPDDR2 temperature threshold */
+#define LPDDR2_TEMP_THRESHOLD			0x101b
+
 /* Used to index into DPLL parameter tables */
 struct dpll_param {
 	unsigned int 	m;

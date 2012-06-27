@@ -171,6 +171,42 @@ static char *get_rom_version(void)
 	return rom_version;
 }
 
+static void check_lpddr2_temp(void)
+{
+	u32 temp1 = 0, temp2 = 0, temp3 = 0, temp4 = 0;
+
+	/* EMIF1 CS0 MR4 */
+	writel(0x00000004, EMIF1_LPDDR2_MODE_REG_CONFIG);
+	temp1 = readl(EMIF1_LPDDR2_MODE_DATA);
+
+	/* EMIF1 CS1 MR4 */
+	writel(0x80000004, EMIF1_LPDDR2_MODE_REG_CONFIG);
+	temp2 = readl(EMIF1_LPDDR2_MODE_DATA);
+
+	/* EMIF2 CS0 MR4 */
+	writel(0x00000004, EMIF2_LPDDR2_MODE_REG_CONFIG);
+	temp3 = readl(EMIF2_LPDDR2_MODE_DATA);
+
+	/* EMIF2 CS1 MR4 */
+	writel(0x80000004, EMIF2_LPDDR2_MODE_REG_CONFIG);
+	temp4 = readl(EMIF2_LPDDR2_MODE_DATA);
+
+	while ((temp1 >= LPDDR2_TEMP_THRESHOLD) &&
+		(temp2 >= LPDDR2_TEMP_THRESHOLD) &&
+		(temp3 >= LPDDR2_TEMP_THRESHOLD) &&
+		(temp4 >= LPDDR2_TEMP_THRESHOLD)) {
+		u32 temp;
+		writel(PRM_RSTST_RESET_COLD_BIT, PRM_RSTST);
+		temp = readl(PRM_RSTCTRL);
+		temp |=  PRM_RSTCTRL_RESET_COLD_BIT;
+		writel(temp, PRM_RSTCTRL);
+		temp = readl(PRM_RSTCTRL);
+		ldelay(1000);
+	}
+
+	return;
+}
+
 static struct proc_specific_functions omap5_id_funcs = {
 	.proc_get_serial_num = get_serial_no,
 	.proc_get_type = get_cpu_type,
@@ -179,6 +215,7 @@ static struct proc_specific_functions omap5_id_funcs = {
 	.proc_get_proc_id = get_omap_rev,
 	.proc_get_api_base = get_public_rom_base,
 	.proc_get_rom_version = get_rom_version,
+	.proc_check_lpddr2_temp = check_lpddr2_temp,
 };
 
 void* init_processor_id_funcs(void)

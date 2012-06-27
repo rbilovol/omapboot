@@ -49,6 +49,7 @@ struct proc_specific_functions {
 	char* (*proc_get_revision)(void);
 	char* (*proc_get_version)(void);
 	int (*proc_get_proc_id)(void);
+	void (*proc_check_lpddr2_temp)(void);
 };
 
 /* Use these functions to override the
