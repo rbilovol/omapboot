@@ -162,6 +162,15 @@ static u32 get_public_rom_base(void)
 	return PUBLIC_API_BASE_5430;
 }
 
+static char *get_rom_version(void)
+{
+	static char rom_version[5];
+
+	sprintf(rom_version, "%x", readl(OMAP54XX_ROM_CODE_VERSION));
+
+	return rom_version;
+}
+
 static struct proc_specific_functions omap5_id_funcs = {
 	.proc_get_serial_num = get_serial_no,
 	.proc_get_type = get_cpu_type,
@@ -169,6 +178,7 @@ static struct proc_specific_functions omap5_id_funcs = {
 	.proc_get_version= get_cpu_version,
 	.proc_get_proc_id = get_omap_rev,
 	.proc_get_api_base = get_public_rom_base,
+	.proc_get_rom_version = get_rom_version,
 };
 
 void* init_processor_id_funcs(void)

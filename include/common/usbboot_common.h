@@ -42,6 +42,7 @@ struct partition {
 /* Use these functions to override the
  * default configuration for the processor */
 struct proc_specific_functions {
+	char* (*proc_get_rom_version)(void);
 	u32 (*proc_get_api_base)(void);
 	char* (*proc_get_serial_num)(void);
 	char* (*proc_get_type)(void);

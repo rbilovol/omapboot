@@ -38,6 +38,9 @@
  * 4430 specific Section
  */
 
+#define OMAP4430_ROM_CODE_VERSION	0x33FFC
+#define OMAP4460_ROM_CODE_VERSION	0x3BFFC
+
 /* Stuff on L3 Interconnect */
 
 /* L3 Firewall */

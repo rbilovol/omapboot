@@ -55,6 +55,14 @@ static struct fastboot_data *fb_data = &fb_data_data;
 static u8 *transfer_buffer = (void *) 0x82000000;
 static u8 *read_buffer = (void *) 0x83000000;
 
+char *get_rom_version(void)
+{
+	if (!fb_data->proc_ops->proc_get_rom_version)
+		return "";
+
+	return fb_data->proc_ops->proc_get_rom_version();
+}
+
 char *get_serial_number(void)
 {
 	/* TODO check for valid pointer */
@@ -94,6 +102,8 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 		strcpy(tx_buffer + 4, ABOOT_VERSION);
 	else if (!memcmp(rx_buffer, "version", 7))
 		strcpy(tx_buffer + 4, FASTBOOT_VERSION);
+	else if (!memcmp(rx_buffer, "romversion", 10))
+		strcpy(tx_buffer + 4, get_rom_version());
 	else if (!memcmp(rx_buffer, "product", 7))
 		strcpy(tx_buffer + 4, PRODUCT_NAME);
 	else if (!memcmp(rx_buffer, "serialno", 8)) {
@@ -135,6 +145,11 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 		/*serial number */
 		strcpy(tx_buffer + strlen(tx_buffer), "serialno: ");
 		strcpy(tx_buffer + strlen(tx_buffer), get_serial_number());
+		fastboot_tx_status(tx_buffer, strlen(tx_buffer));
+		/* rom version */
+		strcpy(tx_buffer, "INFO");
+		strcpy(tx_buffer + strlen(tx_buffer), "rom version: ");
+		strcpy(tx_buffer + strlen(tx_buffer), get_rom_version());
 		fastboot_tx_status(tx_buffer, strlen(tx_buffer));
 
 		strcpy(tx_buffer, "OKAY");

@@ -57,6 +57,7 @@ static char *usb_boot_read_chip_info(usb_handle *usb)
 	int i;
 
 #define OFF_CHIP	0x04
+#define OFF_ROM_REV	0x07
 #define OFF_ID		0x0F
 #define OFF_MPKH	0x26
 	memset(id, 0xee, 81);
@@ -65,6 +66,7 @@ static char *usb_boot_read_chip_info(usb_handle *usb)
 	usb_read(usb, id, sizeof(id));
 
 	fprintf(stderr,"CHIP: %02x%02x\n", id[OFF_CHIP+0], id[OFF_CHIP+1]);
+	fprintf(stderr, "rom minor version: %02X\n", id[OFF_ROM_REV]);
 	fprintf(stderr,"IDEN: ");
 	for (i = 0; i < 20; i++)
 		fprintf(stderr,"%02x", id[OFF_ID+i]);

@@ -197,6 +197,23 @@ static u32 get_public_rom_base(void)
 
 }
 
+static char *get_rom_version(void)
+{
+	static char rom_version[5];
+
+	if (get_omap_rev() < OMAP_4460_ES1_DOT_0)
+		sprintf(rom_version, "%x", readl(OMAP4430_ROM_CODE_VERSION));
+	else {
+		/*
+		* In the ROM Memory MAP, the offset for rom version is the
+		* same for both 4460 and 4470
+		*/
+		sprintf(rom_version, "%x", readl(OMAP4460_ROM_CODE_VERSION));
+	}
+
+	return rom_version;
+}
+
 static struct proc_specific_functions omap4_id_funcs = {
 	.proc_get_serial_num = get_serial_no,
 	.proc_get_type = get_cpu_type,
@@ -204,6 +221,7 @@ static struct proc_specific_functions omap4_id_funcs = {
 	.proc_get_version= get_cpu_version,
 	.proc_get_proc_id = get_omap_rev,
 	.proc_get_api_base = get_public_rom_base,
+	.proc_get_rom_version = get_rom_version,
 };
 
 void* init_processor_id_funcs(void)
