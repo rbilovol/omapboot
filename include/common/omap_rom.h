@@ -260,6 +260,7 @@ struct usb_ioconf {
 #endif
 
 int usb_open(struct usb *usb);
+void usb_init(struct usb *usb);
 void usb_close(struct usb *usb);
 
 void usb_queue_read(struct usb *usb, void *data, unsigned len);

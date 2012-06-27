@@ -199,6 +199,11 @@ int usb_write(struct usb *usb, void *data, unsigned len)
 	return usb_wait_write(usb);
 }
 
+void usb_init(struct usb *usb)
+{
+	usb->io->init(&usb->dread);
+}
+
 void usb_close(struct usb *usb)
 {
 	usb->io->close(&usb->dread);
