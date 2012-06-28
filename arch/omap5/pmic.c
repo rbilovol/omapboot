@@ -58,7 +58,7 @@ int palmas_read_sw_revision(void)
 	cmd = (reg_addr & 0xFF);
 	clk32 = readl(CLK32K_COUNTER_REGISTER);
 
-	ret = i2c_read(i2c_id, slave, 2, &cmd, clk32, 0xFF);
+	ret = i2c_read(i2c_id, slave, 1, &cmd, clk32, 0xFF);
 	if (ret != 0) {
 		printf("I2C read failed, ret = %d\n", ret);
 		return ret;
@@ -91,6 +91,7 @@ int palmas_configure_pwm_mode(void)
 	} else
 		DBG("Initialized I2C-%d\n", i2c_id);
 
+	/* SMPS7_CTRL: Enable FORCED PWM mode */
 	slave = 0x48; reg_addr = 0x30; value = 0x0F;
 	cmd = (reg_addr & 0xFF) | ((value & 0xFF) << 8);
 	clk32 = readl(CLK32K_COUNTER_REGISTER);
@@ -101,6 +102,7 @@ int palmas_configure_pwm_mode(void)
 	}
 
 #ifdef DEBUG
+	/* SMPS7_CTRL: check if FORCED PWM mode is enabled */
 	if (ret != 0) {
 		printf("re-initialize the I2C\n");
 		ret = rom_hal_i2c_initialize(i2c_id);
@@ -115,7 +117,7 @@ int palmas_configure_pwm_mode(void)
 	slave = 0x48; reg_addr = 0x30;
 	cmd = (reg_addr & 0xFF);
 	clk32 = readl(CLK32K_COUNTER_REGISTER);
-	ret = i2c_read(i2c_id, slave, 2, &cmd, clk32, 0xFF);
+	ret = i2c_read(i2c_id, slave, 1, &cmd, clk32, 0xFF);
 	if (ret != 0) {
 		printf("I2C read failed, ret = %d\n", ret);
 		return ret;
