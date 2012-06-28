@@ -54,7 +54,7 @@ int palmas_read_sw_revision(void)
 	} else
 		DBG("Initialized I2C-%d\n", i2c_id);
 
-	slave = 0x48; reg_addr = 0x17;
+	slave = 0x48; reg_addr = 0xB7;
 	cmd = (reg_addr & 0xFF);
 	clk32 = readl(CLK32K_COUNTER_REGISTER);
 
