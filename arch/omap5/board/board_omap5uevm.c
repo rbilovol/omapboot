@@ -86,7 +86,7 @@ static u8 omap5uevm_get_flash_slot(void)
 
 static void omap5uevm_prcm_init(void)
 {
-	return;
+	prcm_init();
 }
 
 static int omap5uevm_read_sw_revision(void)
