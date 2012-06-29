@@ -133,10 +133,14 @@ void eboot(unsigned *info)
 	switch (bootdevice) {
 	case 0x05:
 		serial_puts("boot device: MMC1\n");
+		if (boot_ops->board_ops->board_set_flash_slot)
+			boot_ops->board_ops->board_set_flash_slot(bootdevice);
 		do_booti("mmc");
 		break;
 	case 0x06:
 	case 0x07:
+		if (boot_ops->board_ops->board_set_flash_slot)
+			boot_ops->board_ops->board_set_flash_slot(bootdevice);
 		serial_puts("boot device: MMC2\n");
 		do_booti("mmc");
 		break;

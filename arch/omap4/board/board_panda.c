@@ -337,6 +337,14 @@ static u8 panda_get_flash_slot()
 	return DEVICE_SDCARD;
 }
 
+static int panda_set_flash_slot(u8 dev)
+{
+	if (dev == DEVICE_SDCARD)
+		return 0;
+	else
+		return -1;
+}
+
 static void panda_scale_cores(void)
 {
 	/* Use default OMAP voltage */
@@ -400,6 +408,7 @@ static struct storage_specific_functions *panda_storage_init(void)
 
 static struct board_specific_functions panda_funcs = {
 	.board_get_flash_slot = panda_get_flash_slot,
+	.board_set_flash_slot = panda_set_flash_slot,
 	.board_mux_init = panda_mux_init,
 	.board_ddr_init = panda_ddr_init,
 	.board_user_fastboot_request = panda_check_fastboot,

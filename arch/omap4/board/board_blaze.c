@@ -54,6 +54,8 @@ static struct partition partitions[] = {
 	{ 0, 0 },
 };
 
+static u8 device = DEVICE_EMMC;
+
 static struct partition * blaze_get_partition(void)
 {
 	return partitions;
@@ -356,7 +358,7 @@ static int blaze_check_fastboot(void)
 
 static u8 blaze_get_flash_slot(void)
 {
-	return DEVICE_EMMC;
+	return device;
 }
 
 static void blaze_scale_cores(void)
@@ -420,8 +422,30 @@ static struct storage_specific_functions *blaze_storage_init(void)
 	return storage_ops;
 }
 
+static int blaze_set_flash_slot(u8 dev)
+{
+	int ret = 0;
+	u8 prev_dev = device;
+	switch (dev) {
+	case DEVICE_SDCARD:
+	case DEVICE_EMMC:
+		device = dev;
+		if (!blaze_storage_init()) {
+			printf("Unable to set flash slot: %d\n", dev);
+			ret = -1;
+			device = prev_dev;
+		} else
+			break;
+	default:
+		printf("Unable to set flash slot: %d\n", dev);
+		ret = -1;
+	}
+	return ret;
+}
+
 static struct board_specific_functions blaze_funcs = {
 	.board_get_flash_slot = blaze_get_flash_slot,
+	.board_set_flash_slot = blaze_set_flash_slot,
 	.board_user_fastboot_request = blaze_check_fastboot,
 	.board_late_init = blaze_late_init,
 	.board_get_part_tbl = blaze_get_partition,

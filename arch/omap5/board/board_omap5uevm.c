@@ -50,6 +50,8 @@ static struct partition partitions[] = {
 	{ 0, 0 },
 };
 
+static u8 device = DEVICE_EMMC;
+
 static struct partition * omap5uevm_get_partition(void)
 {
 	return partitions;
@@ -81,7 +83,7 @@ static int omap5uevm_check_fastboot(void)
 
 static u8 omap5uevm_get_flash_slot(void)
 {
-	return DEVICE_EMMC;
+	return device;
 }
 
 static void omap5uevm_prcm_init(void)
@@ -128,8 +130,30 @@ static struct storage_specific_functions *omap5uevm_storage_init(void)
 	return storage_ops;
 }
 
+static int omap5uevm_set_flash_slot(u8 dev)
+{
+	int ret = 0;
+	u8 prev_dev = device;
+	switch (dev) {
+	case DEVICE_SDCARD:
+	case DEVICE_EMMC:
+		device = dev;
+		if (!omap5uevm_storage_init()) {
+			printf("Unable to set flash slot: %d\n", dev);
+			ret = -1;
+			device = prev_dev;
+		} else
+			break;
+	default:
+		printf("Unable to set flash slot: %d\n", dev);
+		ret = -1;
+	}
+	return ret;
+}
+
 static struct board_specific_functions omap5uevm_funcs = {
 	.board_get_flash_slot = omap5uevm_get_flash_slot,
+	.board_set_flash_slot = omap5uevm_set_flash_slot,
 	.board_user_fastboot_request = omap5uevm_check_fastboot,
 	.board_late_init = omap5uevm_late_init,
 	.board_get_part_tbl = omap5uevm_get_partition,

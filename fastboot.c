@@ -94,6 +94,33 @@ static int fastboot_tx_status(const char *buffer, unsigned int buffer_size)
 	return 0;
 }
 
+static void dev_to_devstr(u8 dev, char *devstr)
+{
+	switch (dev) {
+	case DEVICE_EMMC:
+		strcpy(devstr, "EMMC");
+		break;
+	case DEVICE_SDCARD:
+		strcpy(devstr, "SD");
+		break;
+	default:
+		strcpy(devstr, "Unknown");
+		break;
+	}
+}
+
+static int devstr_to_dev(const char *devstr, u8 *dev)
+{
+	int ret = 0;
+	if (!strcmp(devstr, "EMMC"))
+		*dev = DEVICE_EMMC;
+	else if (!strcmp(devstr, "SD"))
+		*dev = DEVICE_SDCARD;
+	else
+		ret = -1;
+	return ret;
+}
+
 static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 {
 	strcpy(tx_buffer, "OKAY");
@@ -120,6 +147,11 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 	} else if (!strcmp(rx_buffer, "userdata_size")) {
 		strcpy(tx_buffer + 4, get_ptn_size(fb_data,
 		     tx_buffer + strlen(tx_buffer), "userdata"));
+	} else if (!strcmp(rx_buffer, "flash_slot")) {
+		if (fb_data->board_ops->board_set_flash_slot) {
+			dev_to_devstr(fb_data->board_ops->
+				board_get_flash_slot(), tx_buffer + 4);
+		}
 	} else if (!strcmp(rx_buffer, "all")) {
 		/* product name */
 		strcpy(tx_buffer, "INFO");
@@ -166,6 +198,7 @@ static void fastboot_oem(struct fastboot_data *fb_data,
 			char *response)
 {
 	int ret = -1;
+	u8 dev = 0;
 
 	if (memcmp(cmd, "format", 6) == 0) {
 		ret = do_gpt_format(fb_data);
@@ -176,6 +209,20 @@ static void fastboot_oem(struct fastboot_data *fb_data,
 	} else if (memcmp(cmd, "unlock", 6) == 0) {
 		printf("\nfastboot oem unlock not implemented yet!\n");
 		strcpy(response, "FAILNot Implemented");
+	} else if (memcmp(cmd,  "set_flash_slot", 14) == 0) {
+		ret = devstr_to_dev(cmd + 15, &dev);
+		if (ret)
+			strcpy(response, "FAILNot Supported");
+		else {
+			if (fb_data->board_ops->board_set_flash_slot) {
+				if (fb_data->board_ops->
+						board_set_flash_slot(dev))
+					strcpy(response, "FAILNot Supported");
+				else
+					strcpy(response, "OKAY");
+			} else
+				strcpy(response, "FAILNot Supported");
+		}
 	} else {
 		printf("\nfastboot: does not understand %s\n", cmd);
 		strcpy(response, "FAILUnknown command");
