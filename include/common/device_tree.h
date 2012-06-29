@@ -66,6 +66,6 @@ struct enviro_img_hdr
     unsigned id[8]; /* timestamp / checksum / sha1 / etc */
 };
 
-void* load_dev_tree(struct bootloader_ops *boot_ops);
+u32 load_dev_tree(struct bootloader_ops *boot_ops);
 
 #endif

@@ -174,7 +174,7 @@ out:
  *
  * Returns the load addres in memory of the device tree.
  **/
-void* load_dev_tree(struct bootloader_ops *boot_ops)
+u32 load_dev_tree(struct bootloader_ops *boot_ops)
 {
 	int ret = 0;
 	int sector;
@@ -204,5 +204,5 @@ void* load_dev_tree(struct bootloader_ops *boot_ops)
 		dt_data->dev_tree_sz);
 
 out:
-	return (void*)dt_data->dev_tree_load_addr;
+	return dt_data->dev_tree_load_addr;
 }
