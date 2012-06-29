@@ -231,4 +231,11 @@ void setup_emif_config(void)
 	writel(0x00000000, EMIF2_LPDDR2_MODE_DATA);
 	writel(0xC0000010, EMIF2_LPDDR2_MODE_REG_CONFIG);
 	writel(0x00000000, EMIF2_LPDDR2_MODE_DATA);
+
+	/* Put EMIF clock domain in sw wakeup mode */
+	writel(0x00000002, CM_EMIF_CLKSTCTRL);
+	writel(0x00001709, CM_SHADOW_FREQ_CONFIG1);
+	if (!check_loop(BIT(0), 1, CM_SHADOW_FREQ_CONFIG1)) {
+		/* do nothing */
+	}
 }

@@ -35,10 +35,14 @@ void prcm_init(void);
 void gpmc_init(void);
 int mmc_init(u8 device);
 void prcm_init(void);
-void setup_emif_config(void);
 int pmic_enable(void);
 int pbias_config(void);
 int pmic_disable(void);
 int palmas_read_sw_revision(void);
 int palmas_configure_pwm_mode(void);
+#ifdef CONFIG_USE_CH_RAM_CONFIG
+static inline void setup_emif_config(void) { return; }
+#else
+void setup_emif_config(void);
+#endif
 #endif

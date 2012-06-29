@@ -108,6 +108,10 @@ void setup_clocks(void)
 
 void configure_core_dpll(dpll_param *dpll_param_p)
 {
+#ifdef CONFIG_USE_CH_SETTINGS_CONFIG
+	/* Use the Config header to configure this dpll */
+	return;
+#endif
 	/* Unlock the CORE dpll */
 	set_modify(CM_CLKMODE_DPLL_CORE, 0x0000000f, IDLE_BYPASS_FAST_RELOCK_MODE);
 	if (!check_loop(BIT(0), 0, CM_IDLEST_DPLL_CORE)) {
@@ -141,6 +145,10 @@ void configure_core_dpll(dpll_param *dpll_param_p)
 
 void configure_per_dpll(dpll_param *dpll_param_p)
 {
+#ifdef CONFIG_USE_CH_SETTINGS_CONFIG
+	/* Use the Config header to configure this dpll */
+	return;
+#endif
 	/* Put DPLL into bypass mode */
 	set_modify(CM_CLKMODE_DPLL_PER, 0x00000007, 0x00000005);
 	if (!check_loop(BIT(0), 0, CM_IDLEST_DPLL_PER)) {
@@ -185,6 +193,10 @@ void configure_per_dpll(dpll_param *dpll_param_p)
 
 void configure_mpu_dpll(dpll_param *dpll_param_p)
 {
+#ifdef CONFIG_USE_CH_SETTINGS_CONFIG
+	/* Use the Config header to configure this dpll */
+	return;
+#endif
 	/* Put DPLL into bypass mode */
 	set_modify(CM_CLKMODE_DPLL_MPU, 0x00000007, 0x00000005);
 
@@ -210,7 +222,8 @@ void configure_mpu_dpll(dpll_param *dpll_param_p)
 
 	return;
 }
-
+/* The IVA DPLL is not part of the CH Header so we have to perform this
+API */
 void configure_iva_dpll(dpll_param *dpll_param_p)
 {
 	/* Unlock the IVA dpll */
@@ -239,6 +252,8 @@ void configure_iva_dpll(dpll_param *dpll_param_p)
 	return;
 }
 
+/* The ABE DPLL is not part of the CH Header so we have to perform this
+API */
 void configure_abe_dpll(dpll_param *dpll_param_p)
 {
 	u32 value;
@@ -414,12 +429,6 @@ void prcm_init(void)
 	/* ABE DPLL has been configured and LOCKED */
 
 	setup_emif_config();
-	/* Put EMIF clock domain in sw wakeup mode */
-	writel(0x00000002, CM_EMIF_CLKSTCTRL);
-	writel(0x00001709, CM_SHADOW_FREQ_CONFIG1);
-	if (!check_loop(BIT(0), 1, CM_SHADOW_FREQ_CONFIG1)) {
-		/* do nothing */
-	}
 	/* core dpll has now been locked */
 
 	configure_usb_dpll(&usb_dpll_params[0]);
