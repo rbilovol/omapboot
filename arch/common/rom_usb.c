@@ -60,10 +60,10 @@ int usb_open(struct usb *usb)
 		return n;
 
 #if defined(CONFIG_IS_OMAP5)
-	memset(&trbout, 0, sizeof(trbout));
+	memset((void *)&trbout, 0, sizeof(trbout));
 	ioconf.mode         = 0;
 	ioconf.conf_timeout = 0;
-	ioconf.trb_pool     = &trbout;
+	ioconf.trb_pool     = (struct usb_trb *) &trbout;
 	usb->dread.config_object = &ioconf;
 #endif
 
