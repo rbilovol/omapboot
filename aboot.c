@@ -209,7 +209,8 @@ void aboot(unsigned *info)
 	if (n) {
 		serial_puts("*** IO ERROR ***\n");
 	} else {
-		if (OMAP_TYPE_SEC == boot_ops->proc_ops->proc_get_type()) {
+		if (boot_ops->proc_ops->proc_get_type() ==
+			(char *)OMAP_TYPE_SEC) {
 			void *data = (void *) (CONFIG_ADDR_DOWNLOAD);
 			void *sign = (void *) (CONFIG_ADDR_DOWNLOAD +
 								len - 280);
