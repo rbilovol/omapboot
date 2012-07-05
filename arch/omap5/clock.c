@@ -431,6 +431,13 @@ void prcm_init(void)
 	setup_emif_config();
 	/* core dpll has now been locked */
 
+	/* Put EMIF clock domain in sw wakeup mode */
+	writel(0x00000002, CM_EMIF_CLKSTCTRL);
+	writel(0x00001709, CM_SHADOW_FREQ_CONFIG1);
+	if (!check_loop(BIT(0), 1, CM_SHADOW_FREQ_CONFIG1)) {
+		/* do nothing */
+	}
+
 	configure_usb_dpll(&usb_dpll_params[0]);
 
 	setup_clocks();
