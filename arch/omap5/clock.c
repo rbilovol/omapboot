@@ -408,38 +408,42 @@ void scale_vcores(void)
 
 void prcm_init(void)
 {
+	/* Configure CORE DPLL but don't lock it */
 	configure_core_dpll(&core_dpll_params[0]);
 
 	u32 temp = (CLKSEL_CORE_X2_DIV_1 << CLKSEL_CORE_SHIFT) |
 	(CLKSEL_L3_CORE_DIV_2 << CLKSEL_L3_SHIFT) |
 	(CLKSEL_L4_L3_DIV_2 << CLKSEL_L4_SHIFT);
 	writel(temp, CM_CLKSEL_CORE);
-	/* CORE DPLL has been configured but not locked */
 
+	/* Configure PER DPLL and LOCK it */
 	configure_per_dpll(&per_dpll_params[0]);
-	/* PER DPLL has been configured and LOCKED */
 
+	/* Configure MPU DPLL and LOCK it */
 	configure_mpu_dpll(&mpu_dpll_params[0]);
-	/* MPU DPLL has been configured and LOCKED */
 
+	/* Configure IVA DPLL and LOCK it */
 	configure_iva_dpll(&iva_dpll_params[0]);
-	/* IVA DPLL has been configured and LOCKED */
 
+	/* Configure ABE DPLL and LOCK it */
 	configure_abe_dpll(&abe_dpll_params);
-	/* ABE DPLL has been configured and LOCKED */
 
+	/* Configure EMIF controller */
 	setup_emif_config();
-	/* core dpll has now been locked */
 
 	/* Put EMIF clock domain in sw wakeup mode */
 	writel(0x00000002, CM_EMIF_CLKSTCTRL);
+
+	/* LOCK the CORE DPLL */
 	writel(0x00001709, CM_SHADOW_FREQ_CONFIG1);
 	if (!check_loop(BIT(0), 1, CM_SHADOW_FREQ_CONFIG1)) {
 		/* do nothing */
 	}
 
+	/* Configure USB DPLL and LOCK it */
 	configure_usb_dpll(&usb_dpll_params[0]);
 
+	/* Configure CLOCKS */
 	setup_clocks();
 
 }
