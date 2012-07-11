@@ -33,6 +33,11 @@
 #include <common/omap_rom.h>
 #include <common/usbboot_common.h>
 
+#include <omap5/hw.h>
+#include <omap5/mux.h>
+
+#define FASTBOOT_BUTTON_GPIO	83
+
 static struct partition partitions[] = {
 	{ "-", 128 },
 	{ "bootloader", 256 },
@@ -57,6 +62,13 @@ static struct partition * omap5uevm_get_partition(void)
 	return partitions;
 }
 
+static void omap5uevm_mux_init(void)
+{
+
+	/* push button (GPIO 83) for fastboot mode */
+	setup_core(CONTROL_PADCONF_HSI2_ACDATA, (IEN | M6));
+}
+
 /* Use CH (configuration header) to do the settings */
 static void omap5uevm_late_init(void)
 {
@@ -78,6 +90,15 @@ static void omap5uevm_gpmc_init(void)
 
 static int omap5uevm_check_fastboot(void)
 {
+	if (!gpio_read(FASTBOOT_BUTTON_GPIO)) {
+		/* small debounce to make sure the button is really pressed */
+		ldelay(200000);
+		if (!gpio_read(FASTBOOT_BUTTON_GPIO)) {
+			printf("Button press detected: go to fastboot mode\n");
+			return 1;
+		}
+	}
+
 	return 0;
 }
 
@@ -154,6 +175,7 @@ static int omap5uevm_set_flash_slot(u8 dev)
 static struct board_specific_functions omap5uevm_funcs = {
 	.board_get_flash_slot = omap5uevm_get_flash_slot,
 	.board_set_flash_slot = omap5uevm_set_flash_slot,
+	.board_mux_init = omap5uevm_mux_init,
 	.board_user_fastboot_request = omap5uevm_check_fastboot,
 	.board_late_init = omap5uevm_late_init,
 	.board_get_part_tbl = omap5uevm_get_partition,
