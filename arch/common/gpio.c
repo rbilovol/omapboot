@@ -36,6 +36,7 @@
 
 #define GPIO_CTRL    0x130
 #define GPIO_OE      0x134
+#define GPIO_DATAIN  0x138
 #define GPIO_DATAOUT 0x13C
 #define GPIO_CLEAR   0x190
 #define GPIO_SET     0x194
@@ -53,4 +54,19 @@ void gpio_write(unsigned gpio, unsigned set)
 
 	/* set or clear the bit */
 	writel(bit, base + (set ? GPIO_SET : GPIO_CLEAR));
+}
+
+unsigned gpio_read(unsigned gpio)
+{
+	unsigned base = gpio_base[gpio / 32];
+	unsigned bit = 1 << (gpio % 32);
+
+	/* determine if this gpio is configured as an input or output */
+	if (bit & readl(base + GPIO_OE)) {
+		/* pin is configured as an input */
+		return (bit & readl(base + GPIO_DATAIN)) ? 1 : 0;
+	} else {
+		/* pin is configured as an output */
+		return (bit & readl(base + GPIO_SET)) ? 1 : 0;
+	}
 }
