@@ -436,11 +436,13 @@ void prcm_init(void)
 	writel(0x00000002, CM_EMIF_CLKSTCTRL);
 #endif
 
+#ifndef CONFIG_USE_CH_SETTINGS_CONFIG
 	/* LOCK the CORE DPLL */
 	writel(0x00001709, CM_SHADOW_FREQ_CONFIG1);
 	if (!check_loop(BIT(0), 1, CM_SHADOW_FREQ_CONFIG1)) {
 		/* do nothing */
 	}
+#endif
 
 	/* Configure USB DPLL and LOCK it */
 	configure_usb_dpll(&usb_dpll_params[0]);
