@@ -432,7 +432,9 @@ void prcm_init(void)
 	setup_emif_config();
 
 	/* Put EMIF clock domain in sw wakeup mode */
+#ifndef CONFIG_USE_CH_RAM_CONFIG
 	writel(0x00000002, CM_EMIF_CLKSTCTRL);
+#endif
 
 	/* LOCK the CORE DPLL */
 	writel(0x00001709, CM_SHADOW_FREQ_CONFIG1);
