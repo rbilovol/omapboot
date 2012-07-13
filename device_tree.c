@@ -33,6 +33,7 @@
 #include <common/boot_settings.h>
 #include <common/device_tree.h>
 #include <common/fastboot.h>
+#include <common/alloc.h>
 
 struct device_tree_data {
 	struct fastboot_ptentry *pte;
@@ -41,7 +42,7 @@ struct device_tree_data {
 	int page_size;
 };
 
-struct device_tree_data *dt_data = (void *) 0x84001000;
+static struct device_tree_data *dt_data;
 
 /**
  * DOC: Introduction
@@ -83,6 +84,12 @@ static int find_dev_tree(struct bootloader_ops *boot_ops)
 	u32 addr = CONFIG_ADDR_DOWNLOAD;
 
 	sector_sz = boot_ops->storage_ops->get_sector_size();
+
+	dt_data = (void *) alloc_memory(sizeof(struct device_tree_data));
+	if (dt_data == NULL) {
+		printf("unable to allocate memory requested: dt_data\n");
+		return -1;
+	}
 
 	pte = fastboot_flash_find_ptn("device_tree");
 	if (pte) {
@@ -180,12 +187,12 @@ u32 load_dev_tree(struct bootloader_ops *boot_ops)
 	int sector;
 	int num_sectors;
 	int sector_sz = 0;
-
-	dt_data->dev_tree_load_addr = ATAGS_ARGS;
+	u32 dt_load_addr;
 
 	ret = find_dev_tree(boot_ops);
 	if (ret < 0) {
 		printf("%s: Device tree not supported\n", __func__);
+		dt_data->dev_tree_load_addr = ATAGS_ARGS;
 		goto out;
 	}
 
@@ -204,5 +211,16 @@ u32 load_dev_tree(struct bootloader_ops *boot_ops)
 		dt_data->dev_tree_sz);
 
 out:
-	return dt_data->dev_tree_load_addr;
+	if (dt_data->dev_tree_load_addr)
+		dt_load_addr = dt_data->dev_tree_load_addr;
+	else
+		return -1;
+
+	ret = free_memory(dt_data);
+	if (ret != 0) {
+		printf("unable to free memory allocated: dt_data\n");
+		return ret;
+	}
+
+	return dt_load_addr;
 }

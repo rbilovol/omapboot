@@ -187,6 +187,8 @@ int do_booti(char *info)
 		ret = load_ptbl(boot_ops->storage_ops, 0);
 
 		dbt_addr = load_dev_tree(boot_ops);
+		if (dbt_addr < 0)
+			goto fail;
 
 		pte = fastboot_flash_find_ptn(ptn);
 		if (!pte) {
