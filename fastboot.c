@@ -981,11 +981,6 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 		}
 		else if (memcmp(cmd, "boot", 4) == 0) {
 
-			char start[32];
-			char *booti_args[4] = { "booti", NULL, "boot", NULL };
-			booti_args[1] = start;
-			sprintf(start, "0x%x", transfer_buffer);
-
 			strcpy(response, "OKAY");
 			fastboot_tx_status(response, strlen(response));
 
@@ -993,7 +988,7 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 
 			printf("booting kernel...\n");
 
-			do_booti((char *)booti_args);
+			do_booti("ram", transfer_buffer);
 
 		} /* "boot" if loop ends */
 

@@ -152,7 +152,7 @@ void bootimg_print_image_hdr(boot_img_hdr *hdr)
 	return;
 }
 
-int do_booti(char *info)
+int do_booti(char *info, void *download_addr)
 {
 	boot_img_hdr *hdr;
 	u32 addr;
@@ -167,7 +167,11 @@ int do_booti(char *info)
 	if (!(strcmp(info, "mmc")))
 		boot_from_mmc = 1;
 
-	addr = CONFIG_ADDR_DOWNLOAD;
+	if (download_addr != NULL)
+		addr = (u32) download_addr;
+	else
+		addr = CONFIG_ADDR_DOWNLOAD;
+
 	hdr = (boot_img_hdr *) addr;
 	boot_ops->board_ops = init_board_funcs();
 	boot_ops->proc_ops = init_processor_id_funcs();
@@ -291,4 +295,5 @@ int do_booti(char *info)
 fail:
 	usb_init(&usb);
 	do_fastboot(boot_ops);
+	return 0;
 }

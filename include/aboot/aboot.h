@@ -57,7 +57,7 @@ void set_modify(u32 reg, u32 mask, u32 value);
 /* global configuration, changable by board file */
 extern unsigned cfg_machine_type;
 
-int do_booti(char *info);
+int do_booti(char *info, void *download_addr);
 extern int boot_image(unsigned machtype, unsigned image, unsigned len);
 
 extern struct bootloader_ops *boot_ops;
