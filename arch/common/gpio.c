@@ -28,14 +28,11 @@
 
 #include <aboot/io.h>
 
-static unsigned gpio_base[6] = {
-	0x4A310000,
-	0x48055000,
-	0x48057000,
-	0x48059000,
-	0x4805B000,
-	0x4805D000
-};
+#if defined CONFIG_IS_OMAP4
+#include <omap4/gpio.h>
+#elif defined CONFIG_IS_OMAP5
+#include <omap5/gpio.h>
+#endif
 
 #define GPIO_CTRL    0x130
 #define GPIO_OE      0x134
