@@ -26,6 +26,7 @@
 ## SUCH DAMAGE.
 
 OMAP_COMMON_OBJS := arch/common/serial.o \
+		arch/common/gpio.o \
 		arch/common/rom_usb.o \
 		arch/common/rom_mmc.o \
 		arch/common/rom_i2c.o \

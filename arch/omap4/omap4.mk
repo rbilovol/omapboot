@@ -29,6 +29,5 @@
 PROC_COMMON_OBJS := arch/omap4/clock.o \
 		    arch/omap4/sdram.o \
 		    arch/omap4/gpmc.o \
-		    arch/omap4/gpio.o \
 		    arch/omap4/id.o \
 		    arch/omap4/pmic.o \
