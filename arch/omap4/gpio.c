@@ -9,7 +9,7 @@
  *    notice, this list of conditions and the following disclaimer.
  *  * Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the 
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -19,7 +19,7 @@
  * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
  * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
  * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
@@ -45,15 +45,15 @@ static unsigned gpio_base[6] = {
 
 void gpio_write(unsigned gpio, unsigned set)
 {
-	unsigned base = gpio_base[ gpio / 32 ];
-    unsigned bit = 1 << (gpio % 32);
+	unsigned base = gpio_base[gpio / 32];
+	unsigned bit = 1 << (gpio % 32);
 
-        /* ensure that this GPIO bank is enabled */
+	/* ensure that this GPIO bank is enabled */
 	writel(0, base + GPIO_CTRL);
 
-        /* enable output for this gpio */
-    writel(readl(base + GPIO_OE) & (~bit), base + GPIO_OE);
+	/* enable output for this gpio */
+	writel(readl(base + GPIO_OE) & (~bit), base + GPIO_OE);
 
-        /* set or clear the bit */
-    writel(bit, base + (set ? GPIO_SET : GPIO_CLEAR));
+	/* set or clear the bit */
+	writel(bit, base + (set ? GPIO_SET : GPIO_CLEAR));
 }
