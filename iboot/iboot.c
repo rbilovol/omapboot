@@ -37,6 +37,7 @@
 #include <common/fastboot.h>
 #include <common/omap_rom.h>
 #include <common/usbboot_common.h>
+#include <common/alloc.h>
 
 #include "config.h"
 
@@ -83,6 +84,8 @@ void iboot(unsigned *info)
 
 	if (boot_ops->board_ops->board_ddr_init)
 		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
+
+	init_memory_alloc();
 
 	if (boot_ops->board_ops->board_gpmc_init)
 		boot_ops->board_ops->board_gpmc_init();

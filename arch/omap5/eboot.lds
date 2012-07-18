@@ -2,6 +2,7 @@ MEMORY
 	{
 	sram(A) : ORIGIN = 0x40309000, LENGTH = 48K
 	mram (Arw) : ORIGIN = 0x40309000 + 48k, LENGTH = 10k
+	sdram (Arw) : ORIGIN = 0xA0BFFFFF, LENGTH = 500m
 	}
 
 
@@ -24,5 +25,9 @@ SECTIONS {
 	. = ALIGN(4);
 	__bss_end = .;
 
+	. = ALIGN(4);
 	.mram : { *(.mram) } >mram
+
+	. = ALIGN(4);
+	.sdram (NOLOAD): { *(.sdram) } > sdram
 }
