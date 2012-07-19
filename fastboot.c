@@ -272,28 +272,30 @@ static int download_image(void)
 
 	fb_data->getsize =
 		get_downloadsize_from_string(size_of_dsize, fb_data->dsize);
-	if (fb_data->getsize == 0) {
-		sprintf(response, "FAILdata invalid size");
-		return -1;
-	} else
-		sprintf(response, "DATA%08x", fb_data->getsize);
 
-	fastboot_tx_status(response, strlen(response));
+	if (fb_data->getsize == 0) {
+		sprintf(response, "FAILinvalid data size %x",
+					fb_data->getsize);
+		ret = -1;
+		goto out;
+	} else {
+		sprintf(response, "DATA%08x", fb_data->getsize);
+		fastboot_tx_status(response, strlen(response));
+	}
 
 	/* read the data */
 	printf("Reading %u amount of data ...\n", fb_data->getsize);
 	ret = usb_read(&usb, transfer_buffer, fb_data->getsize);
 	if (ret < 0) {
-		printf("failed to read the fastboot command\n");
-		strcpy(response, "FAIL");
-		return ret;
-	} else {
+		DBG("failed to read the fastboot command\n");
+		strcpy(response, "FAILUnable to read FASTBOOT command");
+		goto out;
+	} else
 		strcpy(response, "OKAY");
-		fastboot_tx_status(response, strlen(response));
-	}
 
+out:
+	fastboot_tx_status(response, strlen(response));
 	return ret;
-
 }
 
 static int flash_sparse_formatted_image(void)
@@ -308,18 +310,23 @@ static int flash_sparse_formatted_image(void)
 
 	chunk_header_t *chunk_header;
 
+	strcpy(response, "OKAY");
+
 	if ((fb_data->sparse_header->total_blks * fb_data->sparse_header->blk_sz) > fb_data->e->length) {
 		printf("Image size exceeds %d limit\n", fb_data->e->length);
-		strcpy(response, "FAIL");
-		return -1;
+		sprintf(response, "FAILImage size exceeds limit %d",
+						(u32)fb_data->e->length);
+		ret = -1;
+		goto out;
 	}
 
 	if ((fb_data->sparse_header->major_version != 1) ||
 		(fb_data->sparse_header->file_hdr_sz != sizeof(sparse_header_t)) ||
 		(fb_data->sparse_header->chunk_hdr_sz != sizeof(chunk_header_t))) {
 			printf("Invalid sparse format\n");
-			strcpy(response, "FAIL");
-			return -1;
+			strcpy(response, "FAILINVALID sparse format");
+			ret = -1;
+			goto out;
 	}
 
 	/* Read and skip over sparse image header */
@@ -390,7 +397,9 @@ static int flash_sparse_formatted_image(void)
 					num_sectors, transfer_buffer);
 			if (ret != 0) {
 				printf("mmc write failed\n");
-				return ret;
+				strcpy(response, "FAILMMC write FAILED "
+								"sparse");
+				goto out;
 			}
 
 			#ifdef DEBUG
@@ -404,13 +413,24 @@ static int flash_sparse_formatted_image(void)
 				(fb_data->sector + sector_count, 1,
 					read_buffer + (sector_count*512));
 				if (ret != 0) {
-					printf("read failed\n");
-					return ret;
+					printf("mmc read failed\n");
+					strcpy(response, "FAILMMC read FAILED "
+								"sparse");
+					goto out;
 				}
+
 				if (memcmp(read_buffer + (sector_count*512),
 				transfer_buffer + (sector_count*512), 512)) {
 					printf("data mismatch sector %d\n",
 					fb_data->sector + sector_count);
+
+					strcpy(response, "INFO");
+					sprintf(response + strlen(response),
+						"data mismatch sector %d",
+						fb_data->sector+sector_count);
+					fastboot_tx_status(response,
+							strlen(response));
+
 				}
 			}
 			#endif
@@ -448,17 +468,18 @@ static int flash_sparse_formatted_image(void)
 		default:
 
 			sprintf(response, "FAILUnknown chunk type");
+			ret = -1;
 			break;
 
-		return -1;
+		goto out;
 		}
 	}
 
-	printf("Wrote %d blocks, expected to write %d blocks \n", total_blocks,
+	DBG("Wrote %d blocks, expected to write %d blocks\n", total_blocks,
 		fb_data->sparse_header->total_blks);
+	DBG("out blocks = %d\n", out_blocks);
 
-	printf("out blocks = %d\n", out_blocks);
-	strcpy(response, "OKAY");
+out:
 	fastboot_tx_status(response, strlen(response));
 
 	return ret;
@@ -474,24 +495,28 @@ static int fastboot_update_zimage(char *response)
 	u32 sectors_per_page = 0;
 	int ret = 0;
 
+	strcpy(response, "OKAY");
+
 	fb_data->e = fastboot_flash_find_ptn("boot");
 	if (NULL == fb_data->e) {
 		sprintf(response, "FAILCannot find boot partition");
-		return (-1);
+		ret = -1;
+		goto out;
 	}
 	/* Read the boot image header */
 	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
 	if (fb_data->storage_ops->read(fb_data->e->start,
 			hdr_sectors, (void *)hdr)) {
 		sprintf(response, "FAILCannot read hdr from boot partition");
-		return (-1);
+		ret = -1;
+		goto out;
 	}
 
 	ret = memcmp(hdr->magic, "ANDROID!", 8);
 	if (ret != 0) {
 		printf("booti: bad boot image magic\n");
 		sprintf(response, "FAILBoot partition not initialized");
-		return (-1);
+		goto out;
 	}
 
 	/* Extract ramdisk location and read it into local buffer */
@@ -507,7 +532,8 @@ static int fastboot_update_zimage(char *response)
 	if (fb_data->storage_ops->read(ramdisk_sector_start,
 		ramdisk_sectors, ramdisk_buffer)) {
 		sprintf(response, "FAILCannot read ramdisk from boot partition");
-		return (-1);
+		ret = -1;
+		goto out;
 	}
 
 	/* Change the boot img hdr */
@@ -515,7 +541,8 @@ static int fastboot_update_zimage(char *response)
 	if (fb_data->storage_ops->write(fb_data->e->start,
 		hdr_sectors, (void *)hdr)) {
 		sprintf(response, "FAILCannot writeback boot img hdr");
-		return (-1);
+		ret = -1;
+		goto out;
 	}
 
 	/* Write the new downloaded kernel*/
@@ -525,7 +552,8 @@ static int fastboot_update_zimage(char *response)
 	if (fb_data->storage_ops->write(kernel_sector_start, kernel_sectors,
 			transfer_buffer)) {
 		sprintf(response, "FAILCannot write new kernel");
-		return (-1);
+		ret = -1;
+		goto out;
 	}
 
 	/* Write the saved Ramdisk back */
@@ -535,11 +563,14 @@ static int fastboot_update_zimage(char *response)
 	if (fb_data->storage_ops->write(ramdisk_sector_start, ramdisk_sectors,
 						ramdisk_buffer)) {
 		sprintf(response, "FAILCannot write back original ramdisk");
-		return (-1);
+		ret = -1;
+		goto out;
 	}
 
-	sprintf(response, "OKAY");
-	return (0);
+out:
+	fastboot_tx_status(response, strlen(response));
+
+	return ret;
 }
 
 static int fastboot_update_ramdisk(char *response)
@@ -550,24 +581,28 @@ static int fastboot_update_ramdisk(char *response)
 	u32 sectors_per_page = 0;
 	int ret = 0;
 
+	strcpy(response, "OKAY");
+
 	fb_data->e = fastboot_flash_find_ptn("boot");
 	if (NULL == fb_data->e) {
 		sprintf(response, "FAILCannot find boot partition");
-		return -1;
+		ret = -1;
+		goto out;
 	}
 	/* Read the boot image header */
 	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
 	if (fb_data->storage_ops->read(fb_data->e->start,
 			hdr_sectors, (void *)hdr)) {
 		sprintf(response, "FAILCannot read hdr from boot partition");
-		return -1;
+		ret = -1;
+		goto out;
 	}
 
 	ret = memcmp(hdr->magic, "ANDROID!", 8);
 	if (ret != 0) {
 		printf("booti: bad boot image magic\n");
 		sprintf(response, "FAILBoot partition not initialized");
-		return (-1);
+		goto out;
 	}
 
 	/* Calculate ramdisk location */
@@ -582,7 +617,8 @@ static int fastboot_update_ramdisk(char *response)
 	if ((fb_data->e->start + fb_data->e->length/512) <
 		(ramdisk_sector_start + ramdisk_sectors)) {
 		sprintf(response, "FAILNew Ramdisk too large");
-		return -1;
+		ret = -1;
+		goto out;
 	}
 
 	/* Change the boot img hdr */
@@ -590,18 +626,22 @@ static int fastboot_update_ramdisk(char *response)
 	if (fb_data->storage_ops->write(fb_data->e->start,
 		hdr_sectors, (void *)hdr)) {
 		sprintf(response, "FAILCannot writeback boot img hdr");
-		return -1;
+		ret = -1;
+		goto out;
 	}
 
 	/* Write the new ramdisk image */
 	if (fb_data->storage_ops->write(ramdisk_sector_start, ramdisk_sectors,
 					transfer_buffer)) {
 		sprintf(response, "FAILCannot write new ramdisk");
-		return -1;
+		ret = -1;
+		goto out;
 	}
 
-	sprintf(response, "OKAY");
-	return 0;
+out:
+	fastboot_tx_status(response, strlen(response));
+
+	return ret;
 }
 
 
@@ -611,6 +651,8 @@ static int flash_non_sparse_formatted_image(void)
 	u32 num_sectors = 0;
 	char response[65];
 
+	strcpy(response, "OKAY");
+
 	num_sectors = CEIL(fb_data->getsize, 512);
 
 	if (num_sectors > (fb_data->getsize / 512)) {
@@ -618,14 +660,15 @@ static int flash_non_sparse_formatted_image(void)
 	} else
 		num_sectors = (fb_data->getsize / 512);
 
-	printf("writing to sector %d\n and # of sectors = %d\n",
+	DBG("writing to sector %d\n and # of sectors = %d\n",
 		(int)fb_data->sector, (int)num_sectors);
 
 	ret = fb_data->storage_ops->write(fb_data->sector,
 			num_sectors, transfer_buffer);
 	if (ret != 0) {
-		printf("write failed\n");
-		return ret;
+		printf("mmc write failed\n");
+		strcpy(response, "FAILMMC write FAILED non sparse");
+		goto out;
 	}
 
 	#ifdef DEBUG
@@ -636,19 +679,26 @@ static int flash_non_sparse_formatted_image(void)
 		ret = fb_data->storage_ops->read(fb_data->sector +
 			sector_count, 1, read_buffer + (sector_count*512));
 		if (ret != 0) {
-			printf("read failed\n");
-			return ret;
+			printf("mmc read failed\n");
+			strcpy(response, "FAILMMC read FAILED non sparse");
+			goto out;
 		}
 
 		if (memcmp(read_buffer + (sector_count*512),
 			transfer_buffer + (sector_count*512), 512)) {
 			printf("data mismatch sector %d\n",
 				fb_data->sector+sector_count);
+
+			strcpy(response, "INFO");
+			sprintf(response + strlen(response),
+					"data mismatch sector %d",
+					fb_data->sector+sector_count);
+			fastboot_tx_status(response, strlen(response));
 		}
 	}
 	#endif
 
-	strcpy(response, "OKAY");
+out:
 	fastboot_tx_status(response, strlen(response));
 
 	return ret;
@@ -727,11 +777,9 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 			if ((memcmp(cmd+6, "zimage", 6) == 0) ||
 				(memcmp(cmd+6, "zImage", 6) == 0)){
 				fastboot_update_zimage(response);
-				fastboot_tx_status(response, strlen(response));
 				continue;
 			} else if (memcmp(cmd+6, "ramdisk", 7) == 0) {
 				fastboot_update_ramdisk(response);
-				fastboot_tx_status(response, strlen(response));
 				continue;
 			}
 
