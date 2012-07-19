@@ -31,6 +31,7 @@
 #include <aboot/io.h>
 #include <aboot/types.h>
 
+#include <common/alloc.h>
 #include <common/omap_rom.h>
 #include <common/usbboot_common.h>
 
@@ -52,8 +53,8 @@ struct usb usb;
 static struct fastboot_data fb_data_data;
 
 static struct fastboot_data *fb_data = &fb_data_data;
-static u8 *transfer_buffer = (void *) 0x82000000;
-static u8 *read_buffer = (void *) 0x83000000;
+static void *transfer_buffer;
+static void *read_buffer;
 
 char *get_rom_version(void)
 {
@@ -119,6 +120,31 @@ static int devstr_to_dev(const char *devstr, u8 *dev)
 	else
 		ret = -1;
 	return ret;
+}
+
+static int *fastboot_alloc_mem(void)
+{
+	void *mem_ptr;
+
+	mem_ptr = (void *) alloc_memory(fb_data->getsize);
+	if (mem_ptr != NULL)
+		return mem_ptr;
+	else {
+		printf("unable to allocate memory requested\n");
+		return NULL;
+	}
+}
+
+static int fastboot_free_mem(void *mem_ptr)
+{
+	int ret = 0;
+
+	ret = free_memory(mem_ptr);
+	if (ret != 0) {
+		printf("unable to free memory allocated\n");
+		return ret;
+	} else
+		return 0;
 }
 
 static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
@@ -283,6 +309,13 @@ static int download_image(void)
 		fastboot_tx_status(response, strlen(response));
 	}
 
+	transfer_buffer = fastboot_alloc_mem();
+	if (transfer_buffer == NULL) {
+		sprintf(response, "FAILINVALID transfer_buffer");
+		ret = -1;
+		goto out;
+	}
+
 	/* read the data */
 	printf("Reading %u amount of data ...\n", fb_data->getsize);
 	ret = usb_read(&usb, transfer_buffer, fb_data->getsize);
@@ -294,6 +327,16 @@ static int download_image(void)
 		strcpy(response, "OKAY");
 
 out:
+	if (ret < 0) {
+		ret = fastboot_free_mem(transfer_buffer);
+		if (ret != 0) {
+			strcpy(response, "INFO");
+			strcpy(response + strlen(response),
+					"Unable to free tranfer_buffer");
+			fastboot_tx_status(response, strlen(response));
+		}
+	}
+
 	fastboot_tx_status(response, strlen(response));
 	return ret;
 }
@@ -307,7 +350,7 @@ static int flash_sparse_formatted_image(void)
 	u32 out_blocks = 0;
 	u32 total_blocks = 0;
 	char response[65];
-
+	void *ptr_to_buffer = transfer_buffer;
 	chunk_header_t *chunk_header;
 
 	strcpy(response, "OKAY");
@@ -405,6 +448,13 @@ static int flash_sparse_formatted_image(void)
 			#ifdef DEBUG
 			int sector_count;
 
+			read_buffer = fastboot_alloc_mem();
+			if (read_buffer == NULL) {
+				sprintf(response, "FAILINVALID read_buffer");
+				ret = -1;
+				goto out;
+			}
+
 			/*read back the data and compare */
 			for (sector_count = 0; sector_count < num_sectors;
 							sector_count++) {
@@ -480,6 +530,27 @@ static int flash_sparse_formatted_image(void)
 	DBG("out blocks = %d\n", out_blocks);
 
 out:
+	/* reset the pointer to the top */
+	transfer_buffer = ptr_to_buffer;
+
+	ret = fastboot_free_mem(transfer_buffer);
+	if (ret != 0) {
+		strcpy(response, "INFO");
+		strcpy(response + strlen(response),
+				"Unable to free tranfer_buffer");
+		fastboot_tx_status(response, strlen(response));
+	}
+
+#ifdef DEBUG
+	ret = fastboot_free_mem(read_buffer);
+	if (ret != 0) {
+		strcpy(response, "INFO");
+		strcpy(response + strlen(response),
+				"Unable to free read_buffer");
+		fastboot_tx_status(response, strlen(response));
+	}
+#endif
+
 	fastboot_tx_status(response, strlen(response));
 
 	return ret;
@@ -487,7 +558,6 @@ out:
 
 static int fastboot_update_zimage(char *response)
 {
-	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
 	u8 *ramdisk_buffer;
 	u32 ramdisk_sector_start, ramdisk_sectors;
 	u32 kernel_sector_start, kernel_sectors;
@@ -496,6 +566,15 @@ static int fastboot_update_zimage(char *response)
 	int ret = 0;
 
 	strcpy(response, "OKAY");
+
+	read_buffer = fastboot_alloc_mem();
+	if (read_buffer == NULL) {
+		strcpy(response, "FAILINVALID read_buffer");
+		ret = -1;
+		goto out;
+	}
+
+	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
 
 	fb_data->e = fastboot_flash_find_ptn("boot");
 	if (NULL == fb_data->e) {
@@ -568,6 +647,14 @@ static int fastboot_update_zimage(char *response)
 	}
 
 out:
+	ret = fastboot_free_mem(read_buffer);
+	if (ret != 0) {
+		strcpy(response, "INFO");
+		strcpy(response + strlen(response),
+				"Unable to free read_buffer");
+		fastboot_tx_status(response, strlen(response));
+	}
+
 	fastboot_tx_status(response, strlen(response));
 
 	return ret;
@@ -575,13 +662,21 @@ out:
 
 static int fastboot_update_ramdisk(char *response)
 {
-	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
 	u32 ramdisk_sector_start, ramdisk_sectors;
 	u32 hdr_sectors = 0;
 	u32 sectors_per_page = 0;
 	int ret = 0;
 
 	strcpy(response, "OKAY");
+
+	read_buffer = fastboot_alloc_mem();
+	if (read_buffer == NULL) {
+		strcpy(response, "FAILINVALID read_buffer");
+		ret = -1;
+		goto out;
+	}
+
+	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
 
 	fb_data->e = fastboot_flash_find_ptn("boot");
 	if (NULL == fb_data->e) {
@@ -639,6 +734,14 @@ static int fastboot_update_ramdisk(char *response)
 	}
 
 out:
+	ret = fastboot_free_mem(read_buffer);
+	if (ret != 0) {
+		strcpy(response, "INFO");
+		strcpy(response + strlen(response),
+				"Unable to free read_buffer");
+		fastboot_tx_status(response, strlen(response));
+	}
+
 	fastboot_tx_status(response, strlen(response));
 
 	return ret;
@@ -674,6 +777,13 @@ static int flash_non_sparse_formatted_image(void)
 	#ifdef DEBUG
 	int sector_count;
 
+	read_buffer = fastboot_alloc_mem();
+	if (read_buffer == NULL) {
+		sprintf(response, "FAILINVALID read_buffer");
+		ret = -1;
+		goto out;
+	}
+
 	for (sector_count = 0; sector_count < num_sectors; sector_count++) {
 		/*read back the data and compare */
 		ret = fb_data->storage_ops->read(fb_data->sector +
@@ -699,6 +809,24 @@ static int flash_non_sparse_formatted_image(void)
 	#endif
 
 out:
+	ret = fastboot_free_mem(transfer_buffer);
+	if (ret != 0) {
+		strcpy(response, "INFO");
+		strcpy(response + strlen(response),
+				"Unable to free tranfer_buffer");
+		fastboot_tx_status(response, strlen(response));
+	}
+
+#ifdef DEBUG
+	ret = fastboot_free_mem(read_buffer);
+	if (ret != 0) {
+		strcpy(response, "INFO");
+		strcpy(response + strlen(response),
+				"Unable to free read_buffer");
+		fastboot_tx_status(response, strlen(response));
+	}
+#endif
+
 	fastboot_tx_status(response, strlen(response));
 
 	return ret;
