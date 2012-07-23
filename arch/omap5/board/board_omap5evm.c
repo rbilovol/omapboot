@@ -62,6 +62,18 @@ static struct partition * omap5evm_get_partition(void)
 	return partitions;
 }
 
+static void omap5evm_ddr_init(struct proc_specific_functions *proc_ops)
+{
+#ifdef CONFIG_USE_CH_RAM_CONFIG
+	if (proc_ops->proc_get_proc_id) {
+		if (proc_ops->proc_get_proc_id() > OMAP_5430_ES1_DOT_0)
+			return;
+	}
+#endif
+
+	omap5_ddr_init();
+}
+
 static void omap5evm_mux_init(void)
 {
 	/* core padconf essential */
@@ -439,6 +451,7 @@ static int omap5evm_set_flash_slot(u8 dev)
 static struct board_specific_functions omap5evm_funcs = {
 	.board_get_flash_slot = omap5evm_get_flash_slot,
 	.board_set_flash_slot = omap5evm_set_flash_slot,
+	.board_ddr_init = omap5evm_ddr_init,
 	.board_mux_init = omap5evm_mux_init,
 	.board_user_fastboot_request = omap5evm_check_fastboot,
 	.board_late_init = omap5evm_late_init,
