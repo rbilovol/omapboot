@@ -59,32 +59,40 @@ static void *read_buffer;
 char *get_rom_version(void)
 {
 	if (!fb_data->proc_ops->proc_get_rom_version)
-		return "";
+		return "not supported";
 
 	return fb_data->proc_ops->proc_get_rom_version();
 }
 
 char *get_serial_number(void)
 {
-	/* TODO check for valid pointer */
+	if (!fb_data->proc_ops->proc_get_serial_num)
+		return "not supported";
+
 	return fb_data->proc_ops->proc_get_serial_num();
 }
 
 static char *get_proc_type(void)
 {
-	/* TODO check for valid pointer */
+	if (!fb_data->proc_ops->proc_get_type)
+		return "not supported";
+
 	return fb_data->proc_ops->proc_get_type();
 }
 
 static char *get_cpu_rev(void)
 {
-	/* TODO check for valid pointer */
+	if (!fb_data->proc_ops->proc_get_revision)
+		return "not supported";
+
 	return fb_data->proc_ops->proc_get_revision();
 }
 
 static char *get_proc_version(void)
 {
-	/* TODO check for valid pointer */
+	if (!fb_data->proc_ops->proc_get_version)
+		return "not supported";
+
 	return fb_data->proc_ops->proc_get_version();
 }
 
