@@ -30,4 +30,5 @@ PROC_COMMON_OBJS := arch/omap5/clock.o \
 		    arch/omap5/sdram.o \
 		    arch/omap5/gpmc.o \
 		    arch/omap5/id.o \
+		    arch/omap5/smartio.o \
 		    arch/omap5/pmic.o \

@@ -61,6 +61,7 @@ struct board_specific_functions {
 	void (*board_gpmc_init)(void);
 	void (*board_late_init)(void);
 	void (*board_mux_init)(void);
+	void (*board_smartio_init)(void);
 	void (*board_ddr_init)(struct proc_specific_functions *proc_ops);
 	struct storage_specific_functions * (*board_storage_init)();
 	int (*board_user_fastboot_request)(void);

@@ -35,6 +35,7 @@
 
 #include <omap5/hw.h>
 #include <omap5/mux.h>
+#include <omap5/smartio.h>
 
 #define FASTBOOT_BUTTON_GPIO	83
 
@@ -91,6 +92,12 @@ static void omap5uevm_mux_init(void)
 
 	/* push button (GPIO 83) for fastboot mode */
 	setup_core(CONTROL_PADCONF_HSI2_ACDATA, (IEN | M6));
+}
+
+static void omap5uevm_smartio_init(void)
+{
+	/* configure smart io */
+	configure_smartio(NULL);
 }
 
 /* Use CH (configuration header) to do the settings */
@@ -203,6 +210,7 @@ static struct board_specific_functions omap5uevm_funcs = {
 	.board_get_flash_slot = omap5uevm_get_flash_slot,
 	.board_set_flash_slot = omap5uevm_set_flash_slot,
 	.board_mux_init = omap5uevm_mux_init,
+	.board_smartio_init = omap5uevm_smartio_init,
 	.board_user_fastboot_request = omap5uevm_check_fastboot,
 	.board_late_init = omap5uevm_late_init,
 	.board_get_part_tbl = omap5uevm_get_partition,

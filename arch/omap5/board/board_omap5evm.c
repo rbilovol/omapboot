@@ -37,6 +37,7 @@
 
 #include <omap5/hw.h>
 #include <omap5/mux.h>
+#include <omap5/smartio.h>
 
 static struct partition partitions[] = {
 	{ "-", 128 },
@@ -337,8 +338,13 @@ static void omap5evm_mux_init(void)
 	setup_wakeup(CONTROL_WAKEUP_SYS_BOOT4, (IEN | M0));
 	setup_wakeup(CONTROL_WAKEUP_SYS_BOOT5, (IEN | M0));
 
-	/* Setup Drive Strengths */
-	setup_smartio_padconf(CONTROL_SMART1IO_PADCONF_0, DS_60, EMMC_DS_SHIFT);
+}
+
+static void omap5evm_smartio_init(void)
+{
+
+	/* configure smart io */
+	configure_smartio(NULL);
 }
 
 static void omap5evm_late_init(void)
@@ -453,6 +459,7 @@ static struct board_specific_functions omap5evm_funcs = {
 	.board_set_flash_slot = omap5evm_set_flash_slot,
 	.board_ddr_init = omap5evm_ddr_init,
 	.board_mux_init = omap5evm_mux_init,
+	.board_smartio_init = omap5evm_smartio_init,
 	.board_user_fastboot_request = omap5evm_check_fastboot,
 	.board_late_init = omap5evm_late_init,
 	.board_get_part_tbl = omap5evm_get_partition,

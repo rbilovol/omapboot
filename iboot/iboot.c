@@ -74,6 +74,9 @@ void iboot(unsigned *info)
 	if (boot_ops->board_ops->board_mux_init)
 		boot_ops->board_ops->board_mux_init();
 
+	if (boot_ops->board_ops->board_smartio_init)
+		boot_ops->board_ops->board_smartio_init();
+
 	ldelay(100);
 
 	if (boot_ops->board_ops->board_scale_vcores)
