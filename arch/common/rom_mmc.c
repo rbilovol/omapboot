@@ -414,19 +414,24 @@ struct storage_specific_functions *init_rom_mmc_funcs(u8 device)
 		return NULL;
 
 	boot_ops->proc_ops = init_processor_id_funcs();
-	/*TODO check for valid functions */
-	mmcd.rom_hal_mmchs_writedata   =
-		API(&rom_hal_mmchs_writedata_addr[boot_ops->
-				proc_ops->proc_get_proc_id()]);
 
-	mmcd.rom_hal_mmchs_sendcommand =
-		API(&rom_hal_mmchs_sendcommand_addr[boot_ops->
-				proc_ops->proc_get_proc_id()]);
+	if (boot_ops->proc_ops->proc_get_proc_id) {
+		mmcd.rom_hal_mmchs_writedata =
+			API(&rom_hal_mmchs_writedata_addr
+			[boot_ops->proc_ops->proc_get_proc_id()]);
+
+		mmcd.rom_hal_mmchs_sendcommand =
+			API(&rom_hal_mmchs_sendcommand_addr
+			[boot_ops->proc_ops->proc_get_proc_id()]);
+	} else
+		return NULL;
+
 	mmcd.mmc_functions.init = mmc_init;
 	mmcd.mmc_functions.get_sector_size = get_mmc_sector_size;
 	mmcd.mmc_functions.read = mmc_read;
 	mmcd.mmc_functions.write = mmc_write;
 	mmcd.mmc_functions.get_total_sectors = get_mmc_total_sectors;
 	mmcd.mmc_functions.erase = mmc_erase;
+
 	return &mmcd.mmc_functions;
 }
