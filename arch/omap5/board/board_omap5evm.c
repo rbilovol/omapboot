@@ -307,7 +307,7 @@ static void omap5evm_mux_init(void)
 	setup_wakeup(CONTROL_WAKEUP_JTAG_TMSC, (IEN | M0));
 	setup_wakeup(CONTROL_WAKEUP_JTAG_TDI, (IEN | M0));
 	setup_wakeup(CONTROL_WAKEUP_JTAG_TDO, (M0));
-	setup_wakeup(CONTROL_WAKEUP_FREF_CLK_IOREQ, (IEN | M0));
+	setup_wakeup(CONTROL_WAKEUP_FREF_CLK_IOREQ, (IEN | PTD | M0));
 	setup_wakeup(CONTROL_WAKEUP_FREF_CLK0_OUT, (M0));
 	setup_wakeup(CONTROL_WAKEUP_FREF_CLK1_OUT, (M0));
 	setup_wakeup(CONTROL_WAKEUP_FREF_CLK2_OUT, (M0));
