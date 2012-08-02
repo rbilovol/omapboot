@@ -152,9 +152,6 @@ static u8 omap5uevm_get_flash_slot(void)
 
 static void omap5uevm_prcm_init(void)
 {
-	/* Work around to make sure EMIF 2 is in good health*/
-	writel(0x0100040D, EMIF2_SDRAM_REFRESH_CONTROL);
-	writel(0x0000040D, EMIF2_SDRAM_REFRESH_CONTROL);
 	prcm_init();
 }
 
