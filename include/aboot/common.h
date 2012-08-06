@@ -32,8 +32,6 @@
 #include <aboot/types.h>
 #include <version.h>
 
-char aboot_version_string[20];
-
 unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);
 int get_downloadsize_from_string(int count, char *string);

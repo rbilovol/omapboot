@@ -53,6 +53,7 @@ struct usb usb;
 
 static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 {
+	u32 size;
 	u32 *atag_start = atag;
 	char *p;
 	char *cmdline = (char *)hdr->cmdline;
@@ -82,7 +83,7 @@ static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 	if (*p == '\0')
 		goto _none;
 
-	u32 size = strlen(p); /* size in bytes */
+	size = strlen(p); /* size in bytes */
 	*(atag++) = 2 + size/4; /* size text + size of size + size of tag */
 	*(atag++) = _CMDLINE;
 	strcpy((char *)atag, p);
@@ -94,7 +95,7 @@ _none:
 	return atag - atag_start;
 }
 
-void boot_settings(boot_img_hdr *hdr, u32 atag)
+static void boot_settings(boot_img_hdr *hdr, u32 atag)
 {
 	char temp_cmdline[512] = EXTENDED_CMDLINE;
 	char serial_str[64];
@@ -124,7 +125,7 @@ void boot_settings(boot_img_hdr *hdr, u32 atag)
 	return;
 }
 
-void bootimg_print_image_hdr(boot_img_hdr *hdr)
+static void bootimg_print_image_hdr(boot_img_hdr *hdr)
 {
 #ifdef DEBUG
 	int i;
@@ -163,6 +164,7 @@ int do_booti(char *info, void *download_addr)
 	int sector_sz = 0;
 	int ret = 0;
 	unsigned dbt_addr = ATAGS_ARGS;
+	void (*theKernel)(int zero, int arch, void *);
 
 	if (!(strcmp(info, "mmc")))
 		boot_from_mmc = 1;
@@ -286,7 +288,6 @@ int do_booti(char *info, void *download_addr)
 	boot_settings(&hdr[0], ATAGS_ARGS);
 #endif
 
-	void (*theKernel)(int zero, int arch, void *);
 	theKernel = (void (*)(int, int, void *))(hdr->kernel_addr);
 
 	printf("\nbooting kernel...\n");
