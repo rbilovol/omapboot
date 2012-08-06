@@ -55,7 +55,7 @@ unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 u32 public_rom_base;
 
 __attribute__((__section__(".mram")))
-struct bootloader_ops boot_operations;
+static struct bootloader_ops boot_operations;
 struct bootloader_ops* boot_ops = &boot_operations;
 
 void eboot(unsigned *info)
