@@ -93,10 +93,7 @@ static const unsigned long crc_table[256] = {
   0x2d02ef8dL
 };
 
-unsigned long crc32(crc, buf, len)
-	ulong crc;
-	const u8 *buf;
-	uint len;
+unsigned long crc32(ulong crc, const u8 *buf, uint len)
 {
 	crc = crc ^ 0xffffffffL;
 
