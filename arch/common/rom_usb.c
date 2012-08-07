@@ -31,7 +31,7 @@
 #include <common/omap_rom.h>
 
 #if defined(CONFIG_IS_OMAP5)
-struct usb_ioconf ioconf;
+static struct usb_ioconf ioconf;
 volatile struct usb_trb trbout;
 #endif
 
@@ -88,7 +88,7 @@ int usb_open(struct usb *usb)
 }
 
 
-struct usb *local_read_usb;
+static struct usb *local_read_usb;
 static void rom_read_callback(struct per_handle *rh)
 {
 
@@ -115,7 +115,7 @@ void usb_queue_read(struct usb *usb, void *data, unsigned len)
 	usb->dread.length = len;
 	usb->dread.status = -1;
 	usb->dread.device_type = DEVICE_USB;
-	usb->dread.device_data = 0;
+	usb->dread.device_data = NULL;
 #if defined(CONFIG_IS_OMAP4)
 	usb->dread.xfer_mode = 1;
 #endif
@@ -138,8 +138,8 @@ int usb_wait_read(struct usb *usb)
 	}
 }
 
-struct usb *local_write_usb;
-void rom_write_callback(struct per_handle *rh)
+static struct usb *local_write_usb;
+static void rom_write_callback(struct per_handle *rh)
 {
 	local_write_usb->dwrite.status = rh->status;
 	return;
@@ -155,7 +155,7 @@ void usb_queue_write(struct usb *usb, void *data, unsigned len)
 	usb->dwrite.xfer_mode = 1;
 #endif
 	usb->dwrite.device_type = DEVICE_USB;
-	usb->dwrite.device_data = 0;
+	usb->dwrite.device_data = NULL;
 	usb->dwrite.callback = rom_write_callback;
 	local_write_usb = usb;
 	n = usb->io->write(&usb->dwrite);
