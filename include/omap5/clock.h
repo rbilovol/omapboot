@@ -53,7 +53,7 @@ struct omap_clocks {
 	u32 value;
 };
 
-struct omap_clocks omap5_clocks[] = {
+static struct omap_clocks omap5_clocks[] = {
 	{WRITEL, CM_L4PER_GPIO4_CLKCTRL, GPIO_CTRL_FIELD_MASK, 0},
 	{WRITEL, CM_L3INIT_HSMMC1_CLKCTRL, L3INIT_CTRL_FIELD_MASK, 0},
 	{WRITEL, CM_L3INIT_HSMMC2_CLKCTRL, L3INIT_CTRL_FIELD_MASK, 0},

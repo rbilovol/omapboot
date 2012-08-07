@@ -36,28 +36,28 @@
 typedef struct dpll_param dpll_param;
 
 /* OPP NOM */
-struct dpll_param core_dpll_params[2] = {
+static struct dpll_param core_dpll_params[2] = {
 	{665, 11,  2,  5,  8,  4, 62,  5,   5,  7},	/* 19.2 MHz */
 	{665, 23,  2,  5,  8,  4, 62,  5,  5,   7}	/* 38.4 MHz */
 };
 #define CORE_VOLTAGE	1040000
 
 /* OPP NOM */
-struct dpll_param usb_dpll_params[2] = {
+static struct dpll_param usb_dpll_params[2] = {
 	{400, 7, 2, -1, -1, -1, -1, -1, -1, -1},	/* 19.2 MHz */
 	{400, 15, 2, -1, -1, -1, -1, -1, -1, -1}	/* 38.4 MHz */
 };
 
 #ifndef CONFIG_FORCE_IVA_OPPNOM
 /* OPP_LOW */
-struct dpll_param iva_dpll_params[2] = {
+static struct dpll_param iva_dpll_params[2] = {
 	{1881, 30, -1, -1, 10, 12, -1, -1, -1, -1},	/* 19.2 MHz */
 	{1972, 64, -1, -1, 10, 12, -1, -1, -1, -1}	/* 38.4 MHz */
 };
 #define IVA_VOLTAGE	950000
 #else
 /* OPP_NOM: in the customer specific need of having to go to OPP NOM */
-struct dpll_param iva_dpll_params[2] = {
+static struct dpll_param iva_dpll_params[2] = {
 	{1881, 30, -1, -1,  5,  6,  -1, -1, -1, -1},	/* 19.2 MHz */
 	{1972, 64, -1, -1,  5,  6,  -1, -1, -1, -1}	/* 38.4 MHz */
 };
@@ -65,24 +65,24 @@ struct dpll_param iva_dpll_params[2] = {
 #endif
 
 /* OPP NOM */
-struct dpll_param abe_dpll_params = {
+static struct dpll_param abe_dpll_params = {
 	750, 0, 1, 1, -1, -1, -1, -1, -1, -1
 };
 
 /* OPP NOM */
-struct dpll_param mpu_dpll_params[2] = {
+static struct dpll_param mpu_dpll_params[2] = {
 	{375, 8, 1, -1, -1, -1, -1, -1, -1, -1},	/* 19.2 MHz */
 	{375, 17, 1, -1, -1, -1, -1, -1, -1, -1}	/* 38.4 MHz */
 };
 #define MPU_VOLTAGE	1040000
 
 /* OPP NOM */
-struct dpll_param per_dpll_params[2] = {
+static struct dpll_param per_dpll_params[2] = {
 	{20, 0, 4, 3, 6, 4, -1, 2, -1, -1},	/* 19.2 MHz */
 	{10, 0, 4, 3, 6, 4, -1, 2, -1, -1}	/* 38.4 MHz */
 };
 
-void setup_clocks(void)
+static void setup_clocks(void)
 {
 	struct omap_clocks * oclock;
 	for (oclock = &omap5_clocks[0]; oclock->ad > 0; oclock++) {
@@ -106,7 +106,7 @@ void setup_clocks(void)
 	}
 }
 
-void configure_core_dpll(dpll_param *dpll_param_p)
+static void configure_core_dpll(dpll_param *dpll_param_p)
 {
 #ifdef CONFIG_USE_CH_SETTINGS_CONFIG
 	/* Use the Config header to configure this dpll */
@@ -143,7 +143,7 @@ void configure_core_dpll(dpll_param *dpll_param_p)
 	return;
 }
 
-void configure_per_dpll(dpll_param *dpll_param_p)
+static void configure_per_dpll(dpll_param *dpll_param_p)
 {
 #ifdef CONFIG_USE_CH_SETTINGS_CONFIG
 	/* Use the Config header to configure this dpll */
@@ -191,7 +191,7 @@ void configure_per_dpll(dpll_param *dpll_param_p)
 	return;
 }
 
-void configure_mpu_dpll(dpll_param *dpll_param_p)
+static void configure_mpu_dpll(dpll_param *dpll_param_p)
 {
 #ifdef CONFIG_USE_CH_SETTINGS_CONFIG
 	/* Use the Config header to configure this dpll */
@@ -224,7 +224,7 @@ void configure_mpu_dpll(dpll_param *dpll_param_p)
 }
 /* The IVA DPLL is not part of the CH Header so we have to perform this
 API */
-void configure_iva_dpll(dpll_param *dpll_param_p)
+static void configure_iva_dpll(dpll_param *dpll_param_p)
 {
 	/* Unlock the IVA dpll */
 	set_modify(CM_CLKMODE_DPLL_IVA, 0x00000007, IDLE_BYPASS_FAST_RELOCK_MODE);
@@ -254,7 +254,7 @@ void configure_iva_dpll(dpll_param *dpll_param_p)
 
 /* The ABE DPLL is not part of the CH Header so we have to perform this
 API */
-void configure_abe_dpll(dpll_param *dpll_param_p)
+static void configure_abe_dpll(dpll_param *dpll_param_p)
 {
 	u32 value;
 
@@ -291,12 +291,14 @@ void configure_abe_dpll(dpll_param *dpll_param_p)
 	return;
 }
 
-void configure_usb_dpll(dpll_param *dpll_param_p)
+static void configure_usb_dpll(dpll_param *dpll_param_p)
 {
-	u32 num = dpll_param_p->m * (19200000/1000);
-	u32 den = (dpll_param_p->n + 1) * 250 * 1000;
+	u32 num, den, sd_div;
+
+	num = dpll_param_p->m * (19200000/1000);
+	den = (dpll_param_p->n + 1) * 250 * 1000;
 	num += den - 1;
-	u32 sd_div = num / den;
+	sd_div = num / den;
 
 	set_modify(CM_CLKSEL_DPLL_USB, 0xff000000, sd_div << 24);
 
@@ -408,10 +410,12 @@ void scale_vcores(void)
 
 void prcm_init(void)
 {
+	u32 temp;
+
 	/* Configure CORE DPLL but don't lock it */
 	configure_core_dpll(&core_dpll_params[0]);
 
-	u32 temp = (CLKSEL_CORE_X2_DIV_1 << CLKSEL_CORE_SHIFT) |
+	temp = (CLKSEL_CORE_X2_DIV_1 << CLKSEL_CORE_SHIFT) |
 	(CLKSEL_L3_CORE_DIV_2 << CLKSEL_L3_SHIFT) |
 	(CLKSEL_L4_L3_DIV_2 << CLKSEL_L4_SHIFT);
 	writel(temp, CM_CLKSEL_CORE);
