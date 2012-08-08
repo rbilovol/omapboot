@@ -39,47 +39,52 @@
 __attribute__((__section__(".sdram")))
 static struct mem_alloc_header head;
 
-static u32 memory_available;
-static void *data = &head;
-static void *next = &head;
-
 void init_memory_alloc(void)
 {
-	/* Initially the entire heap is FREE */
-	memory_available = HEAP_SIZE;
-	head.section_size = 0;
-	head.status = 0;
+	u8 *next;
 
-	head.next = NULL;
-	head.data = NULL;
+	head.status = 0;
+	head.section_size = HEAP_SIZE - (2 * MALLOC_HDR_SIZE);
+	head.data = (u8 *)&head;
+	head.data += MALLOC_HDR_SIZE;
+	next = (u8 *)(head.data);
+	next += head.section_size;
+	head.next = (struct mem_alloc_header *)next;
+
+	head.next->status = 0;
+	head.next->section_size = 0;
+	head.next->data = NULL;
+	head.next->next = NULL;
 
 	return;
 }
 
 static int align_size_requested(int size)
 {
-	if (size % 4)
-		size = ((size >> 2) + 1) << 2;
+	if (size % ALLOC_ALIGN_SIZE)
+		size = ((size >> ALLOC_ALIGN_SHIFT) + 1) << ALLOC_ALIGN_SHIFT;
 
 	return size;
 }
 
-static void create_new_hdr(void)
-{
-	struct mem_alloc_header *new;
-
-	new = next;
-	new->status = 0;
-	new->section_size = 0;
-	new->data = NULL;
-	new->next = NULL;
-
-}
-
 int *alloc_memory(int size)
 {
-	void *ret_ptr = NULL;
 	struct mem_alloc_header *hdr = &head;
+	struct mem_alloc_header *next;
+	u8 *tptr;
+#ifdef DEBUG
+	u32 max_available = 0;
+	while (hdr->next) {
+		printf("hdr = 0x%08x, data = 0x%08x, next = 0x%08x\n",
+			hdr, hdr->data, hdr->next);
+		if (hdr->section_size > max_available)
+			max_available = hdr->section_size;
+		hdr = hdr->next;
+	}
+	hdr = &head;
+	printf("Maximum section available = 0x%08x bytes. Req=0x%08x\n",
+				max_available, size);
+#endif
 
 	if (size < 1) {
 		DBG("user has requested an invalid amount of memory\n");
@@ -88,102 +93,40 @@ int *alloc_memory(int size)
 
 	size = align_size_requested(size);
 
-	DBG("user has requested %d bytes and %d byte(s) are available\n",
-		size, memory_available);
-
-	if (memory_available < size) {
-		printf("ERROR!! not enough memory available for allocation\n");
-
+	/*
+	* Traverse the heap to find an available section:
+	* If a section is unused and can fit requested size
+	* then allocated the section and break that section
+	* if necessary. If you reached end of linked list
+	* you have no space left.
+	*/
+	while (hdr->next) {
+		if ((!hdr->status) && (hdr->section_size >= size)) {
+			DBG("Section at 0x%08x can be used\n\n\n",
+							(u32)hdr);
+			break;
+		}
+		hdr = hdr->next;
+	}
+	if (!hdr->next) {
+		printf("Reached end of heap. Requested size not available\n");
 		return NULL;
 	}
+	/* Break segment if segment is too big */
+	if (hdr->section_size > (size + FRAGMENT_THRESH)) {
+		tptr = hdr->data + size;
+		next = (struct mem_alloc_header *) tptr;
+		next->status = 0;
+		next->section_size = hdr->section_size -
+					(size + MALLOC_HDR_SIZE);
+		next->next = hdr->next;
+		next->data = (u8 *)next + MALLOC_HDR_SIZE;
 
-#ifdef DEBUG
-	if (memory_available == HEAP_SIZE)
-		DBG("all heap mem is available\n");
-	else if (memory_available < HEAP_SIZE)
-		DBG("some heap mem is available, some heap mem is in use\n");
-#endif
-
-	/*
-	* traverse the heap to find an available section:
-	* start at the top of the heap
-	* check each header status to find one unused
-	* if we find an unused section, check if it can fit
-	* "size" bytes, else allocate a new section at the
-	* bottom of the heap
-	*/
-
-	while (ret_ptr == NULL) {
-
-		if (!hdr->status) {
-			DBG("current section is not in use\n");
-
-			if ((!hdr->section_size) ||
-				(size <= hdr->section_size)) {
-				DBG("current section has not been allocated, "
-				"we can fit %d bytes in this section\n", size);
-
-				memory_available -= size;
-				hdr->status = 1;
-				hdr->section_size = size;
-
-				data = hdr;
-				next = hdr;
-
-				next += sizeof(head) + (size * sizeof(u32));
-				hdr->next = next;
-
-				data += sizeof(head);
-				hdr->data = data;
-
-				create_new_hdr();
-
-				ret_ptr = data;
-
-			} else if (size > hdr->section_size) {
-				DBG("we cannot fit %d bytes in a section of "
-				"size %d bytes\n", size, hdr->section_size);
-
-				DBG("...skip to next section\n");
-				hdr = (struct mem_alloc_header *) hdr->next;
-
-				if (!hdr->next) {
-					DBG("since hdr->next is NULL, "
-						"create new header\n");
-
-					next = hdr;
-					next += sizeof(head) +
-						(size * sizeof(u32));
-
-					create_new_hdr();
-
-					data = hdr;
-					next = hdr;
-
-				}
-			}
-		} else {
-			DBG("current section in use, skip to next section\n");
-			hdr = (struct mem_alloc_header *) hdr->next;
-
-			if (!hdr->next) {
-				DBG("since hdr->next is NULL, "
-					"create new header\n");
-				next = hdr;
-				next += sizeof(head) + (size * sizeof(u32));
-
-				create_new_hdr();
-
-				data = hdr;
-				next = hdr;
-			}
-		}
+		hdr->next = next;
+		hdr->section_size = size;
 	}
-
-	data = &head;
-	next = &head;
-
-	return ret_ptr;
+	hdr->status = 1;
+	return (int *) hdr->data;
 }
 
 int *zalloc_memory(int size)
@@ -207,25 +150,24 @@ int *zalloc_memory(int size)
 
 int free_memory(void *ptr_to_data)
 {
-	if (ptr_to_data == NULL) {
-		DBG("cannot free invalid pointer\n");
+	struct mem_alloc_header *hdr = &head;
+	u8 *free;
+	struct mem_alloc_header *curr;
+	free = (u8 *) (ptr_to_data - MALLOC_HDR_SIZE);
+	curr = (struct mem_alloc_header *)free;
+
+	while (hdr->next) {
+		if (hdr == curr)
+			break;
+		hdr = hdr->next;
+	}
+	if (!hdr->next) {
+		printf("Invalid pointer: 0x%08x\n", ptr_to_data);
 		return -1;
 	}
-
-	/* ToDo : Check if the pointer passed in is within the heap */
-
-	void *free = (void *) (ptr_to_data - 0x10);
-	struct mem_alloc_header *hdr = free;
-
-	/* mark the section as unused */
 	hdr->status = 0;
-
-	/* add the section size back to available memory pool */
-	memory_available += hdr->section_size;
-
 	DBG("user has freed memory section 0x%x of size 0x%x\n",
-					free, hdr->section_size);
-
+					hdr, hdr->section_size);
 	return 0;
 }
 

@@ -28,12 +28,25 @@
 
 #define HEAP_SIZE	0x1F400000
 
+struct mem_alloc_header;
+
 struct mem_alloc_header {
 	u32 status;	/* free =0, used =1 */
 	u32 section_size;
-	void *data;
-	u32 *next;
+	u8 *data;
+	struct mem_alloc_header *next;
 };
+
+#define MALLOC_HDR_SIZE (sizeof(struct mem_alloc_header))
+
+/* Need to align to 512 bytes as buffers might be passed to MMC or SATA
+ * and for them, the data needs to be aligned to 512 bytes
+ */
+#define ALLOC_ALIGN_SIZE	512
+#define ALLOC_ALIGN_SHIFT	9
+
+/* Threshold for breaking a segment */
+#define FRAGMENT_THRESH (MALLOC_HDR_SIZE + ALLOC_ALIGN_SIZE)
 
 void init_memory_alloc(void);
 int *alloc_memory(int size);
