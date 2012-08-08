@@ -288,14 +288,16 @@ static int mmc_write(u64 start_sec, u64 sectors, void *data)
 	if (dd->addressing == MMCSD_ADDRESSING_SECTOR)
 		/* In case of sector addressing,
 		the address given is the sector nb */
-		arg = start_sec;
+		arg = (u32)start_sec;
 	else
 		/* In case of byte addressing,
 		the address given is start sector * MMCSD_SECTOR_SIZE */
-		arg = start_sec << MMCSD_SECTOR_SIZE_SHIFT;
+		arg = (u32)start_sec << MMCSD_SECTOR_SIZE_SHIFT;
 
 	blkreg = mmc_reg_read(OMAP_HSMMC_BLK_OFFSET);
-	mmc_reg_write(OMAP_HSMMC_BLK_OFFSET, (blkreg | sectors<<16));
+	blkreg &= ~HSMMC_BLK_NBLK_MASK;
+	mmc_reg_write(OMAP_HSMMC_BLK_OFFSET, (blkreg |
+			(u32)sectors<<HSMMC_BLK_NBLK_SHIFT));
 
 	/* Send the CMD25 write command */
 	n = mmcd.rom_hal_mmchs_sendcommand(dd->moduleid,
