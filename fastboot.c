@@ -565,6 +565,41 @@ out:
 	return ret;
 }
 
+static u32 fastboot_get_boot_ptn(boot_img_hdr *hdr, char *response)
+{
+	u32 hdr_sectors = 0;
+	int ret = -1;
+
+	strcpy(response, "OKAY");
+
+	fb_data->e = fastboot_flash_find_ptn("boot");
+	if (NULL == fb_data->e) {
+		strcpy(response, "FAILCannot find boot partition");
+		goto out;
+	}
+
+	/* Read the boot image header */
+	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
+	if (fb_data->storage_ops->read(fb_data->e->start,
+			hdr_sectors, (void *)hdr)) {
+		strcpy(response, "FAILCannot read hdr from boot partition");
+		goto out;
+	}
+
+	if (memcmp(hdr->magic, "ANDROID!", 8) != 0) {
+		printf("booti: bad boot image magic\n");
+		strcpy(response, "FAILBoot partition not initialized");
+		goto out;
+	}
+
+	return hdr_sectors;
+
+out:
+	strcpy(response, "INFO");
+	fastboot_tx_status(response, strlen(response));
+	return ret;
+}
+
 static int fastboot_update_zimage(char *response)
 {
 	u8 *ramdisk_buffer;
@@ -585,25 +620,11 @@ static int fastboot_update_zimage(char *response)
 
 	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
 
-	fb_data->e = fastboot_flash_find_ptn("boot");
-	if (NULL == fb_data->e) {
-		sprintf(response, "FAILCannot find boot partition");
+	hdr_sectors = fastboot_get_boot_ptn(hdr, response);
+	if (hdr_sectors <= 0) {
+		sprintf(response + strlen(response),
+			"FAILINVALID number of boot sectors %d", hdr_sectors);
 		ret = -1;
-		goto out;
-	}
-	/* Read the boot image header */
-	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
-	if (fb_data->storage_ops->read(fb_data->e->start,
-			hdr_sectors, (void *)hdr)) {
-		sprintf(response, "FAILCannot read hdr from boot partition");
-		ret = -1;
-		goto out;
-	}
-
-	ret = memcmp(hdr->magic, "ANDROID!", 8);
-	if (ret != 0) {
-		printf("booti: bad boot image magic\n");
-		sprintf(response, "FAILBoot partition not initialized");
 		goto out;
 	}
 
@@ -687,25 +708,11 @@ static int fastboot_update_ramdisk(char *response)
 
 	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
 
-	fb_data->e = fastboot_flash_find_ptn("boot");
-	if (NULL == fb_data->e) {
-		sprintf(response, "FAILCannot find boot partition");
+	hdr_sectors = fastboot_get_boot_ptn(hdr, response);
+	if (hdr_sectors <= 0) {
+		sprintf(response + strlen(response),
+			"FAILINVALID number of boot sectors %d", hdr_sectors);
 		ret = -1;
-		goto out;
-	}
-	/* Read the boot image header */
-	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
-	if (fb_data->storage_ops->read(fb_data->e->start,
-			hdr_sectors, (void *)hdr)) {
-		sprintf(response, "FAILCannot read hdr from boot partition");
-		ret = -1;
-		goto out;
-	}
-
-	ret = memcmp(hdr->magic, "ANDROID!", 8);
-	if (ret != 0) {
-		printf("booti: bad boot image magic\n");
-		sprintf(response, "FAILBoot partition not initialized");
 		goto out;
 	}
 
