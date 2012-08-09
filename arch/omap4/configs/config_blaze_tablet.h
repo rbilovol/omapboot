@@ -49,3 +49,5 @@
 #define PRODUCT_NAME		"blaze"
 #define FASTBOOT_VERSION	"0.5"
 #define MANUFACTURER_NAME	"Texas Instruments"
+
+#define CONFIG_OMAP4_ANDROID_CMD_LINE

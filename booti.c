@@ -56,6 +56,8 @@
 
 struct usb usb;
 
+#if defined CONFIG_OMAP4_ANDROID_CMD_LINE || \
+	defined CONFIG_OMAP5_ANDROID_CMD_LINE
 static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 {
 	u32 size;
@@ -137,6 +139,7 @@ static void boot_settings(boot_img_hdr *hdr, u32 atag)
 
 	return;
 }
+#endif
 
 static void bootimg_print_image_hdr(boot_img_hdr *hdr)
 {
