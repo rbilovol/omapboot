@@ -227,7 +227,7 @@ void aboot(unsigned *info)
 			for (;;) ;
 		}
 
-		boot_image(cfg_machine_type, CONFIG_ADDR_DOWNLOAD, len);
+		do_booti("ram", NULL);
 		serial_puts("*** BOOT FAILED ***\n");
 	}
 

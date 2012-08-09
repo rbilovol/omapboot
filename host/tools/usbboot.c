@@ -176,15 +176,15 @@ static int usage(void)
 	fprintf(stderr, "\nusbboot syntax and options:\n\n");
 	fprintf(stderr, "usbboot [ <2ndstage> ] <image>\n");
 	fprintf(stderr, "=================================================\n");
-	fprintf(stderr, "example: ./out/<board>/usbboot u-boot.bin\n");
+	fprintf(stderr, "example: ./out/<board>/usbboot boot.img\n");
 	fprintf(stderr, "---- ---- ---- ---- OR ---- ---- ---- ----\n");
-	fprintf(stderr, "example: ./out/<board>/usbboot out/<board>/aboot.bin "
-			"u-boot.bin\n");
-	fprintf(stderr, "==>this will download and execute aboot second \n"
-			"stage in SRAM and then download and execute \n"
-			"u-boot.bin in SDRAM\n");
+	fprintf(stderr, "example: ./out/<board>/usbboot out/<board>/aboot.ift "
+			"boot.img\n (for HD boards, aboot.ift needs signing)");
+	fprintf(stderr, "==>this will download and execute aboot second\n"
+			"stage in SRAM and then download and execute\n"
+			"boot.img in SDRAM\n");
 	fprintf(stderr, "=================================================\n");
-	fprintf(stderr, "example: ./out/<board>/usbboot -f \n");
+	fprintf(stderr, "example: ./out/<board>/usbboot -f\n");
 	fprintf(stderr, "---- ---- ---- ---- OR ---- ---- ---- ----\n");
 	fprintf(stderr, "example: ./out/<board>/usbboot -f "
 						"out<board>/iboot.ift\n");
