@@ -37,6 +37,12 @@
 #include "config.h"
 #include "version.h"
 
+#ifdef DEBUG
+#define DBG(x...) printf(x)
+#else
+#define DBG(x...)
+#endif /* DEBUG */
+
 /* Section for Android bootimage format support
  * Refer:
  * http://android.git.kernel.org/?p=platform/system/core.git;
@@ -127,29 +133,28 @@ static void boot_settings(boot_img_hdr *hdr, u32 atag)
 
 static void bootimg_print_image_hdr(boot_img_hdr *hdr)
 {
-#ifdef DEBUG
 	int i;
-	printf("printing bootimg header ...\n");
-	printf("   Image magic:   %s\n", hdr->magic);
+	DBG("printing bootimg header ...\n");
+	DBG("   Image magic:   %s\n", hdr->magic);
 
-	printf("   kernel_size:   0x%x\n", hdr->kernel_size);
-	printf("   kernel_addr:   0x%x\n", hdr->kernel_addr);
+	DBG("   kernel_size:   0x%x\n", hdr->kernel_size);
+	DBG("   kernel_addr:   0x%x\n", hdr->kernel_addr);
 
-	printf("   rdisk_size:   0x%x\n", hdr->ramdisk_size);
-	printf("   rdisk_addr:   0x%x\n", hdr->ramdisk_addr);
+	DBG("   rdisk_size:   0x%x\n", hdr->ramdisk_size);
+	DBG("   rdisk_addr:   0x%x\n", hdr->ramdisk_addr);
 
-	printf("   second_size:   0x%x\n", hdr->second_size);
-	printf("   second_addr:   0x%x\n", hdr->second_addr);
+	DBG("   second_size:   0x%x\n", hdr->second_size);
+	DBG("   second_addr:   0x%x\n", hdr->second_addr);
 
-	printf("   tags_addr:   0x%x\n", hdr->tags_addr);
-	printf("   page_size:   0x%x\n", hdr->page_size);
+	DBG("   tags_addr:   0x%x\n", hdr->tags_addr);
+	DBG("   page_size:   0x%x\n", hdr->page_size);
 
-	printf("   name:      %s\n", hdr->name);
-	printf("   cmdline:   %s%x\n", hdr->cmdline);
+	DBG("   name:      %s\n", hdr->name);
+	DBG("   cmdline:   %s%x\n", hdr->cmdline);
 
 	for (i = 0; i < 8; i++)
-		printf("   id[%d]:   0x%x\n", i, hdr->id[i]);
-#endif
+		DBG("   id[%d]:   0x%x\n", i, hdr->id[i]);
+
 	return;
 }
 
@@ -226,40 +231,39 @@ int do_booti(char *info, void *download_addr)
 		num_sectors = CEIL(hdr->kernel_size, sector_sz);
 		if (num_sectors <= (hdr->kernel_size / sector_sz))
 			num_sectors = (hdr->kernel_size / sector_sz);
-#ifdef DEBUG
-		printf("Reading kernel from start sector %d and reading %d "
+
+		DBG("Reading kernel from start sector %d and reading %d "
 			"number of sectors\n", (int)sector1, (int)num_sectors);
-#endif
+
 		ret = boot_ops->storage_ops->read(sector1, num_sectors,
 					(void *) hdr->kernel_addr);
 		if (ret != 0) {
-				printf("mmc read failed\n");
-				goto fail;
+			printf("mmc read failed\n");
+			goto fail;
 		}
-#ifdef DEBUG
-		printf("Done reading kernel from mmc\n");
-#endif
+
+		DBG("Done reading kernel from mmc\n");
+
 		num_sectors = CEIL(hdr->ramdisk_size, sector_sz);
 		if (num_sectors <= (hdr->ramdisk_size / sector_sz))
 			num_sectors = (hdr->ramdisk_size / sector_sz);
 
-#ifdef DEBUG
-		printf("Reading ramdisk from start sector %d and reading %d "
+		DBG("Reading ramdisk from start sector %d and reading %d "
 			"number of sectors\n", (int)sector2, (int)num_sectors);
-#endif
+
 		ret = boot_ops->storage_ops->read(sector2, num_sectors,
 					(void *) hdr->ramdisk_addr);
 		if (ret != 0) {
 			printf("mmc read failed\n");
 			goto fail;
 		}
-#ifdef DEBUG
-		printf("Done reading ramdisk from mmc\n");
-#endif
+
+		DBG("Done reading ramdisk from mmc\n");
+
 	} else {
 		u32 kaddr, raddr;
 
-		printf("user wants to boot an image downloaded using "
+		DBG("user wants to boot an image downloaded using "
 							"fastboot\n");
 
 		ret = memcmp(hdr->magic, "ANDROID!", 8);
