@@ -266,7 +266,7 @@ static void fastboot_oem(struct fastboot_data *fb_data,
 void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count)
 {
 	if (count < MAX_PTN) {
-		memcpy(fb_data->ptable + count, ptn, sizeof(*ptn));
+		memcpy(fb_data->fb_ptable + count, ptn, sizeof(*ptn));
 	count++;
 	}
 }
@@ -278,9 +278,9 @@ fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
 
 	for (n = 0; n < MAX_PTN; n++) {
 		/* Make sure a substring is not accepted */
-		if (strlen(name) == strlen(fb_data->ptable[n].name)) {
-			if (0 == strcmp(fb_data->ptable[n].name, name))
-				return fb_data->ptable + n;
+		if (strlen(name) == strlen(fb_data->fb_ptable[n].name)) {
+			if (0 == strcmp(fb_data->fb_ptable[n].name, name))
+				return fb_data->fb_ptable + n;
 		}
 	}
 
@@ -290,7 +290,7 @@ fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
 fastboot_ptentry *fastboot_flash_get_ptn(unsigned int n, int count)
 {
 	if (n < count)
-		return fb_data->ptable + n;
+		return fb_data->fb_ptable + n;
 	else
 		return NULL;
 }

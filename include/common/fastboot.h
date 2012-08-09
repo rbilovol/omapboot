@@ -121,7 +121,7 @@ struct fastboot_data {
 	struct proc_specific_functions *proc_ops;
 	struct storage_specific_functions *storage_ops;
 	struct fastboot_ptentry *e;
-	struct fastboot_ptentry ptable[MAX_PTN];
+	struct fastboot_ptentry fb_ptable[MAX_PTN];
 	char *dsize;
 	u32 getsize;
 	u32 sector;
