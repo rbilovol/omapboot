@@ -264,7 +264,6 @@ void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count)
 {
 	if (count < MAX_PTN) {
 		memcpy(fb_data->fb_ptable + count, ptn, sizeof(*ptn));
-	count++;
 	}
 }
 
@@ -282,14 +281,6 @@ fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
 	}
 
 	return NULL;
-}
-
-fastboot_ptentry *fastboot_flash_get_ptn(unsigned int n, int count)
-{
-	if (n < count)
-		return fb_data->fb_ptable + n;
-	else
-		return NULL;
 }
 
 static int download_image(void)
