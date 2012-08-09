@@ -443,7 +443,7 @@ static int blaze_tablet_set_flash_slot(u8 dev)
 
 static struct board_specific_functions blaze_tablet_funcs = {
 	.board_get_flash_slot = blaze_tablet_get_flash_slot,
-	.board_get_flash_slot = blaze_tablet_set_flash_slot,
+	.board_set_flash_slot = blaze_tablet_set_flash_slot,
 	.board_user_fastboot_request = blaze_tablet_check_fastboot,
 	.board_late_init = blaze_tablet_late_init,
 	.board_get_part_tbl = blaze_tablet_get_partition,
