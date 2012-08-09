@@ -274,6 +274,11 @@ int main(int argc, char **argv)
 		if (data2 == 0) {
 			fprintf(stderr, "cannot load '%s'\n", argv[1]);
 			usage();
+
+			/* free up memory */
+			if (data)
+				free(data);
+
 			return -1;
 		}
 	}
