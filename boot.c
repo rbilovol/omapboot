@@ -44,7 +44,7 @@ int boot_image(unsigned machtype, unsigned image, unsigned len)
 
 	if (n != 8) {
 		printf("jumping to 0x%x...\n", CONFIG_ADDR_DOWNLOAD);
-		entry = CONFIG_ADDR_DOWNLOAD;
+		entry =  (void *) CONFIG_ADDR_DOWNLOAD;
 		entry(0, cfg_machine_type, CONFIG_ADDR_ATAGS);
 		for (;;);
 	}
