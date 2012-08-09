@@ -26,9 +26,17 @@
 ## SUCH DAMAGE.
 ##
 
-PROC_COMMON_OBJS := arch/omap5/clock.o \
-		    arch/omap5/sdram.o \
-		    arch/omap5/gpmc.o \
-		    arch/omap5/id.o \
-		    arch/omap5/smartio.o \
-		    arch/omap5/pmic.o \
+ABOOT_TEXT_BASE = 0x40309000
+IBOOT_TEXT_BASE = 0x40309000
+EBOOT_TEXT_BASE = 0x40309000
+
+include arch/common/common.mk
+
+BOARD_OBJS := arch/$(MACH)/board/board_$(BOARD).o
+
+PROC_COMMON_OBJS := arch/$(MACH)/clock.o \
+		    arch/$(MACH)/sdram.o \
+		    arch/$(MACH)/gpmc.o \
+		    arch/$(MACH)/id.o \
+		    arch/$(MACH)/smartio.o \
+		    arch/$(MACH)/pmic.o \

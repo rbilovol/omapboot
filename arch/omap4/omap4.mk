@@ -25,9 +25,15 @@
 ## OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 ## SUCH DAMAGE.
 
+ABOOT_TEXT_BASE = 0x40309000
+IBOOT_TEXT_BASE = 0x40300200
+EBOOT_TEXT_BASE = 0x40300200
 
-PROC_COMMON_OBJS := arch/omap4/clock.o \
-		    arch/omap4/sdram.o \
-		    arch/omap4/gpmc.o \
-		    arch/omap4/id.o \
-		    arch/omap4/pmic.o \
+include arch/common/common.mk
+BOARD_OBJS := arch/$(MACH)/board/board_$(BOARD).o
+
+PROC_COMMON_OBJS := arch/$(MACH)/clock.o \
+		    arch/$(MACH)/sdram.o \
+		    arch/$(MACH)/gpmc.o \
+		    arch/$(MACH)/id.o \
+		    arch/$(MACH)/pmic.o \

@@ -128,7 +128,7 @@ include build/rules.mk
 include host/tools/host_usbboot.mk
 
 # Build the target with it's dependencies
-include arch/$(MACH)/board/$(BOARD).mk
+include arch/$(MACH)/$(MACH).mk
 
 COMMON_OBJS := 	crc32.o \
 		libc/utils.o \
