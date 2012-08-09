@@ -33,11 +33,11 @@
 int boot_image(unsigned machtype, unsigned image, unsigned len)
 {
 	void (*entry)(unsigned, unsigned, unsigned);
-	struct boot_img_hdr *hdr = (void*) image;
+	struct boot_img_hdr *hdr = (void *) image;
 	unsigned psize, pmask, kactual;
-	unsigned *tag = (void*) CONFIG_ADDR_ATAGS;
+	unsigned *tag = (void *) CONFIG_ADDR_ATAGS;
 	unsigned n;
-	char *x = (void*) image;
+	char *x = (void *) image;
 
 	for (n = 0; n < 8; n++)
 		if (x[n] != "ANDROID!"[n]) break;
@@ -91,9 +91,9 @@ int boot_image(unsigned machtype, unsigned image, unsigned len)
 	 * otherwise the ramdisk gets clobbered before it can be
 	 * uncompressed.
 	 */
-	memcpy((void*) CONFIG_ADDR_KERNEL,(const char *) (image + psize),
-			kactual);
-	entry = (void*) CONFIG_ADDR_KERNEL;
+	memcpy((void *) CONFIG_ADDR_KERNEL, (const char *) (image + psize),
+								 kactual);
+	entry = (void *) CONFIG_ADDR_KERNEL;
 
 	printf("kernel:   0x%x (%d bytes)\n",
 	       CONFIG_ADDR_KERNEL, hdr->kernel_size);
