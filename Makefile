@@ -138,7 +138,6 @@ COMMON_OBJS := 	crc32.o \
 		libc/raise.o \
 		libc/string.o \
 		trusted.o \
-		boot.o \
 		arch/common/misc.o \
 
 M_NAME := aboot
