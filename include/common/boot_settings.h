@@ -35,5 +35,6 @@
 #define _MEM		0x54410002
 #define _INITRD		0x54420005
 #define _CMDLINE	0x54410009
+#define _REV		0x54410007
 #define _NONE		0x00000000
 #endif

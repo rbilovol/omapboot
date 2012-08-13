@@ -50,6 +50,7 @@ struct proc_specific_functions {
 	char* (*proc_get_version)(void);
 	int (*proc_get_proc_id)(void);
 	void (*proc_check_lpddr2_temp)(void);
+	u32 (*proc_get_board_rev)(void);
 };
 
 /* Use these functions to override the

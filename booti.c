@@ -60,6 +60,7 @@ struct usb usb;
 static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 {
 	u32 size;
+	u32 rev;
 	u32 *atag_start = atag;
 	char *p;
 	char *cmdline = (char *)hdr->cmdline;
@@ -79,6 +80,13 @@ static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 	*(atag++) = _MEM;
 	*(atag++) = 0x80000000; /* memory size */
 	*(atag++) = 0x80000000; /* memory start */
+
+	if (boot_ops->proc_ops->proc_get_board_rev) {
+		*(atag++) = 3;
+		*(atag++) = _REV;
+		rev = boot_ops->proc_ops->proc_get_board_rev();
+		*(atag++) = rev;
+	}
 
 	if (!cmdline)
 		goto _none;
