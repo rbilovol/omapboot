@@ -599,6 +599,7 @@ out:
 
 static int fastboot_update_zimage(char *response)
 {
+	boot_img_hdr *hdr = NULL;
 	u8 *ramdisk_buffer;
 	u32 ramdisk_sector_start, ramdisk_sectors;
 	u32 kernel_sector_start, kernel_sectors;
@@ -615,7 +616,7 @@ static int fastboot_update_zimage(char *response)
 		goto out;
 	}
 
-	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
+	hdr = (boot_img_hdr *) read_buffer;
 
 	hdr_sectors = fastboot_get_boot_ptn(hdr, response);
 	if (hdr_sectors <= 0) {
@@ -689,6 +690,7 @@ out:
 
 static int fastboot_update_ramdisk(char *response)
 {
+	boot_img_hdr *hdr = NULL;
 	u32 ramdisk_sector_start, ramdisk_sectors;
 	u32 hdr_sectors = 0;
 	u32 sectors_per_page = 0;
@@ -703,7 +705,7 @@ static int fastboot_update_ramdisk(char *response)
 		goto out;
 	}
 
-	boot_img_hdr *hdr = (boot_img_hdr *) read_buffer;
+	hdr = (boot_img_hdr *) read_buffer;
 
 	hdr_sectors = fastboot_get_boot_ptn(hdr, response);
 	if (hdr_sectors <= 0) {
