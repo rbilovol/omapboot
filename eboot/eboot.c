@@ -40,8 +40,6 @@
 
 #include <version.h>
 
-#include "config.h"
-
 #ifdef DEBUG
 #define DBG(x...) printf(x)
 #else

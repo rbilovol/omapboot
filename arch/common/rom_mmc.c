@@ -44,8 +44,6 @@
 #include <omap5/hw.h>
 #endif
 
-#include "config.h"
-
 #ifdef DEBUG
 #define DBG(x...) printf(x)
 #else

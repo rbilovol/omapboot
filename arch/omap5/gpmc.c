@@ -32,7 +32,6 @@
 #include <aboot/aboot.h>
 #include <aboot/io.h>
 #include <omap5/hw.h>
-#include <config.h>
 
 void gpmc_init(void)
 {

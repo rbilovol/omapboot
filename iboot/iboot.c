@@ -39,8 +39,6 @@
 #include <common/usbboot_common.h>
 #include <common/alloc.h>
 
-#include "config.h"
-
 #ifdef DEBUG
 #define DBG(x...) printf(x)
 #else

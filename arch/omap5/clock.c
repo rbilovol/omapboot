@@ -31,7 +31,6 @@
 #include <aboot/io.h>
 #include <omap5/hw.h>
 #include <omap5/clock.h>
-#include <config.h>
 
 typedef struct dpll_param dpll_param;
 

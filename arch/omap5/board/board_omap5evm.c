@@ -26,8 +26,6 @@
 * SUCH DAMAGE.
 */
 
-#include <config.h>
-
 #include <aboot/aboot.h>
 #include <aboot/io.h>
 

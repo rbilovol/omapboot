@@ -34,7 +34,6 @@
 #include <common/fastboot.h>
 #include <common/boot_settings.h>
 #include <common/device_tree.h>
-#include "config.h"
 #include "version.h"
 
 #ifdef DEBUG

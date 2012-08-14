@@ -36,8 +36,6 @@
 #include <common/common_proc.h>
 #include <common/omap_rom.h>
 
-#include "config.h"
-
 #ifdef DEBUG
 #define DBG(x...) printf(x)
 #else
