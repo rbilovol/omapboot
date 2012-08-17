@@ -30,7 +30,6 @@
 #define _COMMON_H_
 
 #include <aboot/types.h>
-#include <version.h>
 
 unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);
