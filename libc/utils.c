@@ -7,7 +7,7 @@ int get_downloadsize_from_string(int count, char *string)
 	u32 value = 0;
 	u32 result = 0;
 	int k = 0; int j = 0;
-	int raise[7] = {0, 0, 4, 8, 12, 16, 20};
+	int raise[8] = {0, 0, 4, 8, 12, 16, 20, 24};
 
 	while (count > 0) {
 
