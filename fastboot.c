@@ -867,9 +867,21 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 	char response[65];
 
 	fb_data->getsize = 0;
-	fb_data->proc_ops = boot_ops->proc_ops;
-	fb_data->board_ops = boot_ops->board_ops;
-	fb_data->storage_ops = boot_ops->storage_ops;
+
+	if (!boot_ops->proc_ops)
+		return;
+	else
+		fb_data->proc_ops = boot_ops->proc_ops;
+
+	if (!boot_ops->board_ops)
+		return;
+	else
+		fb_data->board_ops = boot_ops->board_ops;
+
+	if (!boot_ops->storage_ops)
+		return;
+	else
+		fb_data->storage_ops = boot_ops->storage_ops;
 
 	load_ptbl(fb_data->storage_ops, 1);
 
