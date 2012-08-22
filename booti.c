@@ -187,8 +187,6 @@ int do_booti(char *info, void *download_addr)
 		addr = CONFIG_ADDR_DOWNLOAD;
 
 	hdr = (boot_img_hdr *) addr;
-	boot_ops->board_ops = init_board_funcs();
-	boot_ops->proc_ops = init_processor_id_funcs();
 
 	if (boot_from_mmc) {
 

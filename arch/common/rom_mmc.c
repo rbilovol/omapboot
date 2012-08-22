@@ -416,8 +416,6 @@ struct storage_specific_functions *init_rom_mmc_funcs(u8 device)
 	else
 		return NULL;
 
-	boot_ops->proc_ops = init_processor_id_funcs();
-
 	if (boot_ops->proc_ops->proc_get_proc_id) {
 		mmcd.rom_hal_mmchs_writedata =
 			API(&rom_hal_mmchs_writedata_addr
