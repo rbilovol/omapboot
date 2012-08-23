@@ -114,19 +114,11 @@ void eboot(unsigned *info)
 		goto fail;
 	}
 
-	if (boot_ops->board_ops->board_storage_init)
-		boot_ops->storage_ops =
-			boot_ops->board_ops->board_storage_init();
+	boot_ops->storage_ops =
+		init_rom_mmc_funcs(boot_ops->board_ops->board_get_flash_slot());
 	if (!boot_ops->storage_ops) {
-		printf("Storage driver init failed\n");
+		printf("Unable to init rom mmc functions\n");
 		goto fail;
-	}
-
-	if (boot_ops->board_ops->board_user_fastboot_request) {
-		if (boot_ops->board_ops->board_user_fastboot_request()) {
-			usb_init(&usb);
-			do_fastboot(boot_ops);
-		}
 	}
 
 	if (info)
@@ -134,15 +126,31 @@ void eboot(unsigned *info)
 
 	switch (bootdevice) {
 	case 0x05:
-		serial_puts("boot device: MMC1\n");
 		if (boot_ops->board_ops->board_set_flash_slot)
+			ret =
 			boot_ops->board_ops->board_set_flash_slot(bootdevice);
+			if (ret != 0)
+				goto fail;
+
+		if (boot_ops->board_ops->board_user_fastboot_request)
+			if (boot_ops->board_ops->board_user_fastboot_request())
+				goto fastboot;
+
+		serial_puts("boot device: MMC1\n");
 		do_booti("mmc", NULL);
 		break;
 	case 0x06:
 	case 0x07:
 		if (boot_ops->board_ops->board_set_flash_slot)
+			ret =
 			boot_ops->board_ops->board_set_flash_slot(bootdevice);
+			if (ret != 0)
+				goto fail;
+
+		if (boot_ops->board_ops->board_user_fastboot_request)
+			if (boot_ops->board_ops->board_user_fastboot_request())
+				goto fastboot;
+
 		serial_puts("boot device: MMC2\n");
 		do_booti("mmc", NULL);
 		break;
@@ -150,6 +158,8 @@ void eboot(unsigned *info)
 		serial_puts("boot device: unknown\n");
 	}
 
+fastboot:
+	usb_init(&usb);
 	do_fastboot(boot_ops);
 
 fail:
