@@ -46,12 +46,14 @@ $(OUT)/$(M_NAME): _OBJS := $(M_OBJS)
 $(OUT)/$(M_NAME): _LIBS := $(M_LIBS)
 $(OUT)/$(M_NAME): _BASE := $(M_BASE)
 $(OUT)/$(M_NAME): _LDS := $(M_LDS)
+$(OUT)/$(M_NAME): _MAP := $(M_MAP)
 $(OUT)/$(M_NAME): $(M_OBJS)
 	@echo link $@
-	$(QUIET)$(TARGET_LD) -Bstatic -T $(_LDS) -Ttext $(_BASE) $(_OBJS) $(_LIBS) -o $@
+	$(QUIET)$(TARGET_LD) -Bstatic -Map $(_MAP) -T $(_LDS) -Ttext $(_BASE) $(_OBJS) $(_LIBS) -o $@
 
 M_OBJS :=
 M_NAME :=
 M_BASE :=
 M_LIBS :=
 M_LDS :=
+M_MAP :=
