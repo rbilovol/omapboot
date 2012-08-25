@@ -30,6 +30,26 @@
 #include <aboot/io.h>
 #include <omap5/hw.h>
 
+static struct ddr_io ddr2_io_default[] = {
+
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDR3CH1_0, CTRL_DDR3CH1_0_ADJ_LPDDR2},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDR3CH2_0, CTRL_DDR3CH2_0_ADJ_LPDDR2},
+
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRCH1_0, CTRL_DDRCH1_0_ADJ_LPDDR2},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRCH1_1, CTRL_DDRCH1_1_ADJ_LPDDR2},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRCH2_0, CTRL_DDRCH2_0_ADJ_LPDDR2},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRCH2_1, CTRL_DDRCH2_1_ADJ_LPDDR2},
+
+	{CONTROL_LPDDR2CH1_0, CTRL_LPDDR2CH1_0_ADJ_LPDDR2},
+	{CONTROL_LPDDR2CH1_1, CTRL_LPDDR2CH1_1_ADJ_LPDDR2},
+
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_0, CTRL_DDRIO_0_ADJ_LPDDR2},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_1, CTRL_DDRIO_1_ADJ_LPDDR2},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_2, CTRL_DDRIO_2_ADJ_LPDDR2},
+
+	{0, 0},
+};
+
 void setup_emif_config(void)
 {
 	writel(0x00000001, CM_EMIF_EMIF1_CLKCTRL);
@@ -242,40 +262,29 @@ static void configure_efuse(void)
 	ES2.0 : This function is required for 5430
 		if CH is not used.
 */
-void omap5_ddr_init(void)
+void omap5_ddrio_init(struct ddr_io *ddrio_config)
 {
 	u32 reg;
+	struct ddr_io *ddr_io;
 
 	configure_efuse();
 
 	/* DDR configuration : Adjust IOs for LPDDR2 */
 
-	writel(CTRL_DDR3CH10_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDR3CH1_0);
-	writel(CTRL_DDR3CH20_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDR3CH2_0);
+	if (ddrio_config != NULL) {
+		for (ddr_io = &ddrio_config[0]; ddr_io->reg > 0; ddr_io++)
+			writel(ddr_io->value, ddr_io->reg);
+	} else {
+		/* Get external RAM interface type */
+		reg = readl(EMIF1_SDRAM_CONFIG);
+		if ((reg & SDRAM_TYPE_MASK) == SDRAM_TYPE_LPDDR2_S4) {
+			/* DDR2 settings */
+			for (ddr_io = &ddr2_io_default[0]; ddr_io->reg > 0;
+								ddr_io++)
+				writel(ddr_io->value, ddr_io->reg);
+		}
 
-	/* DDR_IO__I_34OHM_SR_FASTEST__WD_DQ_NO_PULL_DQS_PULL_DOWN */
-	writel(CONTROL_DDRCH_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDRCH1_0);
-	writel(CONTROL_DDRCH_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDRCH1_1);
-	writel(CONTROL_DDRCH_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDRCH2_0);
-	writel(CONTROL_DDRCH_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDRCH2_1);
-
-	/* DDR_IO__I_34OHM_SR_FASTEST__WD_CK_CKE_NCS_CA_PULL_DOWN */
-	writel(CONTROL_LPDDRCH_ADJ, CONTROL_LPDDR2CH1_0);
-	writel(CONTROL_LPDDRCH_ADJ, CONTROL_LPDDR2CH1_1);
-
-	/* DDR_IO_0__DQ_INT_NO_CAP + DDR_IO_0__DQ_INT_2UA_ALL +
-		DR_IO_0__DDR2_DQ_INT_EN_ALL__DDR3_CA_DIS_ALL */
-	writel(CONTROL_DDRIO_0_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_0);
-
-	/* DDR_IO_1__DQ_OUT_NO_CAP__DQ_INT_NO_CAP +
-		DDR_IO_1__DQ_OUT_2UA__DQ_INT_2UA +
-		DDR_IO_1__DQ_OUT_EN_ALL__DQ_INT_EN_ALL */
-	writel(CONTROL_DDRIO_1_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_1);
-
-	/* DDR_IO_2__CA_OUT_NO_CAP__CA_INT_NO_CAP +
-		DDR_IO_2__CA_OUT_2UA__CA_INT_2UA +
-		 DDR_IO_2__CA_OUT_EN_ALL__CA_INT_EN_ALL */
-	writel(CONTROL_DDRIO_2_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_2);
+	}
 
 	/* Disable self-refresh */
 	set_modify(EMIF1_POWER_MANAGEMENT_CONTROL, LP_MODE_MASK,

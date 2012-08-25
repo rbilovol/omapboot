@@ -61,8 +61,12 @@ static struct partition * omap5evm_get_partition(void)
 	return partitions;
 }
 
-static void omap5evm_ddr_init(struct proc_specific_functions *proc_ops)
+static void omap5evm_signal_int_reg_init
+				(struct proc_specific_functions *proc_ops)
 {
+	/* configure smart io */
+	configure_smartio(NULL);
+
 #ifdef CONFIG_USE_CH_RAM_CONFIG
 	if (proc_ops->proc_get_proc_id) {
 		if (proc_ops->proc_get_proc_id() > OMAP_5430_ES1_DOT_0)
@@ -70,7 +74,8 @@ static void omap5evm_ddr_init(struct proc_specific_functions *proc_ops)
 	}
 #endif
 
-	omap5_ddr_init();
+	/* configure ddr io */
+	omap5_ddrio_init(NULL);
 }
 
 static void omap5evm_mux_init(void)
@@ -338,13 +343,6 @@ static void omap5evm_mux_init(void)
 
 }
 
-static void omap5evm_smartio_init(void)
-{
-
-	/* configure smart io */
-	configure_smartio(NULL);
-}
-
 static void omap5evm_late_init(void)
 {
 	/* enable uart3 console */
@@ -455,9 +453,8 @@ static int omap5evm_set_flash_slot(u8 dev)
 static struct board_specific_functions omap5evm_funcs = {
 	.board_get_flash_slot = omap5evm_get_flash_slot,
 	.board_set_flash_slot = omap5evm_set_flash_slot,
-	.board_ddr_init = omap5evm_ddr_init,
+	.board_signal_integrity_reg_init = omap5evm_signal_int_reg_init,
 	.board_mux_init = omap5evm_mux_init,
-	.board_smartio_init = omap5evm_smartio_init,
 	.board_user_fastboot_request = omap5evm_check_fastboot,
 	.board_late_init = omap5evm_late_init,
 	.board_get_part_tbl = omap5evm_get_partition,

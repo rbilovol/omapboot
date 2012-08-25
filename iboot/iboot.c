@@ -74,6 +74,13 @@ void iboot(unsigned *info)
 	if (boot_ops->board_ops->board_smartio_init)
 		boot_ops->board_ops->board_smartio_init();
 
+	if (boot_ops->board_ops->board_ddr_init)
+		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
+
+	if (boot_ops->board_ops->board_signal_integrity_reg_init)
+		boot_ops->board_ops->board_signal_integrity_reg_init
+							(boot_ops->proc_ops);
+
 	ldelay(100);
 
 	if (boot_ops->board_ops->board_scale_vcores)
@@ -81,9 +88,6 @@ void iboot(unsigned *info)
 
 	if(boot_ops->board_ops->board_prcm_init)
 		boot_ops->board_ops->board_prcm_init();
-
-	if (boot_ops->board_ops->board_ddr_init)
-		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
 
 	init_memory_alloc();
 
