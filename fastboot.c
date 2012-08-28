@@ -97,6 +97,7 @@ static int fastboot_tx_status(const char *buffer, unsigned int buffer_size)
 {
 	/* send response back to host */
 	usb_write(&usb, (void *)buffer, strlen(buffer));
+
 	return 0;
 }
 
@@ -118,12 +119,14 @@ static void dev_to_devstr(u8 dev, char *devstr)
 static int devstr_to_dev(const char *devstr, u8 *dev)
 {
 	int ret = 0;
+
 	if (!strcmp(devstr, "EMMC"))
 		*dev = DEVICE_EMMC;
 	else if (!strcmp(devstr, "SD"))
 		*dev = DEVICE_SDCARD;
 	else
 		ret = -1;
+
 	return ret;
 }
 
@@ -237,9 +240,11 @@ static void fastboot_oem(struct fastboot_data *fb_data,
 			strcpy(response, "FAIL");
 		else
 			strcpy(response, "OKAY");
+
 	} else if (memcmp(cmd, "unlock", 6) == 0) {
 		printf("\nfastboot oem unlock not implemented yet!\n");
 		strcpy(response, "FAILNot Implemented");
+
 	} else if (memcmp(cmd,  "set_flash_slot", 14) == 0) {
 		ret = devstr_to_dev(cmd + 15, &dev);
 		if (ret)
@@ -335,6 +340,7 @@ out:
 	}
 
 	fastboot_tx_status(response, strlen(response));
+
 	return ret;
 }
 
@@ -352,7 +358,8 @@ static int flash_sparse_formatted_image(void)
 
 	strcpy(response, "OKAY");
 
-	if ((fb_data->sparse_header->total_blks * fb_data->sparse_header->blk_sz) > fb_data->e->length) {
+	if ((fb_data->sparse_header->total_blks *
+			fb_data->sparse_header->blk_sz) > fb_data->e->length) {
 		printf("Image size exceeds %d limit\n", fb_data->e->length);
 		sprintf(response, "FAILImage size exceeds limit %d",
 						(u32)fb_data->e->length);
@@ -361,8 +368,10 @@ static int flash_sparse_formatted_image(void)
 	}
 
 	if ((fb_data->sparse_header->major_version != 1) ||
-		(fb_data->sparse_header->file_hdr_sz != sizeof(sparse_header_t)) ||
-		(fb_data->sparse_header->chunk_hdr_sz != sizeof(chunk_header_t))) {
+		(fb_data->sparse_header->file_hdr_sz !=
+						sizeof(sparse_header_t)) ||
+		(fb_data->sparse_header->chunk_hdr_sz !=
+						sizeof(chunk_header_t))) {
 			printf("Invalid sparse format\n");
 			strcpy(response, "FAILINVALID sparse format");
 			ret = -1;
@@ -404,12 +413,14 @@ static int flash_sparse_formatted_image(void)
 		DBG("chunk_sz: 0x%x\n", chunk_header->chunk_sz);
 		DBG("total_sz: 0x%x\n", chunk_header->total_sz);
 
-		if (fb_data->sparse_header->chunk_hdr_sz > sizeof(chunk_header_t)) {
+		if (fb_data->sparse_header->chunk_hdr_sz >
+						sizeof(chunk_header_t)) {
 
 			/* Skip the remaining bytes in a header that is longer
 			than we	expected */
-			transfer_buffer += (fb_data->sparse_header->chunk_hdr_sz -
-						sizeof(chunk_header_t));
+			transfer_buffer +=
+					(fb_data->sparse_header->chunk_hdr_sz-
+							sizeof(chunk_header_t));
 		}
 
 		chunk_data_sz = (fb_data->sparse_header->blk_sz *
@@ -585,6 +596,7 @@ static u32 fastboot_get_boot_ptn(boot_img_hdr *hdr, char *response)
 out:
 	strcpy(response, "INFO");
 	fastboot_tx_status(response, strlen(response));
+
 	return ret;
 }
 
@@ -629,7 +641,8 @@ static int fastboot_update_zimage(char *response)
 	ramdisk_buffer += hdr_sectors *512;
 	if (fb_data->storage_ops->read(ramdisk_sector_start,
 		ramdisk_sectors, ramdisk_buffer)) {
-		sprintf(response, "FAILCannot read ramdisk from boot partition");
+		sprintf(response, "FAILCannot read ramdisk from boot "
+								"partition");
 		ret = -1;
 		goto out;
 	}
