@@ -206,12 +206,11 @@ static void configure_efuse(void)
 	u32 reg;
 
 	/* Put EMIF in self-refresh */
-	reg = readl(EMIF1_POWER_MANAGEMENT_CONTROL);
-	writel((reg | (DDR_SELF_REFRESH_MODE_ENABLE << LP_MODE_OFFSET)),
-				EMIF1_POWER_MANAGEMENT_CONTROL);
-	reg = readl(EMIF2_POWER_MANAGEMENT_CONTROL);
-	writel((reg | (DDR_SELF_REFRESH_MODE_ENABLE << LP_MODE_OFFSET)),
-		EMIF2_POWER_MANAGEMENT_CONTROL);
+	set_modify(EMIF1_POWER_MANAGEMENT_CONTROL, LP_MODE_MASK,
+						DDR_SELF_REFRESH_MODE_ENABLE);
+
+	set_modify(EMIF2_POWER_MANAGEMENT_CONTROL, LP_MODE_MASK,
+						DDR_SELF_REFRESH_MODE_ENABLE);
 
 	/* Wait some time for memories to enter self-refresh */
 	ldelay(100);
@@ -279,12 +278,10 @@ void omap5_ddr_init(void)
 	writel(CONTROL_DDRIO_2_ADJ, CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_2);
 
 	/* Disable self-refresh */
-	reg = readl(EMIF1_POWER_MANAGEMENT_CONTROL);
-	writel((reg | (DDR_SELF_REFRESH_MODE_DISABLE << LP_MODE_OFFSET)),
-		EMIF1_POWER_MANAGEMENT_CONTROL);
-	reg = readl(EMIF2_POWER_MANAGEMENT_CONTROL);
-	writel((reg | (DDR_SELF_REFRESH_MODE_DISABLE << LP_MODE_OFFSET)),
-		EMIF2_POWER_MANAGEMENT_CONTROL);
+	set_modify(EMIF1_POWER_MANAGEMENT_CONTROL, LP_MODE_MASK,
+						DDR_SELF_REFRESH_MODE_DISABLE);
+	set_modify(EMIF2_POWER_MANAGEMENT_CONTROL, LP_MODE_MASK,
+						DDR_SELF_REFRESH_MODE_DISABLE);
 
 	/* Wait some time for IOs to be configured */
 	ldelay(100);
