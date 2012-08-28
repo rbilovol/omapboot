@@ -884,7 +884,7 @@ static int fastboot_flash(char *cmd, char *response)
 
 	fb_data->e = fastboot_flash_find_ptn(cmd);
 
-	if (fb_data->e == 0) {
+	if (fb_data->e == NULL) {
 		char ptn_name[20];
 		strncpy(ptn_name, cmd, strlen(cmd));
 
