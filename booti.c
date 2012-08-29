@@ -192,15 +192,9 @@ int do_booti(char *info, void *download_addr)
 
 		struct fastboot_ptentry *pte;
 
-		/* Init the MMC and load the partition table */
-		if (boot_ops->board_ops->board_storage_init)
-			boot_ops->storage_ops = boot_ops->
-				board_ops->board_storage_init();
-		if (!boot_ops->storage_ops) {
-			printf("board_storage_init() failed\n");
-			goto fail;
-		}
 		ret = load_ptbl(boot_ops->storage_ops, 0);
+		if (ret != 0)
+			goto fail;
 
 		dbt_addr = load_dev_tree(boot_ops);
 		if (dbt_addr < 0)
