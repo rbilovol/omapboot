@@ -296,10 +296,8 @@ static int download_image(char *dsize, char *response)
 {
 	int ret = 0;
 	int size_of_dsize = 0;
-	int count = 0;
 
 	size_of_dsize = strlen(dsize);
-	count = size_of_dsize;
 
 	fb_data->getsize =
 		get_downloadsize_from_string(size_of_dsize, dsize);
