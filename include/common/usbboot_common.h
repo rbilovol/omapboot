@@ -62,7 +62,6 @@ struct board_specific_functions {
 	void (*board_gpmc_init)(void);
 	void (*board_late_init)(void);
 	void (*board_mux_init)(void);
-	void (*board_smartio_init)(void);
 	void (*board_ddr_init)(struct proc_specific_functions *proc_ops);
 	void (*board_signal_integrity_reg_init)
 				(struct proc_specific_functions *proc_ops);

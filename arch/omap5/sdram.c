@@ -50,6 +50,26 @@ static struct ddr_io ddr2_io_default[] = {
 	{0, 0},
 };
 
+static struct ddr_io ddr3_io_default[] = {
+
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDR3CH1_0, CTRL_DDR3CH1_0_ADJ_DDR3},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDR3CH2_0, CTRL_DDR3CH2_0_ADJ_DDR3},
+
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRCH1_0, CTRL_DDRCH1_0_ADJ_DDR3},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRCH1_1, CTRL_DDRCH1_1_ADJ_DDR3},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRCH2_0, CTRL_DDRCH2_0_ADJ_DDR3},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRCH2_1, CTRL_DDRCH2_1_ADJ_DDR3},
+
+	{CONTROL_LPDDR2CH1_0, CTRL_LPDDR2CH1_0_ADJ_DDR3},
+	{CONTROL_LPDDR2CH1_1, CTRL_LPDDR2CH1_1_ADJ_DDR3},
+
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_0, CTRL_DDRIO_0_ADJ_DDR3},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_1, CTRL_DDRIO_1_ADJ_DDR3},
+	{CTRL_MODULE_CORE_PAD_CONTROL_DDRIO_2, CTRL_DDRIO_2_ADJ_DDR3},
+
+	{0, 0},
+};
+
 void setup_emif_config(void)
 {
 	writel(0x00000001, CM_EMIF_EMIF1_CLKCTRL);
@@ -258,8 +278,8 @@ static void configure_efuse(void)
 
 
 /* Note for omap5_ddr_init() :
-	ES1.0 : This function is required for 5430
-	ES2.0 : This function is required for 5430
+	ES1.0 : This function is required for 5430 and 5432
+	ES2.0 : This function is required for 5430 and 5432
 		if CH is not used.
 */
 void omap5_ddrio_init(struct ddr_io *ddrio_config)
@@ -282,8 +302,12 @@ void omap5_ddrio_init(struct ddr_io *ddrio_config)
 			for (ddr_io = &ddr2_io_default[0]; ddr_io->reg > 0;
 								ddr_io++)
 				writel(ddr_io->value, ddr_io->reg);
+		} else if ((reg & SDRAM_TYPE_MASK) == SDRAM_TYPE_DDR3) {
+			/* DDR3 settings */
+			for (ddr_io = &ddr3_io_default[0]; ddr_io->reg > 0;
+								ddr_io++)
+				writel(ddr_io->value, ddr_io->reg);
 		}
-
 	}
 
 	/* Disable self-refresh */

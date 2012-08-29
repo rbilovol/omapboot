@@ -73,9 +73,6 @@ void eboot(unsigned *info)
 	if (boot_ops->board_ops->board_mux_init)
 		boot_ops->board_ops->board_mux_init();
 
-	if (boot_ops->board_ops->board_smartio_init)
-		boot_ops->board_ops->board_smartio_init();
-
 	if (boot_ops->board_ops->board_ddr_init)
 		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
 

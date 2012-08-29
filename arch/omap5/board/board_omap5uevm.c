@@ -63,6 +63,24 @@ static struct partition * omap5uevm_get_partition(void)
 	return partitions;
 }
 
+static void omap5uevm_signal_int_reg_init
+				(struct proc_specific_functions *proc_ops)
+{
+	/* configure smart io */
+	configure_smartio(NULL);
+
+#ifdef CONFIG_USE_CH_RAM_CONFIG
+	if (proc_ops->proc_get_proc_id) {
+		if (proc_ops->proc_get_proc_id() > OMAP_5432_ES1_DOT_0)
+			return;
+	}
+#endif
+
+	/* configure ddr io */
+	omap5_ddrio_init(NULL);
+}
+
+
 static void omap5uevm_mux_init(void)
 {
 	/* core padconf essential */
@@ -92,12 +110,6 @@ static void omap5uevm_mux_init(void)
 
 	/* push button (GPIO 83) for fastboot mode */
 	setup_core(CONTROL_PADCONF_HSI2_ACDATA, (IEN | M6));
-}
-
-static void omap5uevm_smartio_init(void)
-{
-	/* configure smart io */
-	configure_smartio(NULL);
 }
 
 /* Use CH (configuration header) to do the settings */
@@ -209,8 +221,8 @@ static int omap5uevm_set_flash_slot(u8 dev)
 static struct board_specific_functions omap5uevm_funcs = {
 	.board_get_flash_slot = omap5uevm_get_flash_slot,
 	.board_set_flash_slot = omap5uevm_set_flash_slot,
+	.board_signal_integrity_reg_init = omap5uevm_signal_int_reg_init,
 	.board_mux_init = omap5uevm_mux_init,
-	.board_smartio_init = omap5uevm_smartio_init,
 	.board_user_fastboot_request = omap5uevm_check_fastboot,
 	.board_late_init = omap5uevm_late_init,
 	.board_get_part_tbl = omap5uevm_get_partition,
