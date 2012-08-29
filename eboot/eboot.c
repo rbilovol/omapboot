@@ -115,6 +115,10 @@ void eboot(unsigned *info)
 		goto fail;
 	}
 
+	if (!boot_ops->board_ops->board_get_flash_slot ||
+				!boot_ops->board_ops->board_set_flash_slot)
+		goto fail;
+
 	boot_ops->storage_ops =
 		init_rom_mmc_funcs(boot_ops->board_ops->board_get_flash_slot());
 	if (!boot_ops->storage_ops) {
@@ -128,10 +132,12 @@ void eboot(unsigned *info)
 	switch (bootdevice) {
 	case 0x05:
 		if (boot_ops->board_ops->board_set_flash_slot)
-			ret =
-			boot_ops->board_ops->board_set_flash_slot(bootdevice);
-			if (ret != 0)
+			ret = boot_ops->board_ops->board_set_flash_slot
+					(bootdevice, boot_ops->storage_ops);
+			if (ret != 0) {
+				DBG("Storage driver init failed\n");
 				goto fail;
+			}
 
 		if (boot_ops->board_ops->board_user_fastboot_request)
 			if (boot_ops->board_ops->board_user_fastboot_request())
@@ -143,10 +149,12 @@ void eboot(unsigned *info)
 	case 0x06:
 	case 0x07:
 		if (boot_ops->board_ops->board_set_flash_slot)
-			ret =
-			boot_ops->board_ops->board_set_flash_slot(bootdevice);
-			if (ret != 0)
+			ret = boot_ops->board_ops->board_set_flash_slot
+					(bootdevice, boot_ops->storage_ops);
+			if (ret != 0) {
+				DBG("Storage driver init failed\n");
 				goto fail;
+			}
 
 		if (boot_ops->board_ops->board_user_fastboot_request)
 			if (boot_ops->board_ops->board_user_fastboot_request())

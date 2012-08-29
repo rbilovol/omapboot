@@ -337,12 +337,35 @@ static u8 panda_get_flash_slot()
 	return DEVICE_SDCARD;
 }
 
-static int panda_set_flash_slot(u8 dev)
+
+static int panda_storage_init(u8 dev,
+				struct storage_specific_functions *storage_ops)
 {
-	if (dev == DEVICE_SDCARD)
-		return 0;
-	else
-		return -1;
+	int ret;
+
+	ret = storage_ops->init(dev);
+	if (ret)
+		printf("Unable to init storage device\n");
+
+	return ret;
+}
+
+static int panda_set_flash_slot(u8 dev,
+				struct storage_specific_functions *storage_ops)
+{
+	int ret = 0;
+	char buf[12];
+
+	if (dev == DEVICE_SDCARD) {
+		ret = panda_storage_init(dev, storage_ops);
+		if (ret != 0) {
+			dev_to_devstr(dev, buf);
+			printf("Unable to set flash slot: %s\n", buf);
+		}
+	} else
+		ret = -1;
+
+	return ret;
 }
 
 static void panda_scale_cores(void)
@@ -387,23 +410,6 @@ static int panda_pmic_disable(void)
 		printf("Unable to disable the pmic\n");
 
 	return ret;
-}
-
-static struct storage_specific_functions *panda_storage_init(void)
-{
-	int ret;
-	struct storage_specific_functions *storage_ops;
-	storage_ops = init_rom_mmc_funcs(panda_get_flash_slot());
-	if (!storage_ops) {
-		printf("Unable to get rom mmc functions\n");
-		return NULL;
-	}
-	ret = storage_ops->init();
-	if (ret) {
-		printf("Unable to init storage device\n");
-		return NULL;
-	}
-	return storage_ops;
 }
 
 static struct board_specific_functions panda_funcs = {

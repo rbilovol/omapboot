@@ -223,7 +223,8 @@ static int fastboot_oem(const char *cmd, char *response)
 		else {
 			if (fb_data->board_ops->board_set_flash_slot) {
 				ret =
-				fb_data->board_ops->board_set_flash_slot(dev);
+				fb_data->board_ops->board_set_flash_slot(dev,
+							fb_data->storage_ops);
 				if (ret < 0)
 					strcpy(response, "FAILUnable to set "
 								"flash slot");

@@ -136,6 +136,7 @@ static int load_from_usb(unsigned *_len)
 void aboot(unsigned *info)
 {
 	unsigned n, len;
+	int ret = 0;
 
 	boot_ops->board_ops = init_board_funcs();
 	boot_ops->proc_ops = init_processor_id_funcs();
@@ -168,9 +169,24 @@ void aboot(unsigned *info)
 	printf("%s\n", ABOOT_VERSION);
 	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
 
+	if (!boot_ops->board_ops->board_get_flash_slot)
+		goto fail;
+
+	boot_ops->storage_ops =
+		init_rom_mmc_funcs(boot_ops->board_ops->board_get_flash_slot());
+	if (!boot_ops->storage_ops) {
+		printf("Unable to init rom mmc functions\n");
+		goto fail;
+	}
+
 	if (boot_ops->board_ops->board_storage_init)
-		boot_ops->storage_ops =
-			boot_ops->board_ops->board_storage_init();
+		ret = boot_ops->board_ops->board_storage_init
+			(boot_ops->board_ops->board_get_flash_slot(),
+							boot_ops->storage_ops);
+		if (ret != 0) {
+			printf("Storage driver init failed\n");
+			goto fail;
+		}
 
 	/* printf("MSV=%08x\n",*((unsigned*) 0x4A00213C)); */
 
@@ -232,5 +248,6 @@ void aboot(unsigned *info)
 		serial_puts("*** BOOT FAILED ***\n");
 	}
 
+fail:
 	for (;;) ;
 }

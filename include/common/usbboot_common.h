@@ -53,6 +53,15 @@ struct proc_specific_functions {
 	u32 (*proc_get_board_rev)(void);
 };
 
+struct storage_specific_functions {
+	int (*init)(u8 device);
+	int (*get_sector_size)(void);
+	u64 (*get_total_sectors)(void);
+	int (*read)(u64 start_sec, u64 sectors, void *data);
+	int (*write)(u64 start_sec, u64 sectors, void *data);
+	int (*erase)(u64 start_sec, u64 sectors);
+};
+
 /* Use these functions to override the
  * default configuration for the processor */
 struct board_specific_functions {
@@ -68,20 +77,12 @@ struct board_specific_functions {
 	struct storage_specific_functions * (*board_storage_init)();
 	int (*board_user_fastboot_request)(void);
 	u8 (*board_get_flash_slot)(void);
-	int (*board_set_flash_slot)(u8 dev);
+	int (*board_set_flash_slot)(u8 dev,
+			struct storage_specific_functions *storage_ops);
 	int (*board_pmic_enable)(void);
 	int (*board_pmic_disable)(void);
 	int (*board_read_sw_revision)(void);
 	int (*board_configure_pwm_mode)(void);
-};
-
-struct storage_specific_functions {
-	int (*init)(void);
-	int (*get_sector_size)(void);
-	u64 (*get_total_sectors)(void);
-	int (*read)(u64 start_sec, u64 sectors, void *data);
-	int (*write)(u64 start_sec, u64 sectors, void *data);
-	int (*erase)(u64 start_sec, u64 sectors);
 };
 
 struct bootloader_ops {

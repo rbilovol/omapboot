@@ -405,41 +405,42 @@ static int blaze_pmic_disable(void)
 	return ret;
 }
 
-static struct storage_specific_functions *blaze_storage_init(void)
-{
-	int ret;
-	struct storage_specific_functions *storage_ops;
-	storage_ops = init_rom_mmc_funcs(blaze_get_flash_slot());
-	if (!storage_ops) {
-		printf("Unable to get rom mmc functions\n");
-		return NULL;
-	}
-	ret = storage_ops->init();
-	if (ret) {
-		printf("Unable to init storage device\n");
-		return NULL;
-	}
-	return storage_ops;
-}
-
-static int blaze_set_flash_slot(u8 dev)
+static int blaze_storage_init(u8 dev,
+				struct storage_specific_functions *storage_ops)
 {
 	int ret = 0;
+
+	ret = storage_ops->init(dev);
+	if (ret)
+		printf("Unable to init storage device\n");
+
+	return ret;
+}
+
+static int blaze_set_flash_slot(u8 dev,
+				struct storage_specific_functions *storage_ops)
+{
+	int ret = 0;
+	char buf[12];
 	u8 prev_dev = device;
+
 	switch (dev) {
 	case DEVICE_SDCARD:
 	case DEVICE_EMMC:
 		device = dev;
-		if (!blaze_storage_init()) {
-			printf("Unable to set flash slot: %d\n", dev);
-			ret = -1;
+		ret = blaze_storage_init(dev, storage_ops);
+		if (ret != 0) {
+			dev_to_devstr(dev, buf);
+			printf("Unable to set flash slot: %s\n", buf);
 			device = prev_dev;
-		} else
-			break;
+		}
+
+		break;
 	default:
 		printf("Unable to set flash slot: %d\n", dev);
 		ret = -1;
 	}
+
 	return ret;
 }
 

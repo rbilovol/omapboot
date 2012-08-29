@@ -127,7 +127,7 @@ static int mmc_configure(struct mmc *mmc, u32 id, u32 value)
 	return 0;
 }
 
-static int mmc_init(void)
+static int mmc_init(u8 device)
 {
 	struct mem_device *md;
 	struct mmc_devicedata *dd;
@@ -135,11 +135,11 @@ static int mmc_init(void)
 	u16 options;
 	int n;
 
-	if (!((mmcd.storage_device == DEVICE_SDCARD) ||
-		(mmcd.storage_device == DEVICE_EMMC))) {
-		printf("unsupported mmsd device\n");
+	if (!((device == DEVICE_SDCARD) || (device == DEVICE_EMMC))) {
+		printf("unsupported mmc device\n");
 		return -1;
-	}
+	} else
+		mmcd.storage_device = device;
 
 	n = rom_get_mem_driver(&mmcd.mmc.io, mmcd.storage_device);
 	if (n) {
@@ -411,10 +411,10 @@ static u64 get_mmc_total_sectors(void)
 
 struct storage_specific_functions *init_rom_mmc_funcs(u8 device)
 {
-	if ((device == DEVICE_SDCARD) || (device == DEVICE_EMMC))
-		mmcd.storage_device = device;
-	else
+	if (!((device == DEVICE_SDCARD) || (device == DEVICE_EMMC))) {
+		printf("unsupported mmc device\n");
 		return NULL;
+	}
 
 	if (boot_ops->proc_ops->proc_get_proc_id) {
 		mmcd.rom_hal_mmchs_writedata =
