@@ -101,35 +101,6 @@ static int fastboot_tx_status(const char *buffer, unsigned int buffer_size)
 	return 0;
 }
 
-static void dev_to_devstr(u8 dev, char *devstr)
-{
-	switch (dev) {
-	case DEVICE_EMMC:
-		strcpy(devstr, "EMMC");
-		break;
-	case DEVICE_SDCARD:
-		strcpy(devstr, "SD");
-		break;
-	default:
-		strcpy(devstr, "Unknown");
-		break;
-	}
-}
-
-static int devstr_to_dev(const char *devstr, u8 *dev)
-{
-	int ret = 0;
-
-	if (!strcmp(devstr, "EMMC"))
-		*dev = DEVICE_EMMC;
-	else if (!strcmp(devstr, "SD"))
-		*dev = DEVICE_SDCARD;
-	else
-		ret = -1;
-
-	return ret;
-}
-
 static int *fastboot_alloc_mem(void)
 {
 	void *mem_ptr;
