@@ -220,8 +220,8 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 
 		strcpy(tx_buffer, "OKAY");
 	} else {
-		printf("fastboot_getvar():unsupported variable\n");
-		strcpy(tx_buffer, "FAILUnkown getvar option");
+		DBG("fastboot_getvar():unsupported variable\n");
+		sprintf(tx_buffer, "FAILUnsupported Variable %s", rx_buffer);
 	}
 
 	fastboot_tx_status(tx_buffer, strlen(tx_buffer));
@@ -237,13 +237,13 @@ static int fastboot_oem(const char *cmd, char *response)
 	if (memcmp(cmd, "format", 6) == 0) {
 		ret = do_gpt_format(fb_data);
 		if (ret)
-			strcpy(response, "FAIL");
+			strcpy(response, "FAILGPT format failed");
 		else
 			strcpy(response, "OKAY");
 
 	} else if (memcmp(cmd, "unlock", 6) == 0) {
-		printf("\nfastboot oem unlock not implemented yet!\n");
-		strcpy(response, "FAILNot Implemented");
+		DBG("\nfastboot oem unlock not implemented yet!\n");
+		strcpy(response, "FAILoem unlock not implemented");
 
 	} else if (memcmp(cmd,  "set_flash_slot", 14) == 0) {
 		ret = devstr_to_dev(cmd + 15, &dev);
@@ -251,17 +251,20 @@ static int fastboot_oem(const char *cmd, char *response)
 			strcpy(response, "FAILNot Supported");
 		else {
 			if (fb_data->board_ops->board_set_flash_slot) {
-				if (fb_data->board_ops->
-						board_set_flash_slot(dev))
-					strcpy(response, "FAILNot Supported");
+				ret =
+				fb_data->board_ops->board_set_flash_slot(dev);
+				if (ret < 0)
+					strcpy(response, "FAILUnable to set "
+								"flash slot");
 				else
 					strcpy(response, "OKAY");
 			} else
-				strcpy(response, "FAILNot Supported");
+				strcpy(response, "FAILboard_set_flash_slot not "
+								"supported");
 		}
 	} else {
-		printf("\nfastboot: does not understand %s\n", cmd);
-		strcpy(response, "FAILUnknown command");
+		DBG("\nfastboot: does not understand %s\n", cmd);
+		sprintf(response, "FAILUnknown oem command %s", cmd);
 	}
 
 	fastboot_tx_status(response, strlen(response));
@@ -869,14 +872,14 @@ static int fastboot_flash(char *cmd, char *response)
 
 	if ((memcmp(cmd, "zimage", 6) == 0) ||
 		(memcmp(cmd, "zImage", 6) == 0)) {
-		fastboot_update_zimage(response);
+		ret = fastboot_update_zimage(response);
 
-		return 0;
+		return ret;
 
 	} else if (memcmp(cmd, "ramdisk", 7) == 0) {
-		fastboot_update_ramdisk(response);
+		ret = fastboot_update_ramdisk(response);
 
-		return 0;
+		return ret;
 	}
 
 	fb_data->e = fastboot_flash_find_ptn(cmd);
@@ -885,15 +888,14 @@ static int fastboot_flash(char *cmd, char *response)
 		char ptn_name[20];
 		strncpy(ptn_name, cmd, strlen(cmd));
 
-		printf("Partition: %s does not exist\n", ptn_name);
-		sprintf(response,
-			"FAILpartition does not exist");
+		DBG("Partition: %s does not exist\n", ptn_name);
+		sprintf(response, "FAILpartition does not exist %s", ptn_name);
 		fastboot_tx_status(response, strlen(response));
 
 		return 0;
 
 	} else if (fb_data->getsize > fb_data->e->length) {
-		printf("Image is too large for partition\n");
+		DBG("Image is too large for partition\n");
 		sprintf(response, "FAILimage is too large for partition");
 		fastboot_tx_status(response, strlen(response));
 
@@ -952,13 +954,12 @@ static int fastboot_erase(char *cmd, char *response)
 
 	fb_data->e = fastboot_flash_find_ptn(cmd);
 	if (fb_data->e == NULL)
-		sprintf(response, "FAILPartition %s " \
-			"does not exist", cmd);
+		sprintf(response, "FAILPartition %s does not exist", cmd);
 	else {
 		ret = erase_section(fb_data->e->start, fb_data->e->length);
 		if (ret)
-			sprintf(response, "FAILUnable to " \
-			"erase partition %s", cmd);
+			printf(response, "FAILUnable to "
+						"erase partition %s", cmd);
 
 		else
 			sprintf(response, "OKAY");
