@@ -74,7 +74,8 @@ struct board_specific_functions {
 	void (*board_ddr_init)(struct proc_specific_functions *proc_ops);
 	void (*board_signal_integrity_reg_init)
 				(struct proc_specific_functions *proc_ops);
-	struct storage_specific_functions * (*board_storage_init)();
+	int (*board_storage_init)(u8 dev,
+				struct storage_specific_functions *storage_ops);
 	int (*board_user_fastboot_request)(void);
 	u8 (*board_get_flash_slot)(void);
 	int (*board_set_flash_slot)(u8 dev,
