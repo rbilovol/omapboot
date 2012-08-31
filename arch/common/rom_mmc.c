@@ -56,6 +56,7 @@ struct mmc_storage_data {
 	u8 storage_device;
 	struct mmc mmc;
 	struct mmc_devicedata dd;
+	int *dd_ptr;
 	int (*rom_hal_mmchs_writedata)(u32 moduleid, u32 *buf);
 	int (*rom_hal_mmchs_sendcommand)(u32 moduleid,
 			u32 cmd, u32 arg, u32 *resp);
@@ -130,8 +131,7 @@ static int mmc_configure(struct mmc *mmc, u32 id, u32 value)
 static int mmc_init(u8 device)
 {
 	struct mem_device *md;
-	struct mmc_devicedata *dd;
-	void *dd_ptr;
+	struct mmc_devicedata *dd =  NULL;
 	u16 options;
 	int n;
 
@@ -152,14 +152,18 @@ static int mmc_init(u8 device)
 	memset(md, 0, sizeof(struct mem_device));
 
 	/*initialize device data buffer*/
-	dd_ptr = (void *) alloc_memory(2500);
-	if (dd_ptr == NULL) {
-		printf("unable to allocate memory for the mmc device data\n");
-		return -1;
+	if (mmcd.dd_ptr == NULL) {
+		mmcd.dd_ptr = (void *) zalloc_memory(SIZEOF_MMC_DEVICE_DATA);
+		if (mmcd.dd_ptr == NULL) {
+			printf("mmc device data memory allocation failed\n");
+			return -1;
+		} else
+			dd = (void *) mmcd.dd_ptr;
+	} else {
+		/* use previously allocated memory and zero out the buffer */
+		dd = (void *) mmcd.dd_ptr;
+		memset(dd, 0, SIZEOF_MMC_DEVICE_DATA);
 	}
-
-	dd = (void *) dd_ptr;
-	memset(dd, 0, 2500);
 
 	options			= 1;
 	md->initialized		= 0;
@@ -433,6 +437,8 @@ struct storage_specific_functions *init_rom_mmc_funcs(u8 device)
 	mmcd.mmc_functions.write = mmc_write;
 	mmcd.mmc_functions.get_total_sectors = get_mmc_total_sectors;
 	mmcd.mmc_functions.erase = mmc_erase;
+
+	mmcd.dd_ptr = NULL;
 
 	return &mmcd.mmc_functions;
 }

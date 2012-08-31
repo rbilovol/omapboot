@@ -153,6 +153,8 @@ struct mmc {
 #define MMCSD_ADDRESSING_BYTE		(1)
 #define MMCSD_ADDRESSING_SECTOR		(2)
 
+/* This is an approximation since all the fields are not defined here */
+#define SIZEOF_MMC_DEVICE_DATA		2500
 struct mmc_devicedata {
 	u32 moduleid;
 	u32 type;      /* memory type (MMC/SD)  */
