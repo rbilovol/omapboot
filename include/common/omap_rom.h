@@ -43,6 +43,7 @@ extern u32 public_rom_base;
 #define PUBLIC_GET_DRIVER_PER_OFFSET (0x08)
 #define PUBLIC_GET_DEVICE_MEM_OFFSET (0x80)
 #define PUBLIC_GET_DEVICE_PER_OFFSET (0x84)
+#define PUBLIC_GET_DEVICE_DATA_OFFSET (0x88)
 
 #define PUBLIC_IRQ_INITIALIZE				(0x40)
 
@@ -305,6 +306,12 @@ typedef int (** const sys_getdevicedescper_pt)(struct per_handle **);
 #define rom_get_per_device(a) \
 	(*(sys_getdevicedescper_pt) \
 	(public_rom_base + PUBLIC_GET_DEVICE_PER_OFFSET))(a);
+
+/* PUBLIC_GET_DEVICE_DATA */
+typedef int (** const sys_getdevicedata_pt)(void **);
+#define rom_get_device_data(a) \
+	(*(sys_getdevicedata_pt) \
+	(public_rom_base + PUBLIC_GET_DEVICE_DATA_OFFSET))(a);
 
 /* PUBLIC_HAL_CTRL_CONFIGUREPADS */
 typedef int (** const hal_ctrl_configurepads_pt)(hal_module, u32);
