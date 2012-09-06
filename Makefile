@@ -227,7 +227,7 @@ $(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 _clean_generic::
 	$(QUIET)rm -f include/config.h
 	$(QUIET)rm -f include/version.h
-	$(QUIET)rm -rf $(OUT)
+	$(QUIET)rm -rf out
 
 clean::
 	@echo clean
