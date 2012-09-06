@@ -876,7 +876,7 @@ static int fastboot_flash(char *cmd, char *response)
 	} else
 		printf("writing to partition %s, begins at " \
 			"sector: %d and is %d long\n",
-			fb_data->e->name,
+			(char *) fb_data->e->name,
 			(int)fb_data->e->start,
 			(int)fb_data->e->length);
 
@@ -893,7 +893,7 @@ static int fastboot_flash(char *cmd, char *response)
 			return -1;
 		else
 			printf("Done flashing the sparse " \
-			"formatted image to %s\n", fb_data->e->name);
+			"formatted image to %s\n", (char *) fb_data->e->name);
 	} else {
 		/* normal flashing case */
 		ret = flash_non_sparse_formatted_image();
@@ -901,7 +901,7 @@ static int fastboot_flash(char *cmd, char *response)
 			return -1;
 		else
 			printf("Done flashing the non-sparse " \
-			"formatted image to %s\n", fb_data->e->name);
+			"formatted image to %s\n", (char *) fb_data->e->name);
 	}
 
 	return ret;
