@@ -181,7 +181,7 @@ int do_booti(char *info, void *download_addr)
 	unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 	void (*theKernel)(int zero, int arch, void *);
 
-	if (!(strcmp(info, "mmc")))
+	if (!(strcmp(info, "storage")))
 		boot_from_mmc = 1;
 
 	if (download_addr != NULL)
