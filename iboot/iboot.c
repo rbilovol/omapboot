@@ -45,12 +45,9 @@
 #endif /* DEBUG */
 
 static unsigned MSG = 0xaabbccdd;
-
 struct usb usb;
-
-unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
-
 u32 public_rom_base;
+
 __attribute__((__section__(".mram")))
 static struct bootloader_ops boot_operations;
 struct bootloader_ops* boot_ops = &boot_operations;

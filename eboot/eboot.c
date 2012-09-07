@@ -45,9 +45,6 @@
 #endif /* DEBUG */
 
 struct usb usb;
-
-unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
-
 u32 public_rom_base;
 
 __attribute__((__section__(".mram")))

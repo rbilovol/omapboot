@@ -58,11 +58,6 @@ static struct partition * panda_get_partition(void)
 	return partitions;
 }
 
-static void panda_late_init(void)
-{
-	cfg_machine_type = 3429;
-}
-
 static void panda_mux_init(void)
 {
 	setup_core(CONTROL_PADCONF_GPMC_AD0, (PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1));  /* sdmmc2_dat0 */
@@ -418,7 +413,6 @@ static struct board_specific_functions panda_funcs = {
 	.board_mux_init = panda_mux_init,
 	.board_ddr_init = panda_ddr_init,
 	.board_user_fastboot_request = panda_check_fastboot,
-	.board_late_init = panda_late_init,
 	.board_get_part_tbl = panda_get_partition,
 	.board_scale_vcores = panda_scale_cores,
 	.board_gpmc_init = panda_gpmc_init,

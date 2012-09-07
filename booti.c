@@ -178,6 +178,7 @@ int do_booti(char *info, void *download_addr)
 	int sector_sz = 0;
 	int ret = 0;
 	unsigned dbt_addr = ATAGS_ARGS;
+	unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 	void (*theKernel)(int zero, int arch, void *);
 
 	if (!(strcmp(info, "mmc")))

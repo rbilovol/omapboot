@@ -60,11 +60,6 @@ static struct partition * blaze_tablet_get_partition(void)
 	return partitions;
 }
 
-static void blaze_tablet_late_init(void)
-{
-	cfg_machine_type = 3429;
-}
-
 static void blaze_tablet_mux_init(void)
 {
 	setup_core(CONTROL_PADCONF_GPMC_AD0, ( PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1))  /* sdmmc2_dat0 */ \
@@ -444,7 +439,6 @@ static struct board_specific_functions blaze_tablet_funcs = {
 	.board_get_flash_slot = blaze_tablet_get_flash_slot,
 	.board_set_flash_slot = blaze_tablet_set_flash_slot,
 	.board_user_fastboot_request = blaze_tablet_check_fastboot,
-	.board_late_init = blaze_tablet_late_init,
 	.board_get_part_tbl = blaze_tablet_get_partition,
 	.board_ddr_init = blaze_tablet_ddr_init,
 	.board_mux_init = blaze_tablet_mux_init,

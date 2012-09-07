@@ -61,12 +61,6 @@ static struct partition * blaze_get_partition(void)
 	return partitions;
 }
 
-
-static void blaze_late_init(void)
-{
-	cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
-}
-
 static void blaze_mux_init(void)
 {
 	setup_core(CONTROL_PADCONF_GPMC_AD0, (PTU|IEN|OFF_EN|OFF_PD|OFF_IN|M1)); /*sdmmc2_dat0*/
@@ -448,7 +442,6 @@ static struct board_specific_functions blaze_funcs = {
 	.board_get_flash_slot = blaze_get_flash_slot,
 	.board_set_flash_slot = blaze_set_flash_slot,
 	.board_user_fastboot_request = blaze_check_fastboot,
-	.board_late_init = blaze_late_init,
 	.board_get_part_tbl = blaze_get_partition,
 	.board_ddr_init = blaze_ddr_init,
 	.board_mux_init = blaze_mux_init,
