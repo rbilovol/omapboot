@@ -144,6 +144,21 @@ COMMON_OBJS := 	crc32.o \
 		trusted.o \
 		arch/common/misc.o \
 
+M_NAME := sboot
+M_LDS :=  arch/$(MACH)/$(M_NAME).lds
+M_MAP :=  $(OUT)/$(M_NAME).map
+M_BASE := $(SBOOT_TEXT_BASE)
+M_OBJS := sboot/start.o
+M_OBJS += $(OMAP_COMMON_OBJS)
+M_OBJS += $(COMMON_OBJS)
+M_OBJS += $(PROC_COMMON_OBJS)
+M_OBJS += $(BOARD_OBJS)
+M_OBJS += booti.o
+M_OBJS += sboot/sboot.o
+M_OBJS += device_tree.o
+M_LIBS := $(TARGET_LIBGCC)
+include build/target-executable.mk
+
 M_NAME := aboot
 M_LDS :=  arch/$(MACH)/$(M_NAME).lds
 M_MAP :=  $(OUT)/$(M_NAME).map
