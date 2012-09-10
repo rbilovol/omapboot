@@ -125,12 +125,6 @@ static void omap5uevm_scale_cores(void)
 	scale_vcores();
 }
 
-static void omap5uevm_gpmc_init(void)
-{
-	/* Use default OMAP gpmc init function */
-	gpmc_init();
-}
-
 static int omap5uevm_check_fastboot(void)
 {
 	if (!gpio_read(FASTBOOT_BUTTON_GPIO)) {
@@ -227,7 +221,6 @@ static struct board_specific_functions omap5uevm_funcs = {
 	.board_get_part_tbl = omap5uevm_get_partition,
 	.board_prcm_init = omap5uevm_prcm_init,
 	.board_scale_vcores = omap5uevm_scale_cores,
-	.board_gpmc_init = omap5uevm_gpmc_init,
 	.board_storage_init = omap5uevm_storage_init,
 	.board_read_sw_revision = omap5uevm_read_sw_revision,
 	.board_configure_pwm_mode = omap5uevm_configure_pwm_mode,
