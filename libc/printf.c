@@ -20,6 +20,7 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 #include <aboot/aboot.h>
 #include <aboot/types.h>
 #include <stdarg.h>
@@ -36,6 +37,7 @@ int printf(const char *fmt, ...)
 	va_end(ap);
 
 	serial_puts(buf);
+
 	return err;
 }
 
@@ -78,11 +80,10 @@ static char *long_to_string(char *buf, unsigned long n, int len, uint flag)
 	/* only do the math if the number is >= 10 */
 	while(n >= 10) {
 		int digit = n % 10;
-
 		n /= 10;
-
 		buf[--pos] = digit + '0';
 	}
+
 	buf[--pos] = n + '0';
 	
 	if(negative)
@@ -96,9 +97,15 @@ static char *long_to_string(char *buf, unsigned long n, int len, uint flag)
 static char *long_to_hexstring(char *buf, unsigned long u, int len, uint flag)
 {
 	int pos = len;
-	static const char hextable[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-	static const char hextable_caps[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 	const char *table;
+
+	static const char hextable[] = {
+		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+		'a', 'b', 'c', 'd', 'e', 'f' };
+	static const char hextable_caps[] = {
+		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+		'A', 'B', 'C', 'D', 'E', 'F' };
+
 
 	if((flag & CAPSFLAG))
 		table = hextable_caps;
@@ -106,6 +113,7 @@ static char *long_to_hexstring(char *buf, unsigned long u, int len, uint flag)
 		table = hextable;
 
 	buf[--pos] = 0;
+
 	do {
 		unsigned int digit = u % 16;
 		u /= 16;
@@ -126,21 +134,32 @@ int vsnprintf(char *str, size_t len, const char *fmt, va_list ap)
 	char c;
 	unsigned char uc;
 	const char *s;
-	unsigned long n;
+	unsigned long n = 0;
 	void *ptr;
 	int flags;
 	unsigned int format_num;
 	size_t chars_written = 0;
 	char num_buffer[32];
 
-#define OUTPUT_CHAR(c) do { (*str++ = c); chars_written++; if (chars_written + 1 == len) goto done; } while(0)
-#define OUTPUT_CHAR_NOLENCHECK(c) do { (*str++ = c); chars_written++; } while(0)
+#define OUTPUT_CHAR(c) do {\
+				(*str++ = c);\
+				chars_written++;\
+				if (chars_written + 1 == len)\
+					goto done;\
+			} while (0)
+
+#define OUTPUT_CHAR_NOLENCHECK(c) do {\
+					(*str++ = c);\
+					chars_written++;\
+				} while (0)
 
 	for(;;) {
 		/* handle regular chars that aren't format related */
 		while((c = *fmt++) != 0) {
+			/* we see a '%', break and start parsing format */
 			if(c == '%')
-				break; /* we saw a '%', break and start parsing format */
+				break;
+
 			OUTPUT_CHAR(c);
 		}
 
@@ -206,23 +225,32 @@ next_format:
 		case 'i':
 		case 'd':
 			n = (flags & LONGFLAG) ? va_arg(ap, long) : 
-				(flags & HALFHALFFLAG) ? (signed char)va_arg(ap, int) :
-				(flags & HALFFLAG) ? (short)va_arg(ap, int) :
+				(flags & HALFHALFFLAG) ?
+						(signed char)va_arg(ap, int) :
+				(flags & HALFFLAG) ?
+							(short)va_arg(ap, int) :
 				(flags & SIZETFLAG) ? va_arg(ap, ssize_t) :
 				va_arg(ap, int);
+
 			flags |= SIGNEDFLAG;
-			s = long_to_string(num_buffer, n, sizeof(num_buffer), flags);
+
+			s = long_to_string(num_buffer, n, sizeof(num_buffer),
+									flags);
 			goto _output_string;
 		case 'U':
 			flags |= LONGFLAG;
 			/* fallthrough */
 		case 'u':
 			n = (flags & LONGFLAG) ? va_arg(ap, unsigned long) : 
-				(flags & HALFHALFFLAG) ? (unsigned char)va_arg(ap, unsigned int) :
-				(flags & HALFFLAG) ? (unsigned short)va_arg(ap, unsigned int) :
+			(flags & HALFHALFFLAG) ? (unsigned char)va_arg(ap,
+								unsigned int) :
+				(flags & HALFFLAG) ? (unsigned short)va_arg(ap,
+								unsigned int) :
 				(flags & SIZETFLAG) ? va_arg(ap, size_t) :
 				va_arg(ap, unsigned int);
-			s = long_to_string(num_buffer, n, sizeof(num_buffer), flags);
+
+			s = long_to_string(num_buffer, n, sizeof(num_buffer),
+									flags);
 			goto _output_string;
 		case 'p':
 			flags |= LONGFLAG | ALTFLAG;
@@ -233,11 +261,15 @@ next_format:
 		hex:
 		case 'x':
 			n = (flags & LONGFLAG) ? va_arg(ap, unsigned long) : 
-				(flags & HALFHALFFLAG) ? (unsigned char)va_arg(ap, unsigned int) :
-				(flags & HALFFLAG) ? (unsigned short)va_arg(ap, unsigned int) :
+				(flags & HALFHALFFLAG) ?
+				(unsigned char)va_arg(ap, unsigned int) :
+				(flags & HALFFLAG) ? (unsigned short)va_arg(ap,
+								unsigned int) :
 				(flags & SIZETFLAG) ? va_arg(ap, size_t) :
 				va_arg(ap, unsigned int);
-			s = long_to_hexstring(num_buffer, n, sizeof(num_buffer), flags);
+
+			s = long_to_hexstring(num_buffer, n, sizeof(num_buffer),
+									flags);
 			if(flags & ALTFLAG) {
 				OUTPUT_CHAR('0');
 				OUTPUT_CHAR((flags & CAPSFLAG) ? 'X': 'x');
