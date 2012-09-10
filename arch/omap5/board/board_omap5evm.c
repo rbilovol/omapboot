@@ -386,7 +386,7 @@ static void omap5evm_gpmc_init(void)
 
 static void omap5evm_prcm_init(void)
 {
-	/* Use default OMAP gpmc init function */
+	/* Use default OMAP prcm init function */
 	prcm_init();
 }
 
