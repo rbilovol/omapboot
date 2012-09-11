@@ -76,6 +76,49 @@ int palmas_read_sw_revision(void)
 	return ret;
 }
 
+int palmas_read_reset_reason(u32 *reason)
+{
+	int ret = 0;
+
+	hal_i2c i2c_id = HAL_I2C1;
+	u32 clk32;
+	u16 slave; u16 reg_addr; u16 cmd;
+
+	ret = i2c_init(i2c_id);
+	if (ret != 0) {
+		printf("Failed to init I2C-%d\n", i2c_id);
+		return ret;
+	} else {
+		DBG("Initialized I2C-%d\n", i2c_id);
+	}
+
+	/* SWOFF_STATUS: qualify wich switch off events generate a HW RESET */
+	slave = 0x48;
+	reg_addr = 0xB1;
+	cmd = reg_addr & 0xFF;
+	clk32 = readl(CLK32K_COUNTER_REGISTER);
+
+	ret = i2c_read(i2c_id, slave, 1, &cmd, clk32, 0xFF);
+	if (!ret)
+		*reason = cmd;
+	else {
+		printf("I2C read failed, ret = %d\n", ret);
+		return ret;
+	}
+
+	ret = i2c_close(i2c_id);
+	if (ret != 0) {
+		printf("i2c close for module %d failed, ret = %d\n",
+							i2c_id, ret);
+		return ret;
+	} else {
+		DBG("I2C-%d has been disabled\n", i2c_id);
+	}
+
+
+	return ret;
+}
+
 int palmas_configure_pwm_mode(void)
 {
 	int ret = 0;

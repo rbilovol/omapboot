@@ -84,6 +84,7 @@ struct board_specific_functions {
 	int (*board_read_sw_revision)(void);
 	int (*board_configure_pwm_mode)(void);
 	u32 (*board_get_board_rev)(void);
+	int (*board_reset_reason)(void);
 };
 
 struct bootloader_ops {

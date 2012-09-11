@@ -39,6 +39,7 @@ int pmic_enable(void);
 int pbias_config(void);
 int pmic_disable(void);
 int palmas_read_sw_revision(void);
+int palmas_read_reset_reason(u32 *reason);
 int palmas_configure_pwm_mode(void);
 void setup_emif_config(void);
 

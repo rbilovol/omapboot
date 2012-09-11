@@ -396,6 +396,22 @@ static int omap5evm_read_sw_revision(void)
 	return ret;
 }
 
+static int omap5evm_pmic_reset_reason(void)
+{
+	int ret = 0;
+	u32 pmic_reason;
+
+	printf("OMAP reset reason PRM_RSTST = 0x%04x\n", readl(PRM_RSTST));
+
+	ret = palmas_read_reset_reason(&pmic_reason);
+	if (ret != 0)
+		printf("unable to read palmas reset reason\n");
+
+	printf("PMIC reset reason SWOFF_STATUS = 0x%02x\n", pmic_reason);
+
+	return ret;
+}
+
 static int omap5evm_configure_pwm_mode(void)
 {
 	int ret = 0;
@@ -514,6 +530,7 @@ static struct board_specific_functions omap5evm_funcs = {
 	.board_read_sw_revision = omap5evm_read_sw_revision,
 	.board_configure_pwm_mode = omap5evm_configure_pwm_mode,
 	.board_get_board_rev = omap5evm_get_board_rev,
+	.board_reset_reason = omap5evm_pmic_reset_reason,
 };
 
 void* init_board_funcs(void)
