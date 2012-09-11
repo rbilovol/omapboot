@@ -31,8 +31,8 @@
 
 #ifndef _FASTBOOT_H_
 #define _FASTBOOT_H_
-#include <common/usbboot_common.h>
-#include <common/sparse_format.h>
+#include <usbboot_common.h>
+#include <sparse_format.h>
 
 /* EFI defines */
 #define EFI_VERSION 0x00010000

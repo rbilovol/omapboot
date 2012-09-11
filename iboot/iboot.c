@@ -29,14 +29,14 @@
  * SUCH DAMAGE.
  */
 
-#include <aboot/aboot.h>
-#include <aboot/io.h>
+#include <aboot.h>
+#include <io.h>
 
-#include <common/common_proc.h>
-#include <common/fastboot.h>
-#include <common/omap_rom.h>
-#include <common/usbboot_common.h>
-#include <common/alloc.h>
+#include <common_proc.h>
+#include <fastboot.h>
+#include <omap_rom.h>
+#include <usbboot_common.h>
+#include <alloc.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)

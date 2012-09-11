@@ -26,15 +26,15 @@
  *
  */
 
-#include <aboot/aboot.h>
-#include <aboot/common.h>
-#include <aboot/io.h>
-#include <aboot/types.h>
+#include <aboot.h>
+#include <common.h>
+#include <io.h>
+#include <types.h>
 
-#include <libc/string.h>
+#include <string.h>
 
-#include <common/common_proc.h>
-#include <common/omap_rom.h>
+#include <common_proc.h>
+#include <omap_rom.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)
@@ -43,7 +43,7 @@
 #endif /* DEBUG */
 
 #if defined CONFIG_FASTBOOT
-#include <common/fastboot.h>
+#include <fastboot.h>
 
 static struct partition *partitions;
 static struct ptable the_ptable;

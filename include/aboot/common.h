@@ -29,7 +29,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <aboot/types.h>
+#include <types.h>
 
 unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);

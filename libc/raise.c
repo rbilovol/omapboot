@@ -1,4 +1,4 @@
-#include <libc/string.h>
+#include <string.h>
 
 void raise(void)
 {

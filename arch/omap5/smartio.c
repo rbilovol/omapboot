@@ -26,8 +26,8 @@
 * SUCH DAMAGE.
 */
 
-#include <aboot/aboot.h>
-#include <omap5/smartio.h>
+#include <aboot.h>
+#include <smartio.h>
 
 static struct smartio smartio_default[] = {
 

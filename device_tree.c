@@ -26,14 +26,14 @@
 * SUCH DAMAGE.
 */
 
-#include <libc/string.h>
+#include <string.h>
 
-#include <aboot/bootimg.h>
+#include <bootimg.h>
 
-#include <common/boot_settings.h>
-#include <common/device_tree.h>
-#include <common/fastboot.h>
-#include <common/alloc.h>
+#include <boot_settings.h>
+#include <device_tree.h>
+#include <fastboot.h>
+#include <alloc.h>
 
 struct device_tree_data {
 	struct fastboot_ptentry *pte;

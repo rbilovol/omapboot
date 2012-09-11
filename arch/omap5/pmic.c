@@ -26,12 +26,12 @@
  * SUCH DAMAGE.
  */
 
-#include <aboot/types.h>
-#include <aboot/io.h>
-#include <omap5/hw.h>
-#include <common/omap_rom.h>
-#include <common/common_proc.h>
-#include <libc/string.h>
+#include <types.h>
+#include <io.h>
+#include <hw.h>
+#include <omap_rom.h>
+#include <common_proc.h>
+#include <string.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)

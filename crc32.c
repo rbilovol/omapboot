@@ -25,8 +25,8 @@
   3. This notice may not be removed or altered from any source distribution.
  */
 
-#include <aboot/types.h>
-#include <aboot/common.h>
+#include <types.h>
+#include <common.h>
 
 static const unsigned long crc_table[256];
 

@@ -26,13 +26,9 @@
  * SUCH DAMAGE.
  */
 
-#include <aboot/io.h>
+#include <io.h>
 
-#if defined CONFIG_IS_OMAP4
-#include <omap4/gpio.h>
-#elif defined CONFIG_IS_OMAP5
-#include <omap5/gpio.h>
-#endif
+#include <gpio.h>
 
 #define GPIO_CTRL    0x130
 #define GPIO_OE      0x134

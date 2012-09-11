@@ -30,8 +30,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OMAP44XX_CPU_H
-#define  _OMAP44XX_CPU_H
+#ifndef _OMAP44XX_HW_H
+#define  _OMAP44XX_HW_H
 
 
 /*
@@ -630,5 +630,4 @@ void configure_core_dpll_no_lock(void);
 void lock_core_dpll_shadow(void);
 
 #endif
-
 #endif

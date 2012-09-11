@@ -31,15 +31,15 @@
 
 /* omap54xx and ID detection and reporting */
 
-#include <libc/string.h>
+#include <string.h>
 
-#include <aboot/aboot.h>
-#include <aboot/io.h>
+#include <aboot.h>
+#include <io.h>
 
-#include <common/omap_rom.h>
-#include <common/usbboot_common.h>
+#include <omap_rom.h>
+#include <usbboot_common.h>
 
-#include <omap5/hw.h>
+#include <hw.h>
 
 #define DEVICETYPE_MASK	(0x7 << 6)
 

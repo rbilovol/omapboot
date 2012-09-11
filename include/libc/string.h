@@ -32,7 +32,7 @@
 #ifndef __STRING_H_
 #define __STRING_H_
 
-#include <aboot/types.h>
+#include <types.h>
 #include <stdarg.h>
 
 /* memcmp - compare memory areas

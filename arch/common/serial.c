@@ -26,10 +26,10 @@
  * SUCH DAMAGE.
  */
 
-#include <aboot/aboot.h>
-#include <aboot/io.h>
+#include <aboot.h>
+#include <io.h>
 
-#include <common/serial.h>
+#include <serial.h>
 
 void serial_init(void)
 {

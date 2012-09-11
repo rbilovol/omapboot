@@ -29,7 +29,7 @@
 #ifndef _USBBOOT_COMMON_H_
 #define _USBBOOT_COMMON_H_
 
-#include <aboot/types.h>
+#include <types.h>
 #include <version.h>
 
 #define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))

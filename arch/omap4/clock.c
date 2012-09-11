@@ -34,10 +34,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <aboot/aboot.h>
-#include <common/common_proc.h>
-#include <aboot/io.h>
-#include <omap4/hw.h>
+#include <aboot.h>
+#include <common_proc.h>
+#include <io.h>
+#include <hw.h>
 
 #define PLL_STOP		1 /* PER & IVA */
 #define PLL_MN_POWER_BYPASS	4

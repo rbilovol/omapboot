@@ -26,9 +26,9 @@
  * SUCH DAMAGE.
  */
 
-#include <aboot/aboot.h>
-#include <common/usbboot_common.h>
-#include <common/alloc.h>
+#include <aboot.h>
+#include <usbboot_common.h>
+#include <alloc.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)

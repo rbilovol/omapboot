@@ -32,7 +32,7 @@
 #ifndef _ABOOT_H_
 #define _ABOOT_H_
 
-#include <aboot/types.h>
+#include <types.h>
 #include <stdarg.h>
 
 void serial_init(void);

@@ -26,11 +26,11 @@
 * SUCH DAMAGE.
 */
 
-#include <aboot/aboot.h>
-#include <common/common_proc.h>
-#include <aboot/io.h>
-#include <omap5/hw.h>
-#include <omap5/clock.h>
+#include <aboot.h>
+#include <common_proc.h>
+#include <io.h>
+#include <hw.h>
+#include <clock.h>
 
 typedef struct dpll_param dpll_param;
 

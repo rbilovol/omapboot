@@ -29,7 +29,7 @@
 #ifndef __DEVICE_TREE_H__
 #define __DEVICE_TREE_H__
 
-#include <common/usbboot_common.h>
+#include <usbboot_common.h>
 
 #define ENVIRO_MAGIC "ANDROID_ENV!"
 #define ENVIRO_MAGIC_SIZE 12

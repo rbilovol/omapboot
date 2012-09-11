@@ -21,10 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <aboot/aboot.h>
-#include <aboot/types.h>
+#include <aboot.h>
+#include <types.h>
 #include <stdarg.h>
-#include <libc/string.h>
+#include <string.h>
 
 int printf(const char *fmt, ...)
 {

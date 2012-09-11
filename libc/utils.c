@@ -1,5 +1,5 @@
-#include <aboot/common.h>
-#include <libc/string.h>
+#include <common.h>
+#include <string.h>
 
 int get_downloadsize_from_string(int count, char *string)
 {

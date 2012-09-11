@@ -35,9 +35,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <aboot/aboot.h>
-#include <aboot/io.h>
-#include <omap4/hw.h>
+#include <aboot.h>
+#include <io.h>
+#include <hw.h>
 
 #define CONFIG_OMAP4_SDC		1
 

@@ -26,19 +26,14 @@
  * SUCH DAMAGE.
  */
 
-#include <version.h>
-#include <aboot/aboot.h>
-#include <aboot/io.h>
+#include <aboot.h>
+#include <io.h>
 
-#if defined CONFIG_IS_OMAP4
-#include <omap4/mux.h>
-#include <omap4/hw.h>
-#elif defined CONFIG_IS_OMAP5
-#include <omap5/hw.h>
-#endif
+#include <mux.h>
+#include <hw.h>
 
-#include <common/omap_rom.h>
-#include <common/usbboot_common.h>
+#include <omap_rom.h>
+#include <usbboot_common.h>
 
 #define WITH_MEMORY_TEST	0
 #define WITH_FLASH_BOOT		0

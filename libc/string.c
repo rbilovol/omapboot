@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include <libc/string.h>
+#include <string.h>
 
 int memcmp(const void *cs, const void *ct, size_t count)
 {

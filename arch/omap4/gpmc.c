@@ -31,8 +31,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <aboot/aboot.h>
-#include <omap4/hw.h>
+#include <aboot.h>
+#include <hw.h>
 
 
 /* must be called from sram or flash */

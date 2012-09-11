@@ -26,11 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined CONFIG_IS_OMAP4
-#include <omap4/hw.h>
-#elif defined CONFIG_IS_OMAP5
-#include <omap5/hw.h>
-#endif
+#include <hw.h>
 
 #define OFF_RBR		0x00
 #define OFF_THR		0x00

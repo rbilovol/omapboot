@@ -30,15 +30,15 @@
  */
 
 
-#include <aboot/aboot.h>
-#include <aboot/io.h>
+#include <aboot.h>
+#include <io.h>
 
-#include <common/common_proc.h>
-#include <common/omap_rom.h>
-#include <common/usbboot_common.h>
+#include <common_proc.h>
+#include <omap_rom.h>
+#include <usbboot_common.h>
 
-#include <omap4/mux.h>
-#include <omap4/hw.h>
+#include <mux.h>
+#include <hw.h>
 
 static struct partition partitions[] = {
 	{ "-", 128 },

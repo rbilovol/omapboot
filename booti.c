@@ -26,15 +26,14 @@
  * SUCH DAMAGE.
  */
 
-#include <aboot/aboot.h>
-#include <aboot/bootimg.h>
-#include <aboot/common.h>
-#include <libc/string.h>
-#include <common/omap_rom.h>
-#include <common/fastboot.h>
-#include <common/boot_settings.h>
-#include <common/device_tree.h>
-#include "version.h"
+#include <aboot.h>
+#include <bootimg.h>
+#include <common.h>
+#include <string.h>
+#include <omap_rom.h>
+#include <fastboot.h>
+#include <boot_settings.h>
+#include <device_tree.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)

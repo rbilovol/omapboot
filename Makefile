@@ -32,7 +32,7 @@ VERSION = 1
 PATCHLEVEL = 1
 SUBLEVEL = 0
 ORGANIZATION="Texas Instruments Inc"
-VERSION_FILE = include/version.h
+VERSION_FILE = include/common/version.h
 ABOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
 
 what_to_build:: all
@@ -64,11 +64,14 @@ TARGET_LD := $(CROSS_COMPILE)ld
 TARGET_OBJCOPY := $(CROSS_COMPILE)objcopy
 TARGET_OBJDUMP := $(CROSS_COMPILE)objdump
 
-$(shell cat arch/$(MACH)/configs/config_$(BOARD).h > include/config.h)
+$(shell cat arch/$(MACH)/configs/config_$(BOARD).h > include/common/config.h)
 TARGET_FLAGS := -g -Os  -Wall
 TARGET_FLAGS += -fno-builtin -ffreestanding
-TARGET_FLAGS += -I. -Iinclude
-TARGET_FLAGS += -include include/config.h
+TARGET_FLAGS += -I. -Iinclude/$(MACH)
+TARGET_FLAGS += -I. -Iinclude/aboot
+TARGET_FLAGS += -I. -Iinclude/libc
+TARGET_FLAGS += -I. -Iinclude/common
+TARGET_FLAGS += -include include/common/config.h
 
 # Newer GCC require +sec postfix to build secure instructions
 plus_sec := $(shell set -e;						\
@@ -86,7 +89,7 @@ TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)
 HOST_CFLAGS := -g -O2 -Wall $(EXTRAOPTS)
 HOST_CFLAGS += -Ihost/include/common
 HOST_CFLAGS += -Ihost/include/$(MACH)
-HOST_CFLAGS += -include include/config.h
+HOST_CFLAGS += -include include/common/config.h
 HOST_CC_LOC := $(shell $(CC) $(HOST_CFLAGS) -print-search-dirs|grep ^install|cut -d ':' -f2|tr -d ' ')
 
 # C=1 to enable check of modified source for target build only
@@ -225,8 +228,8 @@ $(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/secondstage.c
 
 _clean_generic::
-	$(QUIET)rm -f include/config.h
-	$(QUIET)rm -f include/version.h
+	$(QUIET)rm -f include/common/config.h
+	$(QUIET)rm -f include/common/version.h
 	$(QUIET)rm -rf out
 
 clean::

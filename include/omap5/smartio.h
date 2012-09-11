@@ -29,7 +29,7 @@
 #ifndef _SMARTIO_H_
 #define _SMARTIO_H_
 
-#include <aboot/types.h>
+#include <types.h>
 
 /* smartio impedances and slew rates */
 

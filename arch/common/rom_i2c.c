@@ -27,9 +27,9 @@
 * SUCH DAMAGE.
 */
 
-#include <aboot/aboot.h>
-#include <aboot/io.h>
-#include <common/omap_rom.h>
+#include <aboot.h>
+#include <io.h>
+#include <omap_rom.h>
 
 int i2c_init(hal_i2c i2c_id)
 {

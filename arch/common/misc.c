@@ -26,10 +26,10 @@
  * SUCH DAMAGE.
  */
 
-#include <aboot/aboot.h>
-#include <aboot/io.h>
-#include <common/omap_rom.h>
-#include <libc/string.h>
+#include <aboot.h>
+#include <io.h>
+#include <omap_rom.h>
+#include <string.h>
 
 #define LOOP_MAX      2000
 u32 check_loop(u32 mask, u32 match, u32 addr)

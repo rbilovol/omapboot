@@ -26,16 +26,16 @@
  *
  */
 
-#include <aboot/aboot.h>
-#include <aboot/bootimg.h>
-#include <aboot/io.h>
-#include <aboot/types.h>
+#include <aboot.h>
+#include <bootimg.h>
+#include <io.h>
+#include <types.h>
 
-#include <common/alloc.h>
-#include <common/omap_rom.h>
-#include <common/usbboot_common.h>
+#include <alloc.h>
+#include <omap_rom.h>
+#include <usbboot_common.h>
 
-#include <libc/string.h>
+#include <string.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)
@@ -44,7 +44,7 @@
 #endif /* DEBUG */
 
 #if defined CONFIG_FASTBOOT
-#include <common/fastboot.h>
+#include <fastboot.h>
 
 struct usb usb;
 static struct fastboot_data fb_data_data;
