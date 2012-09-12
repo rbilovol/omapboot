@@ -57,7 +57,8 @@ struct usb usb;
 
 #if defined CONFIG_OMAP4_ANDROID_CMD_LINE || \
 	defined CONFIG_OMAP5_ANDROID_CMD_LINE
-static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
+static u32 setup_atag(struct bootloader_ops *boot_ops, boot_img_hdr *hdr,
+								u32 *atag)
 {
 	u32 size;
 	u32 rev;
@@ -109,7 +110,8 @@ _none:
 	return atag - atag_start;
 }
 
-static void boot_settings(boot_img_hdr *hdr, u32 atag)
+static void boot_settings(struct bootloader_ops *boot_ops, boot_img_hdr *hdr,
+								u32 atag)
 {
 	char temp_cmdline[512] = EXTENDED_CMDLINE;
 	char serial_str[64];
@@ -134,7 +136,7 @@ static void boot_settings(boot_img_hdr *hdr, u32 atag)
 			strlen((const char *)hdr->cmdline) + 1))
 		strcat((char *)hdr->cmdline, boot_str);
 
-	atag_size = setup_atag(hdr, (u32 *)atag);
+	atag_size = setup_atag(boot_ops, hdr, (u32 *)atag);
 
 	return;
 }
@@ -167,7 +169,7 @@ static void bootimg_print_image_hdr(boot_img_hdr *hdr)
 	return;
 }
 
-int do_booti(char *info, void *download_addr)
+int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 {
 	boot_img_hdr *hdr;
 	u32 addr;
@@ -291,7 +293,7 @@ int do_booti(char *info, void *download_addr)
 
 #if defined CONFIG_OMAP4_ANDROID_CMD_LINE || \
 	defined CONFIG_OMAP5_ANDROID_CMD_LINE
-	boot_settings(&hdr[0], ATAGS_ARGS);
+	boot_settings(boot_ops, &hdr[0], ATAGS_ARGS);
 #endif
 
 	theKernel = (void (*)(int, int, void *))(hdr->kernel_addr);

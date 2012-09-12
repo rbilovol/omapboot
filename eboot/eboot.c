@@ -50,13 +50,14 @@ u32 public_rom_base;
 
 __attribute__((__section__(".mram")))
 static struct bootloader_ops boot_operations;
-struct bootloader_ops* boot_ops = &boot_operations;
 
 void eboot(unsigned *info)
 {
 	int ret = 0;
 	unsigned bootdevice = -1;
 	char buf[DEV_STR_LENGTH];
+
+	struct bootloader_ops *boot_ops = &boot_operations;
 
 	boot_ops->board_ops = init_board_funcs();
 	boot_ops->proc_ops = init_processor_id_funcs();
@@ -119,7 +120,8 @@ void eboot(unsigned *info)
 		goto fail;
 
 	boot_ops->storage_ops =
-		init_rom_mmc_funcs(boot_ops->board_ops->board_get_flash_slot());
+		init_rom_mmc_funcs(boot_ops->proc_ops->proc_get_proc_id(),
+				boot_ops->board_ops->board_get_flash_slot());
 	if (!boot_ops->storage_ops) {
 		printf("Unable to init rom mmc functions\n");
 		goto fail;
@@ -145,7 +147,7 @@ void eboot(unsigned *info)
 		if (boot_ops->board_ops->board_user_fastboot_request())
 			goto fastboot;
 
-	do_booti("storage", NULL);
+	do_booti(boot_ops, "storage", NULL);
 
 fastboot:
 	usb_init(&usb);

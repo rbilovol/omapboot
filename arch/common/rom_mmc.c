@@ -409,21 +409,21 @@ static u64 get_mmc_total_sectors(void)
 }
 
 
-struct storage_specific_functions *init_rom_mmc_funcs(u8 device)
+struct storage_specific_functions *init_rom_mmc_funcs(int proc_id, u8 device)
 {
 	if (!((device == DEVICE_SDCARD) || (device == DEVICE_EMMC))) {
 		printf("unsupported mmc device\n");
 		return NULL;
 	}
 
-	if (boot_ops->proc_ops->proc_get_proc_id) {
+	if (proc_id) {
 		mmcd.rom_hal_mmchs_writedata =
 			API(&rom_hal_mmchs_writedata_addr
-			[boot_ops->proc_ops->proc_get_proc_id()]);
+			[proc_id]);
 
 		mmcd.rom_hal_mmchs_sendcommand =
 			API(&rom_hal_mmchs_sendcommand_addr
-			[boot_ops->proc_ops->proc_get_proc_id()]);
+			[proc_id]);
 	} else
 		return NULL;
 

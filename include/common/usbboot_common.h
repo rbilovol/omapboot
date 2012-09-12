@@ -101,7 +101,7 @@ unsigned long crc32(unsigned long crc, const unsigned char *buf,
 int get_downloadsize_from_string(int count, char *string);
 
 /* Storage drivers function inits */
-struct storage_specific_functions *init_rom_mmc_funcs(u8 device);
+struct storage_specific_functions *init_rom_mmc_funcs(int proc_id, u8 device);
 
 
 #endif

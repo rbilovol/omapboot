@@ -907,7 +907,8 @@ static int fastboot_flash(char *cmd, char *response)
 	return ret;
 }
 
-static int fastboot_boot(char *cmd, char *response)
+static int fastboot_boot(struct bootloader_ops *boot_ops, char *cmd,
+								char *response)
 {
 	strcpy(response, "OKAY");
 	fastboot_tx_status(response, strlen(response));
@@ -915,7 +916,7 @@ static int fastboot_boot(char *cmd, char *response)
 	usb_close(&usb);
 
 	printf("booting kernel...\n");
-	do_booti("ram", transfer_buffer);
+	do_booti(boot_ops, "ram", transfer_buffer);
 
 	return 0;
 }
@@ -1001,7 +1002,7 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 		} else if (memcmp(cmd, "erase:", 6) == 0) {
 			ret = fastboot_erase(cmd + 6, response);
 		} else if (memcmp(cmd, "boot", 4) == 0) {
-			ret = fastboot_boot(cmd + 4, response);
+			ret = fastboot_boot(boot_ops, cmd + 4, response);
 		}
 
 		if (ret < 0)
