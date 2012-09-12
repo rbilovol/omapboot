@@ -35,6 +35,12 @@
 #include <fastboot.h>
 #include <alloc.h>
 
+#ifdef DEBUG
+#define DBG(x...) printf(x)
+#else
+#define DBG(x...)
+#endif /* DEBUG */
+
 struct device_tree_data {
 	struct fastboot_ptentry *pte;
 	int dev_tree_sz;
@@ -110,14 +116,14 @@ static int find_dev_tree(struct bootloader_ops *boot_ops)
 		ret = boot_ops->storage_ops->read(pte->start, num_sectors,
 							(void *) env_hdr);
 		if (ret != 0) {
-			printf("%s: failed to read enviroment header\n",
+			DBG("%s: failed to read enviroment header\n",
 				__func__);
 			goto out;
 		}
 
 		ret = memcmp(env_hdr->magic, ENVIRO_MAGIC, ENVIRO_MAGIC_SIZE);
 		if (ret != 0) {
-			printf("%s: bad enviroment magic\n", __func__);
+			DBG("%s: bad enviroment magic\n", __func__);
 			goto out;
 		}
 
@@ -141,13 +147,13 @@ static int find_dev_tree(struct bootloader_ops *boot_ops)
 		ret = boot_ops->storage_ops->read(pte->start, num_sectors,
 							(void *) boot_hdr);
 		if (ret != 0) {
-			printf("booti: failed to read bootimg header\n");
+			DBG("booti: failed to read bootimg header\n");
 			goto out;
 		}
 
 		ret = memcmp(boot_hdr->magic, BOOT_MAGIC, BOOT_MAGIC_SIZE);
 		if (ret != 0) {
-			printf("booti: bad boot image magic\n");
+			DBG("booti: bad boot image magic\n");
 			goto out;
 		}
 
@@ -191,7 +197,7 @@ u32 load_dev_tree(struct bootloader_ops *boot_ops)
 
 	ret = find_dev_tree(boot_ops);
 	if (ret < 0) {
-		printf("%s: Device tree not supported\n", __func__);
+		DBG("%s: Device tree not supported\n", __func__);
 		dt_data->dev_tree_load_addr = ATAGS_ARGS;
 		goto out;
 	}
