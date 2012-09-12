@@ -31,8 +31,10 @@
 
 #ifndef _FASTBOOT_H_
 #define _FASTBOOT_H_
+
 #include <usbboot_common.h>
 #include <sparse_format.h>
+#include <fastboot_common.h>
 
 /* EFI defines */
 #define EFI_VERSION 0x00010000
@@ -47,15 +49,6 @@ static const u8 partition_type[16] = {
 static const u8 random_uuid[16] = {
 	0xff, 0x1f, 0xf2, 0xf9, 0xd4, 0xa8, 0x0e, 0x5f,
 	0x97, 0x46, 0x59, 0x48, 0x69, 0xae, 0xc3, 0x4e,
-};
-
-struct efi_entry {
-	u8 type_uuid[16];
-	u8 uniq_uuid[16];
-	u64 first_lba;
-	u64 last_lba;
-	u64 attr;
-	u16 name[EFI_NAMELEN];
 };
 
 struct efi_header {
@@ -90,32 +83,6 @@ struct ptable {
 	struct efi_entry entry[EFI_ENTRIES];
 };
 
-
-/* Write the file as a series of variable/value pairs
-   using the setenv and saveenv commands */
-#define FASTBOOT_PTENTRY_FLAGS_WRITE_ENV	0x00000400
-/* To support the Android-style naming of flash */
-#define MAX_PTN 16
-
-/* Android-style flash naming */
-typedef struct fastboot_ptentry fastboot_ptentry;
-
-
-/* flash partitions are defined in terms of blocks
-** (flash erase units)
-*/
-struct fastboot_ptentry {
-	/* The logical name for this partition, null terminated */
-	char name[16];
-	/* The start wrt the nand part, must be multiple of nand block size */
-	unsigned int start;
-	/* The length of the partition, must be multiple of nand block size */
-	u64 length;
-	/* Controls the details of how operations are done on the partition
-	See the FASTBOOT_PTENTRY_FLAGS_*'s defined below */
-	unsigned int flags;
-};
-
 struct fastboot_data {
 	struct board_specific_functions *board_ops;
 	struct proc_specific_functions *proc_ops;
@@ -132,7 +99,6 @@ struct fastboot_data {
 void do_fastboot(struct bootloader_ops *board_funcs);
 char *get_serial_number(void);
 void fastboot_flash_reset_ptn(void);
-void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count);
 fastboot_ptentry *fastboot_flash_find_ptn(const char *name);
 char *get_ptn_size(struct fastboot_data *fb_data, char *buf, const char *ptn) ;
 
@@ -141,16 +107,12 @@ char *get_ptn_size(struct fastboot_data *fb_data, char *buf, const char *ptn) ;
 static inline void do_fastboot(struct bootloader_ops *board_funcs) { return; };
 static inline char *get_serial_number(void) { return 0; };
 static inline void fastboot_flash_reset_ptn(void) { return; };
-static inline void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count) { return; };
 static inline fastboot_ptentry *fastboot_flash_find_ptn(const char *name) { return NULL; };
-
 static inline char *get_ptn_size(struct fastboot_data *fb_data, char *buf,
 					const char *ptn) { return 0; };
 
 #endif /* CONFIG_FASTBOOT */
 
 int do_gpt_format(struct fastboot_data *fb_data);
-int load_ptbl(struct storage_specific_functions *fb_data, u8 silent);
-
 
 #endif /* FASTBOOT_H */

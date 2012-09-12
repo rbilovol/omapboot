@@ -137,6 +137,7 @@ COMMON_OBJS := 	crc32.o \
 		libc/utils.o \
 		fastboot.o \
 		fastboot_mmc.o \
+		fastboot_common.o \
 		libc/printf.o \
 		libc/raise.o \
 		libc/string.o \

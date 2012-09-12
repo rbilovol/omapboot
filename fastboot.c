@@ -45,6 +45,7 @@
 
 #if defined CONFIG_FASTBOOT
 #include <fastboot.h>
+#include <fastboot_common.h>
 
 struct usb usb;
 static struct fastboot_data fb_data_data;
@@ -242,29 +243,6 @@ static int fastboot_oem(const char *cmd, char *response)
 	fastboot_tx_status(response, strlen(response));
 
 	return ret;
-}
-
-void fastboot_flash_add_ptn(fastboot_ptentry *ptn, int count)
-{
-	if (count < MAX_PTN) {
-		memcpy(fb_data->fb_ptable + count, ptn, sizeof(*ptn));
-	}
-}
-
-
-fastboot_ptentry *fastboot_flash_find_ptn(const char *name)
-{
-    unsigned int n;
-
-	for (n = 0; n < MAX_PTN; n++) {
-		/* Make sure a substring is not accepted */
-		if (strlen(name) == strlen(fb_data->fb_ptable[n].name)) {
-			if (0 == strcmp(fb_data->fb_ptable[n].name, name))
-				return fb_data->fb_ptable + n;
-		}
-	}
-
-	return NULL;
 }
 
 static int download_image(char *dsize, char *response)
