@@ -44,7 +44,7 @@
 struct device_tree_data {
 	struct fastboot_ptentry *pte;
 	int dev_tree_sz;
-	int dev_tree_load_addr;
+	u32 dev_tree_load_addr;
 	int page_size;
 };
 
@@ -187,7 +187,7 @@ out:
  *
  * Returns the load addres in memory of the device tree.
  **/
-u32 load_dev_tree(struct bootloader_ops *boot_ops)
+u32 load_dev_tree(struct bootloader_ops *boot_ops, u32 atag_load_addr)
 {
 	int ret = 0;
 	int sector;
@@ -198,7 +198,7 @@ u32 load_dev_tree(struct bootloader_ops *boot_ops)
 	ret = find_dev_tree(boot_ops);
 	if (ret < 0) {
 		DBG("%s: Device tree not supported\n", __func__);
-		dt_data->dev_tree_load_addr = ATAGS_ARGS;
+		dt_data->dev_tree_load_addr = atag_load_addr;
 		goto out;
 	}
 

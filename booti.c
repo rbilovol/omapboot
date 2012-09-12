@@ -179,7 +179,7 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 	u64 num_sectors = 0;
 	int sector_sz = 0;
 	int ret = 0;
-	unsigned dbt_addr = ATAGS_ARGS;
+	unsigned dbt_addr = CONFIG_ADDR_ATAGS;
 	unsigned cfg_machine_type = CONFIG_BOARD_MACH_TYPE;
 	void (*theKernel)(int zero, int arch, void *);
 
@@ -201,7 +201,7 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 		if (ret != 0)
 			goto fail;
 
-		dbt_addr = load_dev_tree(boot_ops);
+		dbt_addr = load_dev_tree(boot_ops, dbt_addr);
 		if (dbt_addr < 0)
 			goto fail;
 
@@ -293,7 +293,7 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 
 #if defined CONFIG_OMAP4_ANDROID_CMD_LINE || \
 	defined CONFIG_OMAP5_ANDROID_CMD_LINE
-	boot_settings(boot_ops, &hdr[0], ATAGS_ARGS);
+	boot_settings(boot_ops, &hdr[0], CONFIG_ADDR_ATAGS);
 #endif
 
 	theKernel = (void (*)(int, int, void *))(hdr->kernel_addr);

@@ -29,8 +29,6 @@
 #ifndef _BOOTSETTINGS_H_
 #define _BOOTSETTINGS_H_
 
-#define ATAGS_ARGS	0x84000000
-
 #define _CORE		0x54410001
 #define _MEM		0x54410002
 #define _INITRD		0x54420005
