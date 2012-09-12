@@ -209,7 +209,10 @@ static int omap5uevm_set_flash_slot(u8 dev,
 
 	return ret;
 }
-
+static u32 omap5uevm_get_board_rev(void)
+{
+	return 0xff;
+}
 
 static struct board_specific_functions omap5uevm_funcs = {
 	.board_get_flash_slot = omap5uevm_get_flash_slot,
@@ -224,6 +227,7 @@ static struct board_specific_functions omap5uevm_funcs = {
 	.board_storage_init = omap5uevm_storage_init,
 	.board_read_sw_revision = omap5uevm_read_sw_revision,
 	.board_configure_pwm_mode = omap5uevm_configure_pwm_mode,
+	.board_get_board_rev = omap5uevm_get_board_rev,
 };
 
 void* init_board_funcs(void)

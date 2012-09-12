@@ -81,10 +81,10 @@ static u32 setup_atag(boot_img_hdr *hdr, u32 *atag)
 	*(atag++) = MEMORY_SIZE;
 	*(atag++) = MEMORY_BASE;
 
-	if (boot_ops->proc_ops->proc_get_board_rev) {
+	if (boot_ops->board_ops->board_get_board_rev) {
 		*(atag++) = 3;
 		*(atag++) = _REV;
-		rev = boot_ops->proc_ops->proc_get_board_rev();
+		rev = boot_ops->board_ops->board_get_board_rev();
 		*(atag++) = rev;
 	}
 

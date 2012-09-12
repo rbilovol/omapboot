@@ -50,7 +50,6 @@ struct proc_specific_functions {
 	char* (*proc_get_version)(void);
 	int (*proc_get_proc_id)(void);
 	void (*proc_check_lpddr2_temp)(void);
-	u32 (*proc_get_board_rev)(void);
 };
 
 struct storage_specific_functions {
@@ -84,6 +83,7 @@ struct board_specific_functions {
 	int (*board_pmic_disable)(void);
 	int (*board_read_sw_revision)(void);
 	int (*board_configure_pwm_mode)(void);
+	u32 (*board_get_board_rev)(void);
 };
 
 struct bootloader_ops {
