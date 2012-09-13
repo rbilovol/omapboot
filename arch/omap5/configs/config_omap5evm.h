@@ -43,6 +43,8 @@
 #define CONFIG_RAM_VECTORS		0x4030D000
 #define CONFIG_STACK_TOP		0x4030D000
 
+#define CONFIG_ADDR_SBOOT		0x90000000
+
 /* MEMORY_SIZE : This define should be modified
 * in order to pass less memory to the kernel via ATAGS
 * For 2GB, MEMORY_SIZE = 0x80000000

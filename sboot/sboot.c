@@ -44,14 +44,12 @@
 
 u32 public_rom_base;
 
-static struct bootloader_ops boot_operations;
-struct bootloader_ops *boot_ops = &boot_operations;
-
-void sboot(int bootdevice)
+void sboot(u32 bootops_addr, int bootdevice)
 {
 	int ret = 0;
 	char buf[DEV_STR_LENGTH];
 	struct usb usb;
+	struct bootloader_ops *boot_ops = (struct bootloader_ops *)bootops_addr;
 
 	init_memory_alloc();
 
