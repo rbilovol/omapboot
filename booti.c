@@ -53,8 +53,6 @@
 #define EXTENDED_CMDLINE	""
 #endif
 
-struct usb usb;
-
 #if defined CONFIG_OMAP4_ANDROID_CMD_LINE || \
 	defined CONFIG_OMAP5_ANDROID_CMD_LINE
 static u32 setup_atag(struct bootloader_ops *boot_ops, boot_img_hdr *hdr,
@@ -169,7 +167,8 @@ static void bootimg_print_image_hdr(boot_img_hdr *hdr)
 	return;
 }
 
-int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
+int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr,
+								struct usb *usb)
 {
 	boot_img_hdr *hdr;
 	u32 addr;
@@ -302,7 +301,7 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 	theKernel(0, cfg_machine_type, (void *)dbt_addr);
 
 fail:
-	usb_init(&usb);
-	do_fastboot(boot_ops);
+	usb_init(usb);
+	do_fastboot(boot_ops, usb);
 	return 0;
 }

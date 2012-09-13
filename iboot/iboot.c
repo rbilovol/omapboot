@@ -45,7 +45,6 @@
 #endif /* DEBUG */
 
 static unsigned MSG = 0xaabbccdd;
-struct usb usb;
 u32 public_rom_base;
 
 __attribute__((__section__(".mram")))
@@ -54,6 +53,7 @@ static struct bootloader_ops boot_operations;
 void iboot(unsigned *info)
 {
 	int ret = 0;
+	struct usb usb;
 	struct bootloader_ops *boot_ops = &boot_operations;
 
 	boot_ops->board_ops = init_board_funcs();
@@ -132,7 +132,7 @@ void iboot(unsigned *info)
 			goto fail;
 		}
 
-	do_fastboot(boot_ops);
+	do_fastboot(boot_ops, &usb);
 
 fail:
 	while (1)

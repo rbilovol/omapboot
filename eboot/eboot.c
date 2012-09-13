@@ -45,7 +45,6 @@
 #define DBG(x...)
 #endif /* DEBUG */
 
-struct usb usb;
 u32 public_rom_base;
 
 __attribute__((__section__(".mram")))
@@ -56,7 +55,7 @@ void eboot(unsigned *info)
 	int ret = 0;
 	unsigned bootdevice = -1;
 	char buf[DEV_STR_LENGTH];
-
+	struct usb usb;
 	struct bootloader_ops *boot_ops = &boot_operations;
 
 	boot_ops->board_ops = init_board_funcs();
@@ -147,11 +146,11 @@ void eboot(unsigned *info)
 		if (boot_ops->board_ops->board_user_fastboot_request())
 			goto fastboot;
 
-	do_booti(boot_ops, "storage", NULL);
+	do_booti(boot_ops, "storage", NULL, &usb);
 
 fastboot:
 	usb_init(&usb);
-	do_fastboot(boot_ops);
+	do_fastboot(boot_ops, &usb);
 
 fail:
 	printf("boot failed\n");

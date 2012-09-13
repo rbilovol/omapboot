@@ -47,7 +47,6 @@
 #include <fastboot.h>
 #include <fastboot_common.h>
 
-struct usb usb;
 static struct fastboot_data fb_data_data;
 
 static struct fastboot_data *fb_data = &fb_data_data;
@@ -94,10 +93,11 @@ static char *get_proc_version(void)
 	return fb_data->proc_ops->proc_get_version();
 }
 
-static int fastboot_tx_status(const char *buffer, unsigned int buffer_size)
+static int fastboot_tx_status(const char *buffer, unsigned int buffer_size,
+								struct usb *usb)
 {
 	/* send response back to host */
-	usb_write(&usb, (void *)buffer, strlen(buffer));
+	usb_write(usb, (void *)buffer, strlen(buffer));
 
 	return 0;
 }
@@ -127,7 +127,8 @@ static int fastboot_free_mem(void *mem_ptr)
 		return 0;
 }
 
-static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
+static int fastboot_getvar(const char *rx_buffer, char *tx_buffer,
+								struct usb *usb)
 {
 	strcpy(tx_buffer, "OKAY");
 
@@ -163,32 +164,32 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 		strcpy(tx_buffer, "INFO");
 		strcpy(tx_buffer + strlen(tx_buffer), "product: ");
 		strcpy(tx_buffer + strlen(tx_buffer), PRODUCT_NAME);
-		fastboot_tx_status(tx_buffer, strlen(tx_buffer));
+		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 		/* processor version */
 		strcpy(tx_buffer, "INFO");
 		strcpy(tx_buffer + strlen(tx_buffer), "cpu: ");
 		strcpy(tx_buffer + strlen(tx_buffer), get_proc_version());
-		fastboot_tx_status(tx_buffer, strlen(tx_buffer));
+		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 		/* cpu revision */
 		strcpy(tx_buffer, "INFO");
 		strcpy(tx_buffer + strlen(tx_buffer), "cpurev: ");
 		strcpy(tx_buffer + strlen(tx_buffer), get_cpu_rev());
-		fastboot_tx_status(tx_buffer, strlen(tx_buffer));
+		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 		/* device is GP/EMU/HS */
 		strcpy(tx_buffer, "INFO");
 		strcpy(tx_buffer + strlen(tx_buffer), "secure: ");
 		strcpy(tx_buffer + strlen(tx_buffer), get_proc_type());
-		fastboot_tx_status(tx_buffer, strlen(tx_buffer));
+		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 		strcpy(tx_buffer, "INFO");
 		/*serial number */
 		strcpy(tx_buffer + strlen(tx_buffer), "serialno: ");
 		strcpy(tx_buffer + strlen(tx_buffer), get_serial_number());
-		fastboot_tx_status(tx_buffer, strlen(tx_buffer));
+		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 		/* rom version */
 		strcpy(tx_buffer, "INFO");
 		strcpy(tx_buffer + strlen(tx_buffer), "rom version: ");
 		strcpy(tx_buffer + strlen(tx_buffer), get_rom_version());
-		fastboot_tx_status(tx_buffer, strlen(tx_buffer));
+		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 
 		strcpy(tx_buffer, "OKAY");
 	} else {
@@ -196,12 +197,12 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer)
 		sprintf(tx_buffer, "FAILUnsupported Variable %s", rx_buffer);
 	}
 
-	fastboot_tx_status(tx_buffer, strlen(tx_buffer));
+	fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 
 	return 0;
 }
 
-static int fastboot_oem(const char *cmd, char *response)
+static int fastboot_oem(const char *cmd, char *response, struct usb *usb)
 {
 	int ret = -1;
 	u8 dev = 0;
@@ -240,12 +241,12 @@ static int fastboot_oem(const char *cmd, char *response)
 		sprintf(response, "FAILUnknown oem command %s", cmd);
 	}
 
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 
 	return ret;
 }
 
-static int download_image(char *dsize, char *response)
+static int download_image(char *dsize, char *response, struct usb *usb)
 {
 	int ret = 0;
 	int size_of_dsize = 0;
@@ -262,7 +263,7 @@ static int download_image(char *dsize, char *response)
 		goto out;
 	} else {
 		sprintf(response, "DATA%08x", fb_data->getsize);
-		fastboot_tx_status(response, strlen(response));
+		fastboot_tx_status(response, strlen(response), usb);
 	}
 
 	transfer_buffer = fastboot_alloc_mem();
@@ -274,7 +275,7 @@ static int download_image(char *dsize, char *response)
 
 	/* read the data */
 	printf("Reading %u amount of data ...\n", fb_data->getsize);
-	ret = usb_read(&usb, transfer_buffer, fb_data->getsize);
+	ret = usb_read(usb, transfer_buffer, fb_data->getsize);
 	if (ret < 0) {
 		DBG("failed to read the fastboot command\n");
 		strcpy(response, "FAILUnable to read FASTBOOT command");
@@ -289,16 +290,16 @@ out:
 			strcpy(response, "INFO");
 			strcpy(response + strlen(response),
 					"Unable to free tranfer_buffer");
-			fastboot_tx_status(response, strlen(response));
+			fastboot_tx_status(response, strlen(response), usb);
 		}
 	}
 
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 
 	return ret;
 }
 
-static int flash_sparse_formatted_image(void)
+static int flash_sparse_formatted_image(struct usb *usb)
 {
 	int ret = 0;
 	u32 chunk = 0;
@@ -441,7 +442,7 @@ static int flash_sparse_formatted_image(void)
 						"data mismatch sector %d",
 						fb_data->sector+sector_count);
 					fastboot_tx_status(response,
-							strlen(response));
+							strlen(response), usb);
 
 				}
 			}
@@ -500,7 +501,7 @@ out:
 		strcpy(response, "INFO");
 		strcpy(response + strlen(response),
 				"Unable to free tranfer_buffer");
-		fastboot_tx_status(response, strlen(response));
+		fastboot_tx_status(response, strlen(response), usb);
 	}
 
 #ifdef DEBUG
@@ -509,16 +510,17 @@ out:
 		strcpy(response, "INFO");
 		strcpy(response + strlen(response),
 				"Unable to free read_buffer");
-		fastboot_tx_status(response, strlen(response));
+		fastboot_tx_status(response, strlen(response), usb);
 	}
 #endif
 
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 
 	return ret;
 }
 
-static u32 fastboot_get_boot_ptn(boot_img_hdr *hdr, char *response)
+static u32 fastboot_get_boot_ptn(boot_img_hdr *hdr, char *response,
+								struct usb *usb)
 {
 	u32 hdr_sectors = 0;
 	int ret = -1;
@@ -549,12 +551,12 @@ static u32 fastboot_get_boot_ptn(boot_img_hdr *hdr, char *response)
 
 out:
 	strcpy(response, "INFO");
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 
 	return ret;
 }
 
-static int fastboot_update_zimage(char *response)
+static int fastboot_update_zimage(char *response, struct usb *usb)
 {
 	boot_img_hdr *hdr = NULL;
 	u8 *ramdisk_buffer;
@@ -575,7 +577,7 @@ static int fastboot_update_zimage(char *response)
 
 	hdr = (boot_img_hdr *) read_buffer;
 
-	hdr_sectors = fastboot_get_boot_ptn(hdr, response);
+	hdr_sectors = fastboot_get_boot_ptn(hdr, response, usb);
 	if (hdr_sectors <= 0) {
 		sprintf(response + strlen(response),
 			"FAILINVALID number of boot sectors %d", hdr_sectors);
@@ -638,15 +640,15 @@ out:
 		strcpy(response, "INFO");
 		strcpy(response + strlen(response),
 				"Unable to free read_buffer");
-		fastboot_tx_status(response, strlen(response));
+		fastboot_tx_status(response, strlen(response), usb);
 	}
 
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 
 	return ret;
 }
 
-static int fastboot_update_ramdisk(char *response)
+static int fastboot_update_ramdisk(char *response, struct usb *usb)
 {
 	boot_img_hdr *hdr = NULL;
 	u32 ramdisk_sector_start, ramdisk_sectors;
@@ -665,7 +667,7 @@ static int fastboot_update_ramdisk(char *response)
 
 	hdr = (boot_img_hdr *) read_buffer;
 
-	hdr_sectors = fastboot_get_boot_ptn(hdr, response);
+	hdr_sectors = fastboot_get_boot_ptn(hdr, response, usb);
 	if (hdr_sectors <= 0) {
 		sprintf(response + strlen(response),
 			"FAILINVALID number of boot sectors %d", hdr_sectors);
@@ -712,16 +714,16 @@ out:
 		strcpy(response, "INFO");
 		strcpy(response + strlen(response),
 				"Unable to free read_buffer");
-		fastboot_tx_status(response, strlen(response));
+		fastboot_tx_status(response, strlen(response), usb);
 	}
 
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 
 	return ret;
 }
 
 
-static int flash_non_sparse_formatted_image(void)
+static int flash_non_sparse_formatted_image(struct usb *usb)
 {
 	int ret = 0;
 	u32 num_sectors = 0;
@@ -776,7 +778,7 @@ static int flash_non_sparse_formatted_image(void)
 			sprintf(response + strlen(response),
 					"data mismatch sector %d",
 					fb_data->sector+sector_count);
-			fastboot_tx_status(response, strlen(response));
+			fastboot_tx_status(response, strlen(response), usb);
 		}
 	}
 	#endif
@@ -787,7 +789,7 @@ out:
 		strcpy(response, "INFO");
 		strcpy(response + strlen(response),
 				"Unable to free tranfer_buffer");
-		fastboot_tx_status(response, strlen(response));
+		fastboot_tx_status(response, strlen(response), usb);
 	}
 
 #ifdef DEBUG
@@ -796,11 +798,11 @@ out:
 		strcpy(response, "INFO");
 		strcpy(response + strlen(response),
 				"Unable to free read_buffer");
-		fastboot_tx_status(response, strlen(response));
+		fastboot_tx_status(response, strlen(response), usb);
 	}
 #endif
 
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 
 	return ret;
 }
@@ -816,18 +818,18 @@ static int erase_section(unsigned int start, u64 length)
 	return ret;
 }
 
-static int fastboot_flash(char *cmd, char *response)
+static int fastboot_flash(char *cmd, char *response, struct usb *usb)
 {
 	int ret = 0;
 
 	if ((memcmp(cmd, "zimage", 6) == 0) ||
 		(memcmp(cmd, "zImage", 6) == 0)) {
-		ret = fastboot_update_zimage(response);
+		ret = fastboot_update_zimage(response, usb);
 
 		return ret;
 
 	} else if (memcmp(cmd, "ramdisk", 7) == 0) {
-		ret = fastboot_update_ramdisk(response);
+		ret = fastboot_update_ramdisk(response, usb);
 
 		return ret;
 	}
@@ -840,14 +842,14 @@ static int fastboot_flash(char *cmd, char *response)
 
 		DBG("Partition: %s does not exist\n", ptn_name);
 		sprintf(response, "FAILpartition does not exist %s", ptn_name);
-		fastboot_tx_status(response, strlen(response));
+		fastboot_tx_status(response, strlen(response), usb);
 
 		return 0;
 
 	} else if (fb_data->getsize > fb_data->e->length) {
 		DBG("Image is too large for partition\n");
 		sprintf(response, "FAILimage is too large for partition");
-		fastboot_tx_status(response, strlen(response));
+		fastboot_tx_status(response, strlen(response), usb);
 
 		return 0;
 
@@ -866,7 +868,7 @@ static int fastboot_flash(char *cmd, char *response)
 	/*check if we have a sparse compressed image */
 	if (fb_data->sparse_header->magic == SPARSE_HEADER_MAGIC) {
 
-		ret = flash_sparse_formatted_image();
+		ret = flash_sparse_formatted_image(usb);
 		if (ret != 0)
 			return -1;
 		else
@@ -874,7 +876,7 @@ static int fastboot_flash(char *cmd, char *response)
 			"formatted image to %s\n", (char *) fb_data->e->name);
 	} else {
 		/* normal flashing case */
-		ret = flash_non_sparse_formatted_image();
+		ret = flash_non_sparse_formatted_image(usb);
 		if (ret != 0)
 			return -1;
 		else
@@ -886,20 +888,20 @@ static int fastboot_flash(char *cmd, char *response)
 }
 
 static int fastboot_boot(struct bootloader_ops *boot_ops, char *cmd,
-								char *response)
+						char *response, struct usb *usb)
 {
 	strcpy(response, "OKAY");
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 
-	usb_close(&usb);
+	usb_close(usb);
 
 	printf("booting kernel...\n");
-	do_booti(boot_ops, "ram", transfer_buffer);
+	do_booti(boot_ops, "ram", transfer_buffer, usb);
 
 	return 0;
 }
 
-static int fastboot_erase(char *cmd, char *response)
+static int fastboot_erase(char *cmd, char *response, struct usb *usb)
 {
 	int ret = 0;
 
@@ -916,12 +918,12 @@ static int fastboot_erase(char *cmd, char *response)
 			sprintf(response, "OKAY");
 	}
 
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 
 	return ret;
 }
 
-void do_fastboot(struct bootloader_ops *boot_ops)
+void do_fastboot(struct bootloader_ops *boot_ops, struct usb *usb)
 {
 	int ret = 0;
 	char cmd[65];
@@ -962,7 +964,7 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 		memset(&response, 0, 64);
 
 		/* receive the fastboot command from host */
-		ret = usb_read(&usb, &cmd, cmdsize);
+		ret = usb_read(usb, &cmd, cmdsize);
 		if (ret < 0) {
 			printf("failed to read the fastboot command\n");
 			strcpy(response, "FAIL");
@@ -970,17 +972,17 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 		}
 
 		if (memcmp(cmd, "getvar:", 7) == 0) {
-			ret = fastboot_getvar(cmd + 7, response);
+			ret = fastboot_getvar(cmd + 7, response, usb);
 		} else if (memcmp(cmd, "oem ", 4) == 0) {
-			ret = fastboot_oem(cmd + 4, response);
+			ret = fastboot_oem(cmd + 4, response, usb);
 		} else if (memcmp(cmd, "download:", 9) == 0) {
-			ret = download_image(cmd + 9, response);
+			ret = download_image(cmd + 9, response, usb);
 		} else if (memcmp(cmd, "flash:", 6) == 0) {
-			ret = fastboot_flash(cmd + 6, response);
+			ret = fastboot_flash(cmd + 6, response, usb);
 		} else if (memcmp(cmd, "erase:", 6) == 0) {
-			ret = fastboot_erase(cmd + 6, response);
+			ret = fastboot_erase(cmd + 6, response, usb);
 		} else if (memcmp(cmd, "boot", 4) == 0) {
-			ret = fastboot_boot(boot_ops, cmd + 4, response);
+			ret = fastboot_boot(boot_ops, cmd + 4, response, usb);
 		}
 
 		if (ret < 0)
@@ -990,7 +992,7 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 
 fail:
 	/* send response back to host */
-	fastboot_tx_status(response, strlen(response));
+	fastboot_tx_status(response, strlen(response), usb);
 	printf("\nsomething bad happened\n");
 	while (1)	/* stay here */
 		;

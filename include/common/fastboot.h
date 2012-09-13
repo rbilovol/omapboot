@@ -35,6 +35,7 @@
 #include <usbboot_common.h>
 #include <sparse_format.h>
 #include <fastboot_common.h>
+#include <omap_rom.h>
 
 /* EFI defines */
 #define EFI_VERSION 0x00010000
@@ -96,7 +97,7 @@ struct fastboot_data {
 
 #if defined CONFIG_FASTBOOT
 
-void do_fastboot(struct bootloader_ops *board_funcs);
+void do_fastboot(struct bootloader_ops *board_funcs, struct usb *usb);
 char *get_serial_number(void);
 void fastboot_flash_reset_ptn(void);
 fastboot_ptentry *fastboot_flash_find_ptn(const char *name);
@@ -104,7 +105,8 @@ char *get_ptn_size(struct fastboot_data *fb_data, char *buf, const char *ptn) ;
 
 #else
 
-static inline void do_fastboot(struct bootloader_ops *board_funcs) { return; };
+static inline void do_fastboot(struct bootloader_ops *board_funcs,
+						struct usb *usb) { return; };
 static inline char *get_serial_number(void) { return 0; };
 static inline void fastboot_flash_reset_ptn(void) { return; };
 static inline fastboot_ptentry *fastboot_flash_find_ptn(const char *name) { return NULL; };

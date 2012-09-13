@@ -63,7 +63,6 @@ void memtest(void *x, unsigned count) {
 #endif
 
 static unsigned MSG = 0xaabbccdd;
-struct usb usb;
 u32 public_rom_base;
 
 __attribute__((__section__(".mram")))
@@ -99,24 +98,24 @@ static int load_from_mmc(struct storage_specific_functions *storage_ops,
 }
 #endif
 
-static int load_from_usb(unsigned *_len)
+static int load_from_usb(unsigned *_len, struct usb *usb)
 {
 	unsigned len, n;
 	enable_irqs();
 
-	if (usb_open(&usb))
+	if (usb_open(usb))
 		return -1;
 
-	usb_queue_read(&usb, &len, 4);
-	usb_write(&usb, &MSG, 4);
-	n = usb_wait_read(&usb);
+	usb_queue_read(usb, &len, 4);
+	usb_write(usb, &MSG, 4);
+	n = usb_wait_read(usb);
 	if (n)
 		return -1;
 
-	if (usb_read(&usb, (void*) CONFIG_ADDR_DOWNLOAD, len))
+	if (usb_read(usb, (void*) CONFIG_ADDR_DOWNLOAD, len))
 		return -1;
 
-	usb_close(&usb);
+	usb_close(usb);
 
 	disable_irqs();
 	*_len = len;
@@ -127,6 +126,7 @@ void aboot(unsigned *info)
 {
 	unsigned n, len;
 	int ret = 0;
+	struct usb usb;
 	struct bootloader_ops *boot_ops = &boot_operations;
 
 	boot_ops->board_ops = init_board_funcs();
@@ -188,7 +188,7 @@ void aboot(unsigned *info)
 #endif
 
 #if !WITH_FLASH_BOOT
-	n = load_from_usb(&len);
+	n = load_from_usb(&len, &usb);
 #else
 	unsigned bootdevice;
 
@@ -201,7 +201,7 @@ void aboot(unsigned *info)
 	switch (bootdevice) {
 	case 0x45: /* USB */
 		serial_puts("boot device: USB\n\n");
-		n = load_from_usb(&len);
+		n = load_from_usb(&len, &usb);
 		break;
 	case 0x05:
 	case 0x06:
@@ -236,7 +236,7 @@ void aboot(unsigned *info)
 			for (;;) ;
 		}
 
-		do_booti(boot_ops, "ram", NULL);
+		do_booti(boot_ops, "ram", NULL, &usb);
 		serial_puts("*** BOOT FAILED ***\n");
 	}
 
