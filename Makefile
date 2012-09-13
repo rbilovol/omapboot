@@ -34,6 +34,7 @@ SUBLEVEL = 0
 ORGANIZATION="Texas Instruments Inc"
 VERSION_FILE = include/common/version.h
 ABOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)
+USER_PARAMS_FILE = include/common/user_params.h
 
 what_to_build:: all
 
@@ -59,12 +60,19 @@ ARCH ?= arm
 MACH ?= omap4
 EXTRAOPTS ?= -m32
 
+DUAL_STAGE :=
+ifeq ("$(SPLIT)", "1")
+	DUAL_STAGE := 1
+endif
+
 TARGET_CC := $(CROSS_COMPILE)gcc
 TARGET_LD := $(CROSS_COMPILE)ld
 TARGET_OBJCOPY := $(CROSS_COMPILE)objcopy
 TARGET_OBJDUMP := $(CROSS_COMPILE)objdump
 
 $(shell cat arch/$(MACH)/configs/config_$(BOARD).h > include/common/config.h)
+$(shell echo "" > $(USER_PARAMS_FILE))
+
 TARGET_FLAGS := -g -Os  -Wall
 TARGET_FLAGS += -fno-builtin -ffreestanding
 TARGET_FLAGS += -I. -Iinclude/$(MACH)
@@ -124,15 +132,6 @@ OUT := out/$(BOARD)
 OUT_HOST_OBJ := $(OUT)/host-obj
 OUT_TARGET_OBJ := $(OUT)/target-obj
 
-ALL :=
-
-# Build the usbboot host tool
-include build/rules.mk
-include host/tools/host_usbboot.mk
-
-# Build the target with it's dependencies
-include arch/$(MACH)/$(MACH).mk
-
 COMMON_OBJS := 	crc32.o \
 		libc/utils.o \
 		fastboot.o \
@@ -142,8 +141,16 @@ COMMON_OBJS := 	crc32.o \
 		libc/raise.o \
 		libc/string.o \
 		trusted.o \
-		arch/common/misc.o \
+		arch/common/misc.o
 
+target_dep:
+# Build the target with it's dependencies
+include arch/$(MACH)/$(MACH).mk
+
+ifeq ($(DUAL_STAGE), 1)
+ALL := two_stage
+
+two_stage:
 M_NAME := sboot
 M_LDS :=  arch/$(MACH)/$(M_NAME).lds
 M_MAP :=  $(OUT)/$(M_NAME).map
@@ -159,6 +166,17 @@ M_OBJS += device_tree.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
+ALL += second_stage_object_size
+else
+ALL :=
+endif
+
+usbboot:
+# Build the usbboot host tool
+include build/rules.mk
+include host/tools/host_usbboot.mk
+
+boot_modules:
 M_NAME := aboot
 M_LDS :=  arch/$(MACH)/$(M_NAME).lds
 M_MAP :=  $(OUT)/$(M_NAME).map
@@ -227,7 +245,7 @@ $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
 	$(QUIET)./$(OUT)/mkheader $(ABOOT_TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
 	$(QUIET)cat $(OUT)/aboot.bin >> $@
 
-ALL += $(OUT)/aboot.ift $(OUT)/iboot.ift $(OUT)/eboot.ift
+ALL += boot_modules $(OUT)/aboot.ift $(OUT)/iboot.ift $(OUT)/eboot.ift
 
 $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@
@@ -246,6 +264,7 @@ $(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 _clean_generic::
 	$(QUIET)rm -f include/common/config.h
 	$(QUIET)rm -f include/common/version.h
+	$(QUIET)rm -f include/common/user_params.h
 	$(QUIET)rm -rf out
 
 clean::
@@ -261,7 +280,7 @@ distclean::
 
 .PHONY:	tags
 
-all:: version $(ALL)
+all:: usbboot user_params version target_dep $(ALL)
 
 version:
 	$(QUIET)echo -n "#define ABOOT_VERSION \""$(ORGANIZATION)" Bootloader " > $(VERSION_FILE); \
@@ -274,6 +293,21 @@ tags:
 	@echo "Generating Tags"
 	$(QUIET)find . -type f -iname \*.h -o -iname \*.c -o -iname \*.S | \
 		xargs ctags
+
+user_params:
+ifeq ($(DUAL_STAGE), 1)
+	@echo "defining TWO_STAGE_OMAPBOOT"
+	$(QUIET)rm -rf out/$(BOARD)
+	$(QUIET)echo -n "#define TWO_STAGE_OMAPBOOT  1" > $(USER_PARAMS_FILE)
+	$(QUIET)echo "" >> $(USER_PARAMS_FILE)
+endif
+
+second_stage_object_size:
+ifeq ($(DUAL_STAGE), 1)
+	@echo "defining SECOND_STAGE_OBJECT_SIZE"
+	$(QUIET)echo -n "#define SECOND_STAGE_OBJECT_SIZE " >> $(USER_PARAMS_FILE)
+	$(QUIET)cat $(OUT)/sboot.bin | wc -c >>  $(USER_PARAMS_FILE)
+endif
 
 MAKEALL:
 	$(QUIET)rm -rf out
