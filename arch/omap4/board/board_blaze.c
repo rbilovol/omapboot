@@ -415,7 +415,7 @@ static int blaze_set_flash_slot(u8 dev,
 				struct storage_specific_functions *storage_ops)
 {
 	int ret = 0;
-	char buf[12];
+	char buf[DEV_STR_LENGTH];
 	u8 prev_dev = device;
 
 	switch (dev) {

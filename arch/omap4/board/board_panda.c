@@ -31,6 +31,7 @@
 
 
 #include <aboot.h>
+#include <common.h>
 #include <io.h>
 
 #include <common_proc.h>
@@ -349,7 +350,7 @@ static int panda_set_flash_slot(u8 dev,
 				struct storage_specific_functions *storage_ops)
 {
 	int ret = 0;
-	char buf[12];
+	char buf[DEV_STR_LENGTH];
 
 	if (dev == DEVICE_SDCARD) {
 		ret = panda_storage_init(dev, storage_ops);
