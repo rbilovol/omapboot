@@ -40,9 +40,6 @@ int pbias_config(void);
 int pmic_disable(void);
 int palmas_read_sw_revision(void);
 int palmas_configure_pwm_mode(void);
-#ifdef CONFIG_USE_CH_RAM_CONFIG
-static inline void setup_emif_config(void) { return; }
-#else
 void setup_emif_config(void);
-#endif
+
 #endif
