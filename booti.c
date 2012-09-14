@@ -111,12 +111,12 @@ _none:
 static void boot_settings(struct bootloader_ops *boot_ops, boot_img_hdr *hdr,
 								u32 atag)
 {
-	char temp_cmdline[512] = EXTENDED_CMDLINE;
 	char serial_str[64];
 	int serial_len;
 	u32 atag_size, boot_len;
 	char aboot_version_string[64];
 	char boot_str[64];
+	char temp_cmdline[512] = EXTENDED_CMDLINE;
 
 	serial_len = sprintf(serial_str, " androidboot.serialno=%s",
 		boot_ops->proc_ops->proc_get_serial_num());
