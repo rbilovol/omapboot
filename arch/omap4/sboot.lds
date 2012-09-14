@@ -26,30 +26,31 @@
 * SUCH DAMAGE.
 */
 
-#define CONFIG_BLAZE_TABLET
-#define CONFIG_IS_OMAP4
-#define CONFIG_FASTBOOT			/* enable FASTBOOT for BLAZE */
+MEMORY
+	{
+	sdram (Arw) : ORIGIN = 0x90000000, LENGTH = 30m
+	}
 
-#define CONFIG_BAUDRATE			115200
-#define CONFIG_BOARD_MACH_TYPE		3429
-#define CONFIG_SERIAL_BASE		OMAP44XX_UART3
-#define CONFIG_SERIAL_CLK_HZ		48000000
 
-#define CONFIG_ADDR_SBOOT		0x90000000
+ENTRY(_start)
+SECTIONS {
+	.text : { *(.text) } > sdram
 
-#define CONFIG_RAM_HANDLERS		0x4030D020
-#define CONFIG_RAM_VECTORS		0x4030D000
-#define CONFIG_STACK_TOP		0x4030D000
+	. = ALIGN(4);
+	.got : { *(.got) }
 
-#define MEMORY_SIZE			0x40000000
-#define MEMORY_BASE			0x80000000
-#define CONFIG_ADDR_ATAGS		(MEMORY_BASE + 0x100)
-#define CONFIG_ADDR_KERNEL		(MEMORY_BASE + 0x8000)
-#define CONFIG_ADDR_RAMDISK		(MEMORY_BASE + 0x01000000)
-#define CONFIG_ADDR_DOWNLOAD		(MEMORY_BASE + 0x02000000)
+	. = ALIGN(4);
+	.rodata : { *(.rodata) } > sdram
 
-#define PRODUCT_NAME		"blaze"
-#define FASTBOOT_VERSION	"0.5"
-#define MANUFACTURER_NAME	"Texas Instruments"
+	. = ALIGN(4);
+	.data : { *(.data) } >sdram
 
-#define CONFIG_OMAP4_ANDROID_CMD_LINE
+	. = ALIGN(4);
+	__bss_start = .;
+	.bss : { *(.bss) }>sdram
+	. = ALIGN(4);
+	__bss_end = .;
+
+	. = ALIGN(4);
+	.sdram (NOLOAD): { *(.sdram) } > sdram
+}
