@@ -32,6 +32,7 @@
 #include <aboot.h>
 #include <io.h>
 #include <hw.h>
+#include <common_proc.h>
 
 void gpmc_init(void)
 {
