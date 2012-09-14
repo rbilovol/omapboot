@@ -59,8 +59,6 @@ void dev_to_devstr(u8 dev, char *devstr);
 int devstr_to_dev(const char *devstr, u8 *dev);
 
 /* global configuration, changable by board file */
-extern unsigned cfg_machine_type;
-
 int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr,
 							struct usb *usb);
 
