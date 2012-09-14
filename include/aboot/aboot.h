@@ -75,6 +75,9 @@ typedef enum {
 	OMAP_4470_ES1_DOT_0,
 	OMAP_5430_ES1_DOT_0,
 	OMAP_5432_ES1_DOT_0,
+	OMAP_5430_ES2_DOT_0,
+	OMAP_5432_ES2_DOT_0,
+
 } omap_rev;
 
 /* omap-type */

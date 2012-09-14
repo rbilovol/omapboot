@@ -51,6 +51,8 @@ struct omap_id {
 static struct omap_id  map[] = {
 	{ OMAP_5430_ES1_DOT_0, 0x0B94202F },
 	{ OMAP_5432_ES1_DOT_0, 0x0B99802F },
+	{ OMAP_5430_ES2_DOT_0, 0x1B94202F },
+	{ OMAP_5432_ES2_DOT_0, 0x1B99802F },
 	{ OMAP_REV_INVALID,    0x00000000 },
 };
 
@@ -87,6 +89,10 @@ static char *get_cpu_revision(void)
 	case OMAP_5432_ES1_DOT_0:
 		strcpy(cpu_rev, "ES1.0");
 		break;
+	case OMAP_5430_ES2_DOT_0:
+	case OMAP_5432_ES2_DOT_0:
+		strcpy(cpu_rev, "ES2.0");
+		break;
 	default:
 		printf("OMAP_REV_INVALID\n");
 		strcpy(cpu_rev, "invalid");
@@ -103,9 +109,11 @@ static char *get_cpu_version(void)
 
 	switch (cpu) {
 	case OMAP_5430_ES1_DOT_0:
+	case OMAP_5430_ES2_DOT_0:
 		strcpy(proc_ver, "5430");
 		break;
 	case OMAP_5432_ES1_DOT_0:
+	case OMAP_5432_ES2_DOT_0:
 		strcpy(proc_ver, "5432");
 		break;
 	default:
