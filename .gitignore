@@ -1,3 +1,5 @@
+include/common/config.h
+include/common/version.h
 include/config.h
 include/version.h
 local.mk
