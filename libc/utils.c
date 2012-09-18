@@ -17,6 +17,8 @@ int get_downloadsize_from_string(int count, char *string)
 
 		if ((value >= 48) & (value <= 57))
 			value = value - '0';
+		else if ((value >= 65) & (value <= 90))
+			value = value - 'A' + 10;
 		else
 			value = value - 'a' + 10;
 
