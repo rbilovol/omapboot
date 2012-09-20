@@ -118,7 +118,8 @@ typedef enum {
 	HAL_I2C1 = (0x00),
 	HAL_I2C2,
 	HAL_I2C3,
-	HAL_I2C4
+	HAL_I2C4,
+	HAL_I2C5
 } hal_i2c;
 
 int i2c_init(hal_i2c i2c_id);
