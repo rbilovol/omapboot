@@ -88,7 +88,9 @@ static const u32 rom_hal_mmchs_writedata_addr[] = {
 	(0x36028|1),  /*OMAP_4460_ES1_DOT_1*/
 	(0x36028|1),  /*4470 placeholder*/
 	(0x3ee18|1),  /*OMAP_5430_ES1_DOT_0*/
-	(0x3ee18|1)  /*OMAP_5432_ES1_DOT_0*/
+	(0x3ee18|1),  /*OMAP_5432_ES1_DOT_0*/
+	(0x3f6fa|1),  /*OMAP_5430_ES2_DOT_0*/
+	(0x3f6fa|1)   /*OMAP_5432_ES2_DOT_0*/
 };
 
 static const u32 rom_hal_mmchs_sendcommand_addr[] = {
@@ -102,7 +104,9 @@ static const u32 rom_hal_mmchs_sendcommand_addr[] = {
 	(0x35ea4|1),  /*OMAP_4460_ES1_DOT_1*/
 	(0x35ea4|1),  /*4470 placeholder*/
 	(0x3ec8c|1),  /*OMAP_5430_ES1_DOT_0*/
-	(0x3ec8c|1)  /*OMAP_5432_ES1_DOT_0*/
+	(0x3ec8c|1),  /*OMAP_5432_ES1_DOT_0*/
+	(0x3f57c|1),  /*OMAP_5430_ES2_DOT_0*/
+	(0x3f57c|1)   /*OMAP_5432_ES2_DOT_0*/
 };
 
 static void mmc_reg_write(u32 reg_offset, u32 val)
