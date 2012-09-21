@@ -40,3 +40,4 @@ PROC_COMMON_OBJS := arch/$(MACH)/clock.o \
 		    arch/$(MACH)/id.o \
 		    arch/$(MACH)/smartio.o \
 		    arch/$(MACH)/pmic.o \
+		    arch/common/rom_sata.o \
