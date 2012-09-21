@@ -409,7 +409,8 @@ static int blaze_tablet_storage_init(u8 dev,
 	return ret;
 }
 
-static int blaze_tablet_set_flash_slot(u8 dev,
+struct storage_specific_functions *blaze_tablet_set_flash_slot(u8 dev,
+				struct proc_specific_functions *proc_ops,
 				struct storage_specific_functions *storage_ops)
 {
 	int ret = 0;
@@ -420,20 +421,28 @@ static int blaze_tablet_set_flash_slot(u8 dev,
 	case DEVICE_SDCARD:
 	case DEVICE_EMMC:
 		device = dev;
-		ret = blaze_tablet_storage_init(dev, storage_ops);
-		if (ret != 0) {
-			dev_to_devstr(dev, buf);
-			printf("Unable to set flash slot: %s\n", buf);
-			device = prev_dev;
+
+		if (!storage_ops)
+			storage_ops = init_rom_mmc_funcs
+					(proc_ops->proc_get_proc_id(), dev);
+
+		if (storage_ops != NULL) {
+			ret = blaze_tablet_storage_init(dev, storage_ops);
+			if (ret != 0) {
+				dev_to_devstr(dev, buf);
+				printf("Unable to set flash slot: %s\n", buf);
+				device = prev_dev;
+			}
 		}
 
 		break;
+
 	default:
 		printf("Unable to set flash slot: %d\n", dev);
-		ret = -1;
+		return NULL;
 	}
 
-	return ret;
+	return storage_ops;
 }
 
 static struct board_specific_functions blaze_tablet_funcs = {

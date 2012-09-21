@@ -60,6 +60,7 @@ void eboot(unsigned *info)
 
 	boot_ops->board_ops = init_board_funcs();
 	boot_ops->proc_ops = init_processor_id_funcs();
+	boot_ops->storage_ops = NULL;
 
 	if (boot_ops->proc_ops->proc_check_lpddr2_temp)
 		boot_ops->proc_ops->proc_check_lpddr2_temp();
@@ -121,26 +122,17 @@ void eboot(unsigned *info)
 				!boot_ops->board_ops->board_set_flash_slot)
 		goto fail;
 
-	boot_ops->storage_ops =
-		init_rom_mmc_funcs(boot_ops->proc_ops->proc_get_proc_id(),
-				boot_ops->board_ops->board_get_flash_slot());
-	if (!boot_ops->storage_ops) {
-		printf("Unable to init rom mmc functions\n");
-		goto fail;
-	}
-
 	if (info)
 		bootdevice = info[2] & 0xFF;
 	else
 		goto fail;
 
-	if (boot_ops->board_ops->board_set_flash_slot)
-		ret = boot_ops->board_ops->board_set_flash_slot
-					(bootdevice, boot_ops->storage_ops);
-		if (ret != 0) {
-			DBG("Storage driver init failed\n");
-			goto fail;
-		}
+	boot_ops->storage_ops = boot_ops->board_ops->board_set_flash_slot
+			(bootdevice, boot_ops->proc_ops, boot_ops->storage_ops);
+	if (!boot_ops->storage_ops) {
+		printf("Unable to init storage\n");
+		goto fail;
+	}
 
 	dev_to_devstr(bootdevice, buf);
 	printf("sram: boot device: %s\n", buf);

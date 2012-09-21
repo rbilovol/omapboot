@@ -61,6 +61,12 @@ struct storage_specific_functions {
 	int (*erase)(u64 start_sec, u64 sectors);
 };
 
+struct bootloader_ops {
+	struct board_specific_functions *board_ops;
+	struct proc_specific_functions *proc_ops;
+	struct storage_specific_functions *storage_ops;
+};
+
 /* Use these functions to override the
  * default configuration for the processor */
 struct board_specific_functions {
@@ -77,20 +83,15 @@ struct board_specific_functions {
 				struct storage_specific_functions *storage_ops);
 	int (*board_user_fastboot_request)(void);
 	u8 (*board_get_flash_slot)(void);
-	int (*board_set_flash_slot)(u8 dev,
-			struct storage_specific_functions *storage_ops);
+	struct storage_specific_functions *(*board_set_flash_slot)(u8 dev,
+				struct proc_specific_functions *proc_ops,
+				struct storage_specific_functions *storage_ops);
 	int (*board_pmic_enable)(void);
 	int (*board_pmic_disable)(void);
 	int (*board_read_sw_revision)(void);
 	int (*board_configure_pwm_mode)(void);
 	u32 (*board_get_board_rev)(void);
 	int (*board_reset_reason)(void);
-};
-
-struct bootloader_ops {
-	struct board_specific_functions *board_ops;
-	struct proc_specific_functions *proc_ops;
-	struct storage_specific_functions *storage_ops;
 };
 
 void* init_board_funcs(void);

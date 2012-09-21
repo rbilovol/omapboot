@@ -58,6 +58,7 @@ void iboot(unsigned *info)
 
 	boot_ops->board_ops = init_board_funcs();
 	boot_ops->proc_ops = init_processor_id_funcs();
+	boot_ops->storage_ops = NULL;
 
 	if (boot_ops->proc_ops->proc_check_lpddr2_temp)
 		boot_ops->proc_ops->proc_check_lpddr2_temp();
@@ -115,22 +116,13 @@ void iboot(unsigned *info)
 	if (!boot_ops->board_ops->board_get_flash_slot)
 		goto fail;
 
-	boot_ops->storage_ops =
-		init_rom_mmc_funcs(boot_ops->proc_ops->proc_get_proc_id(),
-				boot_ops->board_ops->board_get_flash_slot());
+	boot_ops->storage_ops = boot_ops->board_ops->board_set_flash_slot
+	(boot_ops->board_ops->board_get_flash_slot(), boot_ops->proc_ops,
+							boot_ops->storage_ops);
 	if (!boot_ops->storage_ops) {
-		printf("Unable to init rom mmc functions\n");
+		printf("Unable to init storage\n");
 		goto fail;
 	}
-
-	if (boot_ops->board_ops->board_storage_init)
-		ret = boot_ops->board_ops->board_storage_init
-			(boot_ops->board_ops->board_get_flash_slot(),
-							boot_ops->storage_ops);
-		if (ret != 0) {
-			printf("Storage driver init failed\n");
-			goto fail;
-		}
 
 	do_fastboot(boot_ops, &usb);
 

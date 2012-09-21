@@ -224,14 +224,15 @@ static int fastboot_oem(const char *cmd, char *response, struct usb *usb)
 			strcpy(response, "FAILNot Supported");
 		else {
 			if (fb_data->board_ops->board_set_flash_slot) {
-				ret =
+				fb_data->storage_ops =
 				fb_data->board_ops->board_set_flash_slot(dev,
-							fb_data->storage_ops);
-				if (ret < 0)
+				fb_data->proc_ops, fb_data->storage_ops);
+				if (!fb_data->storage_ops)
 					strcpy(response, "FAILUnable to set "
 								"flash slot");
 				else
 					strcpy(response, "OKAY");
+
 			} else
 				strcpy(response, "FAILboard_set_flash_slot not "
 								"supported");
