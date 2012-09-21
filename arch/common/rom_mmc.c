@@ -30,7 +30,7 @@
 
 #include <aboot.h>
 #include <io.h>
-
+#include <common.h>
 #include <usbboot_common.h>
 #include <alloc.h>
 #include <omap_rom.h>
@@ -128,12 +128,17 @@ static int mmc_init(u8 device)
 {
 	struct mem_device *md;
 	struct mmc_devicedata *dd =  NULL;
+	char buf[DEV_STR_LENGTH];
 	u16 options;
 	int n;
 
 	if (!((device == DEVICE_SDCARD) || (device == DEVICE_EMMC))) {
 		printf("unsupported mmc device\n");
 		return -1;
+	} else if (mmcd.storage_device == device) {
+		dev_to_devstr(device, buf);
+		printf("device %s, was already intialized , returning\n", buf);
+		return 0;
 	} else
 		mmcd.storage_device = device;
 
