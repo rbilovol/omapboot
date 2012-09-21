@@ -1,7 +1,7 @@
 MEMORY
 	{
-	sram (A): ORIGIN = 0x40309000, LENGTH = 48K
-	mram (Arw) : ORIGIN = 0x40309000 + 48k, LENGTH = 10k
+	sram (A): ORIGIN = 0x40309000, LENGTH = 53K
+	mram (Arw) : ORIGIN = 0x40309000 + 53k, LENGTH = 5k
 	sdram (Arw) : ORIGIN = 0xA0BFFFFF, LENGTH = 500m
 	}
 
