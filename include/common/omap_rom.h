@@ -77,6 +77,7 @@ extern u32 public_rom_base;
 #if defined CONFIG_IS_OMAP4
 #define DEVICE_EMMC		0x06
 #define DEVICE_EMMC_MUX5	0x07
+#define DEVICE_SATA		DEVICE_TYPE_NULL
 #elif defined CONFIG_IS_OMAP5
 #define DEVICE_EMMC_BOOT	0x06
 #define DEVICE_EMMC		0x07

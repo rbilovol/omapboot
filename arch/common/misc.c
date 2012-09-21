@@ -63,6 +63,9 @@ void dev_to_devstr(u8 dev, char *devstr)
 	case DEVICE_SDCARD:
 		strcpy(devstr, "SD");
 		break;
+	case DEVICE_SATA:
+		strcpy(devstr, "SATA");
+		break;
 	default:
 		strcpy(devstr, "Unknown");
 		break;
@@ -77,6 +80,8 @@ int devstr_to_dev(const char *devstr, u8 *dev)
 		*dev = DEVICE_EMMC;
 	else if (!strcmp(devstr, "SD"))
 		*dev = DEVICE_SDCARD;
+	else if (!strcmp(devstr, "SATA"))
+		*dev = DEVICE_SATA;
 	else
 		ret = -1;
 
