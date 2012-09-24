@@ -44,34 +44,43 @@
 
 u32 public_rom_base;
 
+#ifdef BOARD_PROCESS_CMDLINE
+static void process_cmdline(struct bootloader_ops *boot_ops,
+				int bootdevice)
+{
+	/* Insert here command prompt processing */
+	printf("Omapboot> ");
+	ldelay(0x10000000);
+	printf(". ");
+	ldelay(0x10000000);
+	printf(". ");
+	ldelay(0x10000000);
+	printf(".\n");
+}
+#endif
+
 void sboot(u32 bootops_addr, int bootdevice)
 {
-	int ret = 0;
 	char buf[DEV_STR_LENGTH];
 	struct bootloader_ops *boot_ops = (struct bootloader_ops *)bootops_addr;
 
 	init_memory_alloc();
 
-	enable_irqs();
-
-	if (boot_ops->board_ops->board_user_fastboot_request)
-		if (boot_ops->board_ops->board_user_fastboot_request())
-			goto fastboot;
-
-	printf("Second Stage: boot device: %s\n", buf);
-	do_booti(boot_ops, "storage", NULL);
-
-fastboot:
-	ret = usb_open(&boot_ops->usb);
-	if (ret != 0) {
-		printf("\nusb_open failed\n");
-		goto fail;
+	dev_to_devstr(bootdevice, buf);
+	printf("Second Stage Boot: boot device: %s\n", buf);
+	if (boot_ops->board_ops->board_user_fastboot_request) {
+		if (boot_ops->board_ops->board_user_fastboot_request()) {
+			if (bootdevice != DEVICE_USB)
+				usb_init(&boot_ops->usb);
+			do_fastboot(boot_ops);
+		}
 	}
 
-	usb_init(&boot_ops->usb);
-	do_fastboot(boot_ops);
-
-fail:
+#ifdef BOARD_PROCESS_CMDLINE
+	do_cmdline(boot_ops, bootdevice);
+#else
+	do_booti(boot_ops, "storage", NULL);
+#endif
 	printf("boot failed\n");
 	while (1)
 		;

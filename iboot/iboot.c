@@ -68,8 +68,6 @@ static u32 load_from_usb(u32 addr, unsigned *_len, struct usb *usb)
 	if (usb_read(usb, (void *) addr, len))
 		return 0;
 
-	usb_close(usb);
-	disable_irqs();
 	*_len = len;
 
 #if DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_IBOOT
@@ -116,17 +114,12 @@ void iboot(unsigned *info)
 	if (!boot_ops)
 		goto fail;
 
+#ifndef TWO_STAGE_OMAPBOOT
 	usb_write(&boot_ops->usb, &MSG, 4);
 
-#ifndef TWO_STAGE_OMAPBOOT
 	usb_init(&boot_ops->usb);
 	do_fastboot(boot_ops);
 #else
-
-#if defined DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_IBOOT
-	memtest((void *)0x82000000, 8*1024*1024);
-	memtest((void *)0xA0208000, 8*1024*1024);
-#endif
 	do_sboot(boot_ops, bootdevice);
 #endif
 

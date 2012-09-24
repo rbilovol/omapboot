@@ -71,10 +71,10 @@
 	#define MANUFACTURER_NAME	""
 	#define SERIALNO		""
 #endif
-/* Compile time Memory Tests */
+/* Compile time Memory Tests
 #define DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_EBOOT	1
 #define DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_IBOOT	1
-
+*/
 #define CONFIG_OMAP5_ANDROID_CMD_LINE
 
 #define EXTENDED_CMDLINE        "earlyprintk ";

@@ -40,9 +40,11 @@ defined DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_IBOOT
 
 #define USER_RQ_MEMTEST		0x00FF004F
 #define USER_RQ_UMEMTEST	0x00FF002F
-
 void memtest(void *x, unsigned count);
 #endif
+
+#define USER_RQ_FASTBOOT	0x00FF0048
+#define USER_RQ_UFASTBOOT	0x00FF0028
 
 struct partition {
 	const char *name;
