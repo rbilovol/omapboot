@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <string.h>
-
+#include "../../include/common/user_params.h"
 #include "usb.h"
 
 typedef struct tocentry {
@@ -46,6 +46,7 @@ typedef struct tocentry {
 } tocentry;
 
 #define USE_TOC 0
+#define USER_RQ_MASK		0x00FF0000
 
 static char *usb_boot_read_chip_info(usb_handle *usb)
 {
@@ -96,34 +97,46 @@ int usb_boot(usb_handle *usb, int fastboot_mode,
 {
 	uint32_t msg_boot = 0xF0030002;
 	uint32_t msg_size = sz;
+	uint32_t param = 0;
 
-	fprintf(stderr,"sending 2ndstage to target... %08x\n",msg_boot);
+	fprintf(stderr, "sending 2ndstage to target...\n");
 	usb_write(usb, &msg_boot, sizeof(msg_boot));
 	usb_write(usb, &msg_size, sizeof(msg_size));
 	usb_write(usb, data, sz);
 
-	if ((data2) || (fastboot_mode)) {
+	if ((data2) || (fastboot_mode > 0)) {
 		fprintf(stderr,"waiting for 2ndstage response...\n");
 		usb_read(usb, &msg_size, sizeof(msg_size));
 		if (msg_size != 0xaabbccdd) {
-			fprintf(stderr,"unexpected 2ndstage response\n");
+			fprintf(stderr, "unexpected 2ndstage response\n");
 			return -1;
 		}
 
-	/* In fastboot mode, we stay in SRAM so don't
-	download data2 to the target. Return back from here */
-	if (fastboot_mode) {
-		fprintf(stderr, "received 2ndstage response...\n");
-		return 0;
-	}
+		if (fastboot_mode > 2) {
+
+			param = fastboot_mode;
+			usb_write(usb, &param, sizeof(param));
+		}
+
+		/* In fastboot mode, we stay in SRAM so don't
+		download data2 to the target. Return back from here */
+		if (fastboot_mode == 1) {
+			fprintf(stderr, "received 2ndstage response...\n");
+			return 0;
+		}
 
 		msg_size = sz2;
+		usb_write(usb, &msg_size, sizeof(msg_size));
+		usb_read(usb, &param, sizeof(param));
+		if (param != 0xaabbccdd) {
+			fprintf(stderr, "unexpected 2ndstage response\n");
+			return -1;
+		}
 
 		fprintf(stderr, "sending image to target...size "
 				"(%d-B/%d-KB/%d-MB)\n", msg_size,
 				msg_size/1024, msg_size/(1024 * 1024));
 
-		usb_write(usb, &msg_size, sizeof(msg_size));
 		usb_write(usb, data2, sz2);
 	}
 	
@@ -167,6 +180,7 @@ void *load_file(const char *file, unsigned *sz)
 	return data;
 	
 fail:
+	fprintf(stderr, "failed loading file\n");
 	close(fd);
 	return 0;
 }
@@ -175,23 +189,29 @@ static int usage(void)
 {
 	fprintf(stderr, "\nusbboot syntax and options:\n\n");
 	fprintf(stderr, "usbboot [ <2ndstage> ] <image>\n");
-	fprintf(stderr, "=================================================\n");
+	fprintf(stderr, "--------------------------------------------------\n");
 	fprintf(stderr, "example: ./out/<board>/usbboot boot.img\n");
 	fprintf(stderr, "---- ---- ---- ---- OR ---- ---- ---- ----\n");
 	fprintf(stderr, "example: ./out/<board>/usbboot out/<board>/aboot.ift "
 			"boot.img\n (for HD boards, aboot.ift needs signing)");
-	fprintf(stderr, "==>this will download and execute aboot second\n"
+	fprintf(stderr, "=>this will download and execute aboot second\n"
 			"stage in SRAM and then download and execute\n"
 			"boot.img in SDRAM\n");
-	fprintf(stderr, "=================================================\n");
+	fprintf(stderr, "--------------------------------------------------\n");
 	fprintf(stderr, "example: ./out/<board>/usbboot -f\n");
 	fprintf(stderr, "---- ---- ---- ---- OR ---- ---- ---- ----\n");
 	fprintf(stderr, "example: ./out/<board>/usbboot -f "
 						"out<board>/iboot.ift\n");
-	fprintf(stderr, "==>this will download and execute iboot second \n"
-			"stage in SRAM along with the configuration header\n"
-			"(CH) and then enter into FASTBOOT mode\n");
-	fprintf(stderr, "=================================================\n");
+	fprintf(stderr, "=>this will download and execute iboot second\n");
+	fprintf(stderr, "stage in SRAM along with the configuration header\n");
+	fprintf(stderr, "(CH) and then enter into FASTBOOT mode\n");
+	fprintf(stderr, "--------------------------------------------------\n");
+	fprintf(stderr, "example: ./out/<board>/usbboot -M\n");
+	fprintf(stderr, "---- ---- ---- ---- OR ---- ---- ---- ----\n");
+	fprintf(stderr, "example: ./out/<board>/usbboot -m\n");
+	fprintf(stderr, "=>this will execute SDRAM memory tests from SRAM\n");
+	fprintf(stderr, "during the first stage boot.");
+	fprintf(stderr, "--------------------------------------------------\n");
 
 	return 0;
 }
@@ -216,9 +236,10 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	if ((argv[1][0] == '-') && ((argv[1][1] == 'f') ||
-	(argv[1][1] == 'F'))) {
-		fprintf(stderr, "usbboot -f:  starting in fastboot mode\n");
+	if ((argv[1][0] == '-') &&
+		(((argv[1][1] == 'f') || ((argv[1][1] == 'F'))) ||
+		((argv[1][1] == 'm') || ((argv[1][1] == 'M'))))) {
+
 		for (;;) {
 			usb = usb_open(match_omap_bootloader);
 			if (usb) {
@@ -239,9 +260,24 @@ int main(int argc, char **argv)
 					sz = iboot_size;
 				}
 
+#ifdef TWO_STAGE_OMAPBOOT
+				sz2 = SECOND_STAGE_OBJECT_SIZE;
+				data2 = load_file("sboot.bin", &sz2);
+				if (data2 == 0) {
+					usage();
+
+					/* free up memory */
+					if (data)
+						free(data);
+
+					return -1;
+				}
+				fastboot_mode = ((argv[1][1]) - 30) |
+								USER_RQ_MASK;
+				printf("fastboot_mode = %08x\n", fastboot_mode);
+#endif
 				break;
 			}
-
 			if (once) {
 				once = 0;
 				fprintf(stderr, "waiting for device...\n");
@@ -250,9 +286,11 @@ int main(int argc, char **argv)
 		}
 
 		once = 1;
+#ifndef TWO_STAGE_OMAPBOOT
 		fastboot_mode = 1;
 		data2 = 0;
 		sz2 = 0;
+#endif
 	} else {
 		if (argc < 3) {
 			fprintf(stderr, "using built-in 2ndstage.bin of size"
@@ -286,6 +324,7 @@ int main(int argc, char **argv)
 	for (;;) {
 		if (usb == NULL)
 			usb = usb_open(match_omap_bootloader);
+
 		if (usb)
 			return usb_boot(usb, fastboot_mode,
 					data, sz, data2, sz2);

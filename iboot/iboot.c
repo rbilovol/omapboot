@@ -48,42 +48,55 @@
 static unsigned MSG = 0xaabbccdd;
 
 #ifdef TWO_STAGE_OMAPBOOT
+
+static u32 load_from_usb(u32 addr, unsigned *_len, struct usb *usb)
+{
+	unsigned len, n, param = 0;
+	enable_irqs();
+
+	usb_queue_read(usb, &param, 4);
+	usb_write(usb, &MSG, 4);
+	n = usb_wait_read(usb);
+	if (n)
+		return 0;
+
+	if (usb_read(usb, &len, 4))
+		return 0;
+
+	usb_write(usb, &MSG, 4);
+
+	if (usb_read(usb, (void *) addr, len))
+		return 0;
+
+	usb_close(usb);
+	disable_irqs();
+	*_len = len;
+
+#if DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_IBOOT
+	if ((param == USER_RQ_MEMTEST) || (param == USER_RQ_UMEMTEST)) {
+		memtest((void *)0x82000000, 8*1024*1024);
+		memtest((void *)0xA0208000, 8*1024*1024);
+	}
+#endif
+	return param;
+}
+
 static int do_sboot(struct bootloader_ops *boot_ops, int bootdevice)
 {
 	int ret = 0;
-	struct fastboot_ptentry *pte;
+	unsigned len;
+
 	void (*Sboot)(u32 bootops_addr, int bootdevice, void *addr);
-
 	u32 bootops_addr = (u32) boot_ops;
-
-	int sector_sz = boot_ops->storage_ops->get_sector_size();
-
-	int num_sectors = SECOND_STAGE_OBJECT_SIZE/sector_sz;
 
 	u32 addr = CONFIG_ADDR_SBOOT;
 
-	/* look for sboot in bootloader ptn, load and jump */
-	ret = load_ptbl(boot_ops->storage_ops, 1);
-	if (ret != 0) {
-		printf("unable to load the partition table\n");
-		return ret;
-	}
-
-	pte = fastboot_flash_find_ptn("bootloader");
-	if (!pte) {
-		printf("eboot: cannot find '%s' partition\n");
+	ret = load_from_usb(addr, &len, &boot_ops->usb);
+	if (ret == 0)
 		return -1;
-	}
-
-	ret = boot_ops->storage_ops->read(pte->start, num_sectors,
-								(void *) addr);
-	if (ret != 0) {
-		printf("mmc read failed\n");
-		return ret;
-	}
 
 	Sboot = (void (*)(u32, int, void *))(addr);
-	Sboot((u32) bootops_addr, (int) bootdevice, (void *) addr);
+	Sboot((u32) bootops_addr, (int) (bootdevice), (void *) addr);
 
 	return -1;
 }
