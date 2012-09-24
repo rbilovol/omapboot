@@ -38,7 +38,7 @@ __attribute__((__section__(".mram")))
 static struct bootloader_ops boot_operations;
 u32 public_rom_base;
 
-struct bootloader_ops *boot_common(unsigned bootdevice, struct usb *usb)
+struct bootloader_ops *boot_common(unsigned bootdevice)
 {
 	int ret = 0;
 	struct bootloader_ops *boot_ops = &boot_operations;
@@ -105,7 +105,7 @@ struct bootloader_ops *boot_common(unsigned bootdevice, struct usb *usb)
 	if (bootdevice == DEVICE_USB)
 		bootdevice = boot_ops->board_ops->board_get_flash_slot();
 
-	ret = usb_open(usb);
+	ret = usb_open(&boot_ops->usb);
 	if (ret != 0) {
 		printf("\nusb_open failed\n");
 		goto fail;

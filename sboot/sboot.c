@@ -48,7 +48,6 @@ void sboot(u32 bootops_addr, int bootdevice)
 {
 	int ret = 0;
 	char buf[DEV_STR_LENGTH];
-	struct usb usb;
 	struct bootloader_ops *boot_ops = (struct bootloader_ops *)bootops_addr;
 
 	init_memory_alloc();
@@ -59,19 +58,18 @@ void sboot(u32 bootops_addr, int bootdevice)
 		if (boot_ops->board_ops->board_user_fastboot_request())
 			goto fastboot;
 
-	dev_to_devstr(bootdevice, buf);
-	printf("second stage: boot device: %s\n", buf);
-	do_booti(boot_ops, "storage", NULL, &usb);
+	printf("Second Stage: boot device: %s\n", buf);
+	do_booti(boot_ops, "storage", NULL);
 
 fastboot:
-	ret = usb_open(&usb);
+	ret = usb_open(&boot_ops->usb);
 	if (ret != 0) {
 		printf("\nusb_open failed\n");
 		goto fail;
 	}
 
-	usb_init(&usb);
-	do_fastboot(boot_ops, &usb);
+	usb_init(&boot_ops->usb);
+	do_fastboot(boot_ops);
 
 fail:
 	printf("boot failed\n");

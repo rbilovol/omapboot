@@ -62,12 +62,6 @@ struct storage_specific_functions {
 	int (*erase)(u64 start_sec, u64 sectors);
 };
 
-struct bootloader_ops {
-	struct board_specific_functions *board_ops;
-	struct proc_specific_functions *proc_ops;
-	struct storage_specific_functions *storage_ops;
-};
-
 /* Use these functions to override the
  * default configuration for the processor */
 struct board_specific_functions {
@@ -95,6 +89,13 @@ struct board_specific_functions {
 	int (*board_reset_reason)(void);
 };
 
+struct bootloader_ops {
+	struct board_specific_functions *board_ops;
+	struct proc_specific_functions *proc_ops;
+	struct storage_specific_functions *storage_ops;
+	struct usb usb;
+};
+
 void* init_board_funcs(void);
 void* init_processor_id_funcs(void);
 
@@ -102,7 +103,7 @@ unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);
 
 int get_downloadsize_from_string(int count, char *string);
-struct bootloader_ops *boot_common(unsigned bootdevice, struct usb *usb);
+struct bootloader_ops *boot_common(unsigned bootdevice);
 
 /* Storage drivers function inits */
 struct storage_specific_functions *init_rom_mmc_funcs(int proc_id, u8 device);

@@ -48,7 +48,6 @@ static unsigned MSG = 0xaabbccdd;
 
 void iboot(unsigned *info)
 {
-	struct usb usb;
 	struct bootloader_ops *boot_ops;
 	unsigned bootdevice = -1;
 
@@ -57,11 +56,11 @@ void iboot(unsigned *info)
 	else
 		goto fail;
 
-	boot_ops = boot_common(bootdevice, &usb);
+	boot_ops = boot_common(bootdevice);
 	if (!boot_ops)
 		goto fail;
 
-	usb_write(&usb, &MSG, 4);
+	usb_write(&boot_ops->usb, &MSG, 4);
 
 	if (!boot_ops->board_ops->board_get_flash_slot)
 		goto fail;
@@ -74,7 +73,7 @@ void iboot(unsigned *info)
 		goto fail;
 	}
 
-	do_fastboot(boot_ops, &usb);
+	do_fastboot(boot_ops);
 
 fail:
 	printf("boot failed\n");

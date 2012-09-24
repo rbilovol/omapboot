@@ -122,7 +122,6 @@ void aboot(unsigned *info)
 {
 	unsigned n, len;
 	unsigned bootdevice = -1;
-	struct usb usb;
 	struct bootloader_ops *boot_ops;
 
 	if (info)
@@ -130,7 +129,7 @@ void aboot(unsigned *info)
 	else
 		goto fail;
 
-	boot_ops = boot_common(bootdevice, &usb);
+	boot_ops = boot_common(bootdevice);
 	if (!boot_ops)
 		goto fail;
 
@@ -140,7 +139,7 @@ void aboot(unsigned *info)
 #endif
 
 #if !WITH_FLASH_BOOT
-	n = load_from_usb(&len, &usb);
+	n = load_from_usb(&len, &boot_ops->usb);
 #else
 	unsigned bootdevice;
 
@@ -153,7 +152,7 @@ void aboot(unsigned *info)
 	switch (bootdevice) {
 	case 0x45: /* USB */
 		serial_puts("boot device: USB\n\n");
-		n = load_from_usb(&len, &usb);
+		n = load_from_usb(&len, &boot_ops->usb);
 		break;
 	case 0x05:
 	case 0x06:
@@ -188,7 +187,7 @@ void aboot(unsigned *info)
 			for (;;) ;
 		}
 
-		do_booti(boot_ops, "ram", NULL, &usb);
+		do_booti(boot_ops, "ram", NULL);
 		serial_puts("*** BOOT FAILED ***\n");
 	}
 

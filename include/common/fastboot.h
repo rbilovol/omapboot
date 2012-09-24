@@ -97,7 +97,7 @@ struct fastboot_data {
 
 #if defined CONFIG_FASTBOOT
 
-void do_fastboot(struct bootloader_ops *board_funcs, struct usb *usb);
+void do_fastboot(struct bootloader_ops *boot_ops);
 char *get_serial_number(void);
 void fastboot_flash_reset_ptn(void);
 fastboot_ptentry *fastboot_flash_find_ptn(const char *name);
@@ -105,8 +105,8 @@ char *get_ptn_size(struct fastboot_data *fb_data, char *buf, const char *ptn) ;
 
 #else
 
-static inline void do_fastboot(struct bootloader_ops *board_funcs,
-						struct usb *usb) { return; };
+static inline void do_fastboot(struct bootloader_ops *boot_ops)
+						 { return; };
 static inline char *get_serial_number(void) { return 0; };
 static inline void fastboot_flash_reset_ptn(void) { return; };
 static inline fastboot_ptentry *fastboot_flash_find_ptn(const char *name) { return NULL; };

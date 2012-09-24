@@ -167,8 +167,7 @@ static void bootimg_print_image_hdr(boot_img_hdr *hdr)
 	return;
 }
 
-int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr,
-								struct usb *usb)
+int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 {
 	boot_img_hdr *hdr;
 	u32 addr;
@@ -301,7 +300,7 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr,
 	theKernel(0, cfg_machine_type, (void *)dbt_addr);
 
 fail:
-	usb_init(usb);
-	do_fastboot(boot_ops, usb);
+	usb_init(&boot_ops->usb);
+	do_fastboot(boot_ops);
 	return 0;
 }

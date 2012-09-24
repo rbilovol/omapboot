@@ -92,7 +92,6 @@ void eboot(unsigned *info)
 {
 	int ret = 0;
 	unsigned bootdevice = -1;
-	struct usb usb;
 	struct bootloader_ops *boot_ops;
 
 	if (info)
@@ -100,7 +99,7 @@ void eboot(unsigned *info)
 	else
 		goto fail;
 
-	boot_ops = boot_common(bootdevice, &usb);
+	boot_ops = boot_common(bootdevice);
 	if (!boot_ops)
 		goto fail;
 
@@ -118,16 +117,16 @@ void eboot(unsigned *info)
 		if (boot_ops->board_ops->board_user_fastboot_request())
 			goto fastboot;
 
-	do_booti(boot_ops, "storage", NULL, &usb);
+	do_booti(boot_ops, "storage", NULL);
 
 fastboot:
-	ret = usb_open(&usb);
+	ret = usb_open(&boot_ops->usb);
 	if (ret != 0) {
 		printf("\nusb_open failed\n");
 		goto fail;
 	}
-	usb_init(&usb);
-	do_fastboot(boot_ops, &usb);
+	usb_init(&boot_ops->usb);
+	do_fastboot(boot_ops);
 
 #endif
 
