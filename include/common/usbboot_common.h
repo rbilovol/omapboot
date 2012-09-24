@@ -35,6 +35,12 @@
 
 #define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))
 
+#if defined DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_EBOOT || \
+defined DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_IBOOT
+
+void memtest(void *x, unsigned count);
+#endif
+
 struct partition {
 	const char *name;
 	u32 size_kb;

@@ -35,32 +35,7 @@
 #include <omap_rom.h>
 #include <usbboot_common.h>
 
-#define WITH_MEMORY_TEST	0
 #define WITH_FLASH_BOOT		0
-
-#if WITH_MEMORY_TEST
-void memtest(void *x, unsigned count) {
-	unsigned *w = x;
-	unsigned n;
-	count /= 4;
-
-	printf("memtest write - %d\n",count);
-	for (n = 0; n < count; n++) {
-		unsigned chk = 0xa5a5a5a5 ^ n;
-		w[n] = chk;
-	}
-	printf("memtest read\n");
-	for (n = 0; n < count; n++) {
-		unsigned chk = 0xa5a5a5a5 ^ n;
-		if (w[n] != chk) {
-			printf("ERROR @ %x (%x != %x)\n", 
-				(unsigned) (w+n), w[n], chk);
-			return;
-		}
-	}
-	printf("OK!\n");
-}
-#endif
 
 static unsigned MSG = 0xaabbccdd;
 
@@ -133,10 +108,6 @@ void aboot(unsigned *info)
 	if (!boot_ops)
 		goto fail;
 
-#if WITH_MEMORY_TEST
-	memtest(0x82000000, 8*1024*1024);
-	memtest(0xA0208000, 8*1024*1024);
-#endif
 
 #if !WITH_FLASH_BOOT
 	n = load_from_usb(&len, &boot_ops->usb);

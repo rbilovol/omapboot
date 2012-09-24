@@ -33,10 +33,44 @@
 #include <fastboot.h>
 #include <usbboot_common.h>
 #include <alloc.h>
+#include <user_params.h>
 
 __attribute__((__section__(".mram")))
 static struct bootloader_ops boot_operations;
 u32 public_rom_base;
+
+#ifdef TWO_STAGE_OMAPBOOT
+
+#if defined DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_EBOOT || \
+defined DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_IBOOT
+/* This sanity memory test taken from aboot.c has no
+    value of its own, it is just here to demonstrate how
+    and where to implement such feature if required */
+
+void memtest(void *x, unsigned count)
+{
+	unsigned *w = x;
+	unsigned n;
+	count /= 4;
+
+	printf("memtest write - %d\n", count);
+	for (n = 0; n < count; n++) {
+		unsigned chk = 0xa5a5a5a5 ^ n;
+		w[n] = chk;
+	}
+	printf("memtest read\n");
+	for (n = 0; n < count; n++) {
+		unsigned chk = 0xa5a5a5a5 ^ n;
+		if (w[n] != chk) {
+			printf("ERROR @ %x (%x != %x)\n",
+				(unsigned) (w+n), w[n], chk);
+			return;
+		}
+	}
+	printf("OK!\n");
+}
+#endif
+#endif
 
 struct bootloader_ops *boot_common(unsigned bootdevice)
 {
@@ -119,6 +153,7 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 	}
 
 	return boot_ops;
+
 fail:
 	printf("boot failed\n");
 	while (1)

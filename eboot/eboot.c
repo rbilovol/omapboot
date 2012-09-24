@@ -109,6 +109,10 @@ void eboot(unsigned *info)
 		goto fail;
 
 #ifdef TWO_STAGE_OMAPBOOT
+#if DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_EBOOT
+	memtest((void *)0x82000000, 8*1024*1024);
+	memtest((void *)0xA0208000, 8*1024*1024);
+#endif
 	ret = do_sboot(boot_ops, bootdevice);
 	if (ret != 0)
 		goto fail;

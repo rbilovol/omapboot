@@ -109,6 +109,11 @@ void iboot(unsigned *info)
 	usb_init(&boot_ops->usb);
 	do_fastboot(boot_ops);
 #else
+
+#if defined DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_IBOOT
+	memtest((void *)0x82000000, 8*1024*1024);
+	memtest((void *)0xA0208000, 8*1024*1024);
+#endif
 	do_sboot(boot_ops, bootdevice);
 #endif
 
