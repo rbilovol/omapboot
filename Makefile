@@ -61,8 +61,17 @@ MACH ?= omap4
 EXTRAOPTS ?= -m32
 
 DUAL_STAGE :=
+ifeq ("$(MACH)", "omap4")
+	DUAL_STAGE := 1
+else
 ifeq ("$(SPLIT)", "1")
 	DUAL_STAGE := 1
+else
+BOOT_DS_OBJS := booti.o \
+		fastboot.o \
+		fastboot_mmc.o \
+		device_tree.o
+endif
 endif
 
 TARGET_CC := $(CROSS_COMPILE)gcc
@@ -134,9 +143,6 @@ OUT_TARGET_OBJ := $(OUT)/target-obj
 
 COMMON_OBJS := 	crc32.o \
 		libc/utils.o \
-		fastboot.o \
-		fastboot_mmc.o \
-		fastboot_common.o \
 		boot_common.o \
 		libc/printf.o \
 		libc/raise.o \
@@ -161,8 +167,11 @@ M_OBJS += $(OMAP_COMMON_OBJS)
 M_OBJS += $(COMMON_OBJS)
 M_OBJS += $(PROC_COMMON_OBJS)
 M_OBJS += $(BOARD_OBJS)
-M_OBJS += booti.o
 M_OBJS += sboot/sboot.o
+M_OBJS += booti.o
+M_OBJS += fastboot_common.o
+M_OBJS += fastboot.o
+M_OBJS += fastboot_mmc.o
 M_OBJS += device_tree.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
@@ -189,6 +198,9 @@ M_OBJS += $(PROC_COMMON_OBJS)
 M_OBJS += $(BOARD_OBJS)
 M_OBJS += aboot.o
 M_OBJS += booti.o
+M_OBJS += fastboot_common.o
+M_OBJS += fastboot.o
+M_OBJS += fastboot_mmc.o
 M_OBJS += device_tree.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
@@ -202,9 +214,9 @@ M_OBJS += $(OMAP_COMMON_OBJS)
 M_OBJS += $(COMMON_OBJS)
 M_OBJS += $(PROC_COMMON_OBJS)
 M_OBJS += $(BOARD_OBJS)
-M_OBJS += booti.o
-M_OBJS += device_tree.o
 M_OBJS += iboot/iboot.o
+M_OBJS += fastboot_common.o
+M_OBJS += $(BOOT_DS_OBJS)
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 
@@ -217,9 +229,9 @@ M_OBJS += $(OMAP_COMMON_OBJS)
 M_OBJS += $(COMMON_OBJS)
 M_OBJS += $(PROC_COMMON_OBJS)
 M_OBJS += $(BOARD_OBJS)
-M_OBJS += booti.o
 M_OBJS += eboot/eboot.o
-M_OBJS += device_tree.o
+M_OBJS += fastboot_common.o
+M_OBJS += $(BOOT_DS_OBJS)
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
 

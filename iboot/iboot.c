@@ -37,6 +37,7 @@
 #include <omap_rom.h>
 #include <usbboot_common.h>
 #include <alloc.h>
+#include <user_params.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)
@@ -45,6 +46,48 @@
 #endif /* DEBUG */
 
 static unsigned MSG = 0xaabbccdd;
+
+#ifdef TWO_STAGE_OMAPBOOT
+static int do_sboot(struct bootloader_ops *boot_ops, int bootdevice)
+{
+	int ret = 0;
+	struct fastboot_ptentry *pte;
+	void (*Sboot)(u32 bootops_addr, int bootdevice, void *addr);
+
+	u32 bootops_addr = (u32) boot_ops;
+
+	int sector_sz = boot_ops->storage_ops->get_sector_size();
+
+	int num_sectors = SECOND_STAGE_OBJECT_SIZE/sector_sz;
+
+	u32 addr = CONFIG_ADDR_SBOOT;
+
+	/* look for sboot in bootloader ptn, load and jump */
+	ret = load_ptbl(boot_ops->storage_ops, 1);
+	if (ret != 0) {
+		printf("unable to load the partition table\n");
+		return ret;
+	}
+
+	pte = fastboot_flash_find_ptn("bootloader");
+	if (!pte) {
+		printf("eboot: cannot find '%s' partition\n");
+		return -1;
+	}
+
+	ret = boot_ops->storage_ops->read(pte->start, num_sectors,
+								(void *) addr);
+	if (ret != 0) {
+		printf("mmc read failed\n");
+		return ret;
+	}
+
+	Sboot = (void (*)(u32, int, void *))(addr);
+	Sboot((u32) bootops_addr, (int) bootdevice, (void *) addr);
+
+	return -1;
+}
+#endif
 
 void iboot(unsigned *info)
 {
@@ -62,21 +105,15 @@ void iboot(unsigned *info)
 
 	usb_write(&boot_ops->usb, &MSG, 4);
 
-	if (!boot_ops->board_ops->board_get_flash_slot)
-		goto fail;
-
-	boot_ops->storage_ops = boot_ops->board_ops->board_set_flash_slot
-	(boot_ops->board_ops->board_get_flash_slot(), boot_ops->proc_ops,
-							boot_ops->storage_ops);
-	if (!boot_ops->storage_ops) {
-		printf("Unable to init storage\n");
-		goto fail;
-	}
-
+#ifndef TWO_STAGE_OMAPBOOT
+	usb_init(&boot_ops->usb);
 	do_fastboot(boot_ops);
+#else
+	do_sboot(boot_ops, bootdevice);
+#endif
 
 fail:
-	printf("boot failed\n");
+	printf("Boot failed\n");
 	while (1)
 		;
 }
