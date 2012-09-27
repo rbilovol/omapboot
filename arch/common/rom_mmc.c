@@ -46,19 +46,34 @@
 #define DBG(x...)
 #endif /* DEBUG */
 
+#define MMC_SECTOR_SZ 512
+/*
+ * According to TRM, It is possible to transfer
+ * upto 64KB per ADMA table entry.
+ * But 64KB = 0x10000 cannot be represented
+ * using a 16bit integer in 1 ADMA table row.
+ * Hence rounding it to a lesser value.
+ */
+#define MMC_ADMA_MAX_XFER (60 * 1024)
+
+struct mmc_adma_desc_table {
+	u32 desc_length_attr;
+	u32 desc_addr;
+};
+
 /* MMC/SD driver specific data */
 struct mmc_storage_data {
 	struct storage_specific_functions mmc_functions;
 	u8 storage_device;
 	struct mmc mmc;
 	struct mmc_devicedata dd;
+	struct mmc_adma_desc_table *adma_desc;
 	int *dd_ptr;
 	int (*rom_hal_mmchs_writedata)(u32 moduleid, u32 *buf);
 	int (*rom_hal_mmchs_sendcommand)(u32 moduleid,
 			u32 cmd, u32 arg, u32 *resp);
 };
 
-#define MMC_SECTOR_SZ 512
 
 static struct mmc_storage_data mmcd;
 
@@ -248,10 +263,94 @@ static int mmc_init(u8 device)
 	return 0;
 }
 
+static int mmc_pop_dma_desc(u64 sectors, void *data)
+{
+	int total_length = 0;
+	int remaining_data = 0;
+	int i = 0;
+
+	total_length = ((u32)sectors * MMC_SECTOR_SZ);
+	if (total_length <= MMC_ADMA_MAX_XFER) {
+		mmcd.adma_desc = (struct mmc_adma_desc_table *)
+				zalloc_memory(
+					sizeof(struct mmc_adma_desc_table));
+		if (!mmcd.adma_desc)
+			return -1;
+		mmcd.adma_desc->desc_length_attr =
+				(total_length << HSMMC_BLK_NBLK_SHIFT) |
+				(MMCADMA_DESC_TBL_ACT2 |
+				 MMCADMA_DESC_TBL_END |
+				 MMCADMA_DESC_TBL_VALID);
+		mmcd.adma_desc->desc_addr = (u32)data;
+	} else {
+		mmcd.adma_desc = (struct mmc_adma_desc_table *)
+				zalloc_memory(
+					(u32)sectors *
+					sizeof(struct mmc_adma_desc_table));
+		if (!mmcd.adma_desc)
+			return -1;
+		do {
+			if (total_length <= MMC_ADMA_MAX_XFER)
+				mmcd.adma_desc[i].desc_length_attr =
+					(total_length << HSMMC_BLK_NBLK_SHIFT) |
+					(MMCADMA_DESC_TBL_ACT2 |
+					 MMCADMA_DESC_TBL_VALID);
+			else
+				mmcd.adma_desc[i].desc_length_attr =
+					(MMC_ADMA_MAX_XFER <<
+						HSMMC_BLK_NBLK_SHIFT) |
+					(MMCADMA_DESC_TBL_ACT2 |
+					MMCADMA_DESC_TBL_VALID);
+
+			mmcd.adma_desc[i].desc_addr =
+					(u32)data + remaining_data;
+			remaining_data += MMC_ADMA_MAX_XFER;
+			if (total_length <= MMC_ADMA_MAX_XFER)
+				break;
+
+			total_length -= MMC_ADMA_MAX_XFER;
+			i++;
+
+		} while (total_length >= 0);
+		mmcd.adma_desc[i].desc_length_attr |= MMCADMA_DESC_TBL_END;
+	}
+
+	return 0;
+}
+
+static inline int mmc_clear_status(void)
+{
+	int n = 0;
+
+	/* First wait for CMDI and DATI bits to clear
+	 * TODO: Figure out what is the worst case amount
+	 * of time an EMMC/SD card can hold the DAT0 line
+	 * low
+	 */
+	while (mmc_reg_read(OMAP_HSMMC_PSTATE_OFFSET) &
+			(MMCHS__MMCHS_PSTATE_CMDI | MMCHS__MMCHS_PSTATE_DATI)) {
+		ldelay(100);
+	}
+
+	/*Now clear STAT register and wait for it to get cleared */
+	mmc_reg_write(MMCHS_STAT_OFFSET, 0xFFFFFFFF);
+	while (mmc_reg_read(MMCHS_STAT_OFFSET)) {
+		ldelay(100);
+		n++;
+		if (n == 100) {
+			printf("Unable to clear MMC Status\n");
+			return -1;
+		}
+	}
+	return 0;
+}
+
 static int mmc_read(u64 start_sec, u64 sectors, void *data)
 {
-	struct read_desc rd;
 	int n;
+	u32 arg;
+	u32 blkreg;
+	int ret = 0;
 
 	if ((start_sec > 0xFFFFFFFF) ||
 		(sectors > 0xFFFFFFFF)) {
@@ -259,17 +358,60 @@ static int mmc_read(u64 start_sec, u64 sectors, void *data)
 		return -1;
 	}
 
-	rd.sector_start	= (u32)start_sec;
-	rd.sector_count	= (u32)sectors;
-	rd.destination	= data;
+	/* Clear any previous Status */
+	if (mmc_clear_status())
+		return -1;
 
-	n = mmcd.mmc.io->read(&mmcd.mmc.dread, &rd);
-	if (n) {
-		printf("mmc_read failed\n");
-		return n;
-	}
+	n = mmc_reg_read(MMCHS_HCTL_OFFSET);
+	/* Configure the MMC for 32-bit Address ADMA */
+	mmc_reg_write(MMCHS_HCTL_OFFSET, n | MMCADMA_HCTL_DMAS_32BIT);
+	n = mmc_reg_read(MMCHS_CONN_OFFSET);
+	/* Configure the MMC for ADMA */
+	mmc_reg_write(MMCHS_CONN_OFFSET, n | MMCADMA_CONN_DMA_MNS);
 
-	return 0;
+	if (mmcd.dd.addressing == MMCSD_ADDRESSING_SECTOR)
+		/* In case of sector addressing,
+		the address given is the sector nb */
+		arg = (u32)start_sec;
+	else
+		/* In case of byte addressing,
+		the address given is start sector * MMCSD_SECTOR_SIZE */
+		arg = (u32)start_sec << MMCSD_SECTOR_SIZE_SHIFT;
+
+	blkreg = mmc_reg_read(OMAP_HSMMC_BLK_OFFSET);
+	blkreg &= ~HSMMC_BLK_NBLK_MASK;
+	mmc_reg_write(OMAP_HSMMC_BLK_OFFSET, (MMC_SECTOR_SZ |
+			(u32)sectors << HSMMC_BLK_NBLK_SHIFT));
+
+	mmc_pop_dma_desc(sectors, data);
+	mmc_reg_write(MMCHS_ADMASAL_OFFSET, (u32)mmcd.adma_desc);
+
+	mmc_reg_write(MMCHS_ARG_OFFSET, arg);
+	mmc_reg_write(MMCHS_CMD_OFFSET, (MMCSD_CMD18 |
+				MMCHS_MMCHS_CMD_ACEN_ENABLECMD12 |
+				MMCHS_MMCHS_CMD_BCE_ENABLE |
+				MMCHS_MMCHS_CMD_MSBS_MULTIBLK |
+				MMCHS_MMCHS_CMD_DDIR_READ |
+				MMCHS_MMCHS_CMD_DE_ENABLE));
+
+	do {
+		n = mmc_reg_read(MMCHS_STAT_OFFSET);
+		if ((n & (MMC_STAT_TC | MMC_STAT_CC)) ==
+				(MMC_STAT_TC | MMC_STAT_CC))
+			break;
+		if (n & MMC_STAT_ERR) {
+			printf("MMCHS_STAT = 0x%08x\n", n);
+			ret = -1;
+			break;
+		}
+	} while (1);
+	/* Clear the STAT register */
+	mmc_reg_write(MMCHS_STAT_OFFSET, n);
+
+	free_memory(mmcd.adma_desc);
+	mmcd.adma_desc = NULL;
+
+	return ret;
 }
 
 static int mmc_write(u64 start_sec, u64 sectors, void *data)
