@@ -112,10 +112,10 @@ static void import_efi_partition(struct efi_entry *entry, int count, u8 silent)
 
 	if (!silent) {
 		if (e.length > 0x100000)
-			printf("%8d %7dM %s\n", e.start,
+			DBG("%8d %7dM %s\n", e.start,
 				(u32)(e.length/0x100000), e.name);
 		else
-			printf("%8d %7dK %s\n", e.start,
+			DBG("%8d %7dK %s\n", e.start,
 				(u32)(e.length/0x400), e.name);
 	}
 }

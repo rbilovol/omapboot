@@ -296,7 +296,7 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 
 	theKernel = (void (*)(int, int, void *))(hdr->kernel_addr);
 
-	printf("\nbooting kernel...\n");
+	printf("booting kernel...\n");
 	theKernel(0, cfg_machine_type, (void *)dbt_addr);
 
 fail:
