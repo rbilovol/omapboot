@@ -181,7 +181,7 @@ static void configure_per_dpll(const dpll_param *dpll_param_p)
 static void configure_abe_dpll(dpll_param *dpll_param_p)
 {
 	/* Select sys_clk as ref clk for ABE dpll */
-	set_modify(CM_ABE_PLL_REF_CLKSEL, 0x00000000, 0x0);
+	writel(0, CM_ABE_PLL_REF_CLKSEL);
 
 	/* Unlock the ABE dpll */
 	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, PLL_MN_POWER_BYPASS);
@@ -191,7 +191,7 @@ static void configure_abe_dpll(dpll_param *dpll_param_p)
 	set_modify(CM_AUTOIDLE_DPLL_ABE, 0x00000007, 0x0);
 
 	set_modify(CM_CLKSEL_DPLL_ABE, 0x0007ff00, dpll_param_p->m << 8);
-	set_modify(CM_CLKSEL_DPLL_ABE, 0x0000003f, dpll_param_p->n);
+	set_modify(CM_CLKSEL_DPLL_ABE, 0x0000002f, dpll_param_p->n);
 
 	/* Force DPLL CLKOUTHIF to stay enabled */
 	set_modify(CM_DIV_M2_DPLL_ABE, 0x00000000, 0x500);
