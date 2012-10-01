@@ -31,6 +31,7 @@
 
 #include <types.h>
 #include <version.h>
+#include <omap_rom.h>
 
 #define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))
 
@@ -101,6 +102,7 @@ unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);
 
 int get_downloadsize_from_string(int count, char *string);
+struct bootloader_ops *boot_common(unsigned bootdevice, struct usb *usb);
 
 /* Storage drivers function inits */
 struct storage_specific_functions *init_rom_mmc_funcs(int proc_id, u8 device);

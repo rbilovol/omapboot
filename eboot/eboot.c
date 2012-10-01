@@ -46,11 +46,6 @@
 #define DBG(x...)
 #endif /* DEBUG */
 
-u32 public_rom_base;
-
-__attribute__((__section__(".mram")))
-static struct bootloader_ops boot_operations;
-
 #ifdef TWO_STAGE_OMAPBOOT
 static int do_sboot(struct bootloader_ops *boot_ops, int bootdevice)
 {
@@ -58,7 +53,7 @@ static int do_sboot(struct bootloader_ops *boot_ops, int bootdevice)
 	struct fastboot_ptentry *pte;
 	void (*Sboot)(u32 bootops_addr, int bootdevice, void *addr);
 
-	u32 bootops_addr = (u32) &boot_operations;
+	u32 bootops_addr = (u32) boot_ops;
 
 	int sector_sz = boot_ops->storage_ops->get_sector_size();
 
@@ -97,88 +92,22 @@ void eboot(unsigned *info)
 {
 	int ret = 0;
 	unsigned bootdevice = -1;
-	char buf[DEV_STR_LENGTH];
 	struct usb usb;
-	struct bootloader_ops *boot_ops = &boot_operations;
-
-	boot_ops->board_ops = init_board_funcs();
-	boot_ops->proc_ops = init_processor_id_funcs();
-	boot_ops->storage_ops = NULL;
-
-	if (boot_ops->proc_ops->proc_check_lpddr2_temp)
-		boot_ops->proc_ops->proc_check_lpddr2_temp();
-
-	if (boot_ops->proc_ops->proc_get_api_base)
-		public_rom_base = boot_ops->proc_ops->proc_get_api_base();
-
-	watchdog_disable();
-
-	if (boot_ops->board_ops->board_mux_init)
-		boot_ops->board_ops->board_mux_init();
-
-	if (boot_ops->board_ops->board_ddr_init)
-		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
-
-	if (boot_ops->board_ops->board_signal_integrity_reg_init)
-		boot_ops->board_ops->board_signal_integrity_reg_init
-							(boot_ops->proc_ops);
-
-	ldelay(100);
-
-	if (boot_ops->board_ops->board_scale_vcores)
-		boot_ops->board_ops->board_scale_vcores();
-
-	if(boot_ops->board_ops->board_prcm_init)
-		boot_ops->board_ops->board_prcm_init();
-
-	init_memory_alloc();
-
-	if (boot_ops->board_ops->board_gpmc_init)
-		boot_ops->board_ops->board_gpmc_init();
-
-	if (boot_ops->board_ops->board_late_init)
-		boot_ops->board_ops->board_late_init();
-
-	enable_irqs();
-
-	serial_init();
-
-	printf("%s\n", ABOOT_VERSION);
-	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
-
-	if (boot_ops->board_ops->board_pmic_enable)
-		boot_ops->board_ops->board_pmic_enable();
-
-	if (boot_ops->board_ops->board_reset_reason)
-		boot_ops->board_ops->board_reset_reason();
-
-	if (boot_ops->board_ops->board_configure_pwm_mode)
-		boot_ops->board_ops->board_configure_pwm_mode();
-
-	ret = usb_open(&usb);
-	if (ret != 0) {
-		printf("\nusb_open failed\n");
-		goto fail;
-	}
-
-	if (!boot_ops->board_ops->board_get_flash_slot ||
-				!boot_ops->board_ops->board_set_flash_slot)
-		goto fail;
+	struct bootloader_ops *boot_ops;
 
 	if (info)
 		bootdevice = info[2] & 0xFF;
 	else
 		goto fail;
 
-	boot_ops->storage_ops = boot_ops->board_ops->board_set_flash_slot
-			(bootdevice, boot_ops->proc_ops, boot_ops->storage_ops);
-	if (!boot_ops->storage_ops) {
-		printf("Unable to init storage\n");
+	boot_ops = boot_common(bootdevice, &usb);
+	if (!boot_ops)
 		goto fail;
-	}
 
-	dev_to_devstr(bootdevice, buf);
-	printf("sram: boot device: %s\n", buf);
+	if (info)
+		bootdevice = info[2] & 0xFF;
+	else
+		goto fail;
 
 #ifdef TWO_STAGE_OMAPBOOT
 	ret = do_sboot(boot_ops, bootdevice);
@@ -192,6 +121,11 @@ void eboot(unsigned *info)
 	do_booti(boot_ops, "storage", NULL, &usb);
 
 fastboot:
+	ret = usb_open(&usb);
+	if (ret != 0) {
+		printf("\nusb_open failed\n");
+		goto fail;
+	}
 	usb_init(&usb);
 	do_fastboot(boot_ops, &usb);
 

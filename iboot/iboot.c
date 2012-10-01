@@ -45,71 +45,21 @@
 #endif /* DEBUG */
 
 static unsigned MSG = 0xaabbccdd;
-u32 public_rom_base;
-
-__attribute__((__section__(".mram")))
-static struct bootloader_ops boot_operations;
 
 void iboot(unsigned *info)
 {
-	int ret = 0;
 	struct usb usb;
-	struct bootloader_ops *boot_ops = &boot_operations;
+	struct bootloader_ops *boot_ops;
+	unsigned bootdevice = -1;
 
-	boot_ops->board_ops = init_board_funcs();
-	boot_ops->proc_ops = init_processor_id_funcs();
-	boot_ops->storage_ops = NULL;
-
-	if (boot_ops->proc_ops->proc_check_lpddr2_temp)
-		boot_ops->proc_ops->proc_check_lpddr2_temp();
-
-	if (boot_ops->proc_ops->proc_get_api_base)
-		public_rom_base = boot_ops->proc_ops->proc_get_api_base();
-
-	if (boot_ops->board_ops->board_mux_init)
-		boot_ops->board_ops->board_mux_init();
-
-	if (boot_ops->board_ops->board_ddr_init)
-		boot_ops->board_ops->board_ddr_init(boot_ops->proc_ops);
-
-	if (boot_ops->board_ops->board_signal_integrity_reg_init)
-		boot_ops->board_ops->board_signal_integrity_reg_init
-							(boot_ops->proc_ops);
-
-	ldelay(100);
-
-	if (boot_ops->board_ops->board_scale_vcores)
-		boot_ops->board_ops->board_scale_vcores();
-
-	if(boot_ops->board_ops->board_prcm_init)
-		boot_ops->board_ops->board_prcm_init();
-
-	init_memory_alloc();
-
-	if (boot_ops->board_ops->board_gpmc_init)
-		boot_ops->board_ops->board_gpmc_init();
-
-	if (boot_ops->board_ops->board_late_init)
-		boot_ops->board_ops->board_late_init();
-
-	enable_irqs();
-
-	serial_init();
-
-	printf("%s\n", ABOOT_VERSION);
-	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
-
-	if (boot_ops->board_ops->board_pmic_enable)
-		boot_ops->board_ops->board_pmic_enable();
-
-	if (boot_ops->board_ops->board_configure_pwm_mode)
-		boot_ops->board_ops->board_configure_pwm_mode();
-
-	ret = usb_open(&usb);
-	if (ret != 0) {
-		printf("\nusb_open failed\n");
+	if (info)
+		bootdevice = info[2] & 0xFF;
+	else
 		goto fail;
-	}
+
+	boot_ops = boot_common(bootdevice, &usb);
+	if (!boot_ops)
+		goto fail;
 
 	usb_write(&usb, &MSG, 4);
 
@@ -127,6 +77,7 @@ void iboot(unsigned *info)
 	do_fastboot(boot_ops, &usb);
 
 fail:
+	printf("boot failed\n");
 	while (1)
 		;
 }
