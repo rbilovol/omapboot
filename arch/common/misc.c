@@ -57,6 +57,9 @@ void set_modify(u32 reg, u32 mask, u32 value)
 void dev_to_devstr(u8 dev, char *devstr)
 {
 	switch (dev) {
+	case DEVICE_USB:
+		strcpy(devstr, "USB");
+		break;
 	case DEVICE_EMMC:
 		strcpy(devstr, "EMMC");
 		break;
@@ -76,7 +79,9 @@ int devstr_to_dev(const char *devstr, u8 *dev)
 {
 	int ret = 0;
 
-	if (!strcmp(devstr, "EMMC"))
+	if (!strcmp(devstr, "USB"))
+		*dev = DEVICE_USB;
+	else if (!strcmp(devstr, "EMMC"))
 		*dev = DEVICE_EMMC;
 	else if (!strcmp(devstr, "SD"))
 		*dev = DEVICE_SDCARD;
