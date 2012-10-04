@@ -345,16 +345,15 @@ static inline int mmc_clear_status(void)
 	return 0;
 }
 
-static int mmc_read(u64 start_sec, u64 sectors, void *data)
+static int mmc_rdwr_limited(u64 start_sec, u64 sectors, void *data, u8 ddir)
 {
 	int n;
 	u32 arg;
 	u32 blkreg;
 	int ret = 0;
 
-	if ((start_sec > 0xFFFFFFFF) ||
-		(sectors > 0xFFFFFFFF)) {
-		printf("mmc_read failed. start_sec or sectors too large.\n");
+	if (start_sec > 0xFFFFFFFF) {
+		printf("%s: failed. start_sec too large.\n");
 		return -1;
 	}
 
@@ -387,12 +386,18 @@ static int mmc_read(u64 start_sec, u64 sectors, void *data)
 	mmc_reg_write(MMCHS_ADMASAL_OFFSET, (u32)mmcd.adma_desc);
 
 	mmc_reg_write(MMCHS_ARG_OFFSET, arg);
-	mmc_reg_write(MMCHS_CMD_OFFSET, (MMCSD_CMD18 |
+	if (ddir == MMCHS__MMCHS_CMD__DDIR__WRITE)
+		mmc_reg_write(MMCHS_CMD_OFFSET, (MMCSD_CMD25 |
 				MMCHS_MMCHS_CMD_ACEN_ENABLECMD12 |
 				MMCHS_MMCHS_CMD_BCE_ENABLE |
 				MMCHS_MMCHS_CMD_MSBS_MULTIBLK |
 				MMCHS_MMCHS_CMD_DE_ENABLE));
-
+	else
+		mmc_reg_write(MMCHS_CMD_OFFSET, (MMCSD_CMD18 |
+				MMCHS_MMCHS_CMD_ACEN_ENABLECMD12 |
+				MMCHS_MMCHS_CMD_BCE_ENABLE |
+				MMCHS_MMCHS_CMD_MSBS_MULTIBLK |
+				MMCHS_MMCHS_CMD_DE_ENABLE));
 	do {
 		n = mmc_reg_read(MMCHS_STAT_OFFSET);
 		if ((n & (MMC_STAT_TC | MMC_STAT_CC)) ==
@@ -413,57 +418,38 @@ static int mmc_read(u64 start_sec, u64 sectors, void *data)
 	return ret;
 }
 
+static int mmc_rdwr(u64 start_sec, u64 sectors, void *data, u8 ddir)
+{
+	u64 sectors_remaining = sectors;
+	u64 current_sectors = 0;
+	u64 current_start = start_sec;
+	u8 *dptr = (u8 *) data;
+	int ret = 0;
+
+	while (sectors_remaining) {
+		current_sectors = (sectors_remaining <= MAX_SECTORS_PER_XFER) ?
+				sectors_remaining : MAX_SECTORS_PER_XFER;
+		ret = mmc_rdwr_limited(current_start, current_sectors,
+					(void *) dptr, ddir);
+		if (ret)
+			break;
+		dptr += (current_sectors * MMC_SECTOR_SZ);
+		current_start += current_sectors;
+		sectors_remaining -= current_sectors;
+	}
+	return ret;
+}
+
+static int mmc_read(u64 start_sec, u64 sectors, void *data)
+{
+	return mmc_rdwr(start_sec, sectors, data,
+			MMCHS__MMCHS_CMD__DDIR__READ);
+}
+
 static int mmc_write(u64 start_sec, u64 sectors, void *data)
 {
-	struct mmc_devicedata *dd;
-	struct mem_device *md;
-	u32 arg;
-	u32 resp[4];
-	int n;
-	u32 blkreg;
-
-	if ((start_sec > 0xFFFFFFFF) ||
-		(sectors > 0xFFFFFFFF)) {
-		printf("mmc_write failed. start_sec or sectors too large.\n");
-		return -1;
-	}
-
-	/* Get the device data structure */
-	md = &mmcd.mmc.dread;
-	dd = md->device_data;
-
-	if (dd->addressing == MMCSD_ADDRESSING_SECTOR)
-		/* In case of sector addressing,
-		the address given is the sector nb */
-		arg = (u32)start_sec;
-	else
-		/* In case of byte addressing,
-		the address given is start sector * MMCSD_SECTOR_SIZE */
-		arg = (u32)start_sec << MMCSD_SECTOR_SIZE_SHIFT;
-
-	blkreg = mmc_reg_read(OMAP_HSMMC_BLK_OFFSET);
-	blkreg &= ~HSMMC_BLK_NBLK_MASK;
-	mmc_reg_write(OMAP_HSMMC_BLK_OFFSET, (blkreg |
-			(u32)sectors<<HSMMC_BLK_NBLK_SHIFT));
-
-	/* Send the CMD25 write command */
-	n = mmcd.rom_hal_mmchs_sendcommand(dd->moduleid,
-			MMCSD_CMD25 | MMCHS_MMCHS_CMD_BCE_ENABLE |
-			MMCHS_MMCHS_CMD_ACEN_ENABLECMD12 |
-			MMCHS_MMCHS_CMD_MSBS_MULTIBLK, arg, resp);
-	if (n) {
-		printf("mmc_sendcommand failed\n");
-		return n;
-	}
-
-	/* Write the data */
-	n = mmcd.rom_hal_mmchs_writedata(dd->moduleid, data);
-	if (n) {
-		printf("mmc_writedata failed\n");
-		return n;
-	}
-
-	return 0;
+	return mmc_rdwr(start_sec, sectors, data,
+			MMCHS__MMCHS_CMD__DDIR__WRITE);
 }
 
 static int mmc_erase (u64 start_sec, u64 sectors)
