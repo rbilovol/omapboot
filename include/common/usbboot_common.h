@@ -32,6 +32,7 @@
 #include <types.h>
 #include <version.h>
 #include <omap_rom.h>
+#include <user_params.h>
 
 #define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))
 
@@ -100,10 +101,24 @@ struct board_specific_functions {
 	int (*board_reset_reason)(void);
 };
 
+#ifdef TWO_STAGE_OMAPBOOT
+struct board_usb_functions {
+	int (*omap_usb_open)(struct usb *usb);
+	void (*omap_usb_init)(struct usb *usb);
+	void (*omap_usb_close)(struct usb *usb);
+	int (*omap_usb_read)(struct usb *usb, void *data, unsigned len);
+	int (*omap_usb_write)(struct usb *usb, void *data, unsigned len);
+};
+void *init_board_usb_funcs(void);
+#endif
+
 struct bootloader_ops {
 	struct board_specific_functions *board_ops;
 	struct proc_specific_functions *proc_ops;
 	struct storage_specific_functions *storage_ops;
+#ifdef TWO_STAGE_OMAPBOOT
+	struct board_usb_functions *usb_ops;
+#endif
 	struct usb usb;
 };
 

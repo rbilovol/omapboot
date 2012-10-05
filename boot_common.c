@@ -41,6 +41,19 @@ u32 public_rom_base;
 
 #ifdef TWO_STAGE_OMAPBOOT
 
+static struct board_usb_functions usb_funcs = {
+	.omap_usb_open = usb_open,
+	.omap_usb_init = usb_init,
+	.omap_usb_close = usb_close,
+	.omap_usb_write = usb_write,
+	.omap_usb_read = usb_read,
+};
+
+void *init_board_usb_funcs(void)
+{
+	return &usb_funcs;
+}
+
 #if defined DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_EBOOT || \
 defined DO_MEMORY_TEST_DURING_FIRST_STAGE_IN_IBOOT
 /* This sanity memory test taken from aboot.c has no
@@ -81,6 +94,9 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 	boot_ops->board_ops = init_board_funcs();
 	boot_ops->proc_ops = init_processor_id_funcs();
 	boot_ops->storage_ops = NULL;
+#ifdef TWO_STAGE_OMAPBOOT
+	boot_ops->usb_ops = init_board_usb_funcs();
+#endif
 
 	if (boot_ops->proc_ops->proc_check_lpddr2_temp)
 		boot_ops->proc_ops->proc_check_lpddr2_temp();
