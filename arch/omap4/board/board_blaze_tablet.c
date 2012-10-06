@@ -458,6 +458,7 @@ static struct board_specific_functions blaze_tablet_funcs = {
 	.board_storage_init = blaze_tablet_storage_init,
 	.board_pmic_enable = blaze_tablet_pmic_enable,
 	.board_pmic_disable = blaze_tablet_pmic_disable,
+	.board_fastboot_size_request = usb_read
 };
 
 void* init_board_funcs(void)

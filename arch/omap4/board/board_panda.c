@@ -427,6 +427,7 @@ static struct board_specific_functions panda_funcs = {
 	.board_storage_init = panda_storage_init,
 	.board_pmic_enable = panda_pmic_enable,
 	.board_pmic_disable = panda_pmic_disable,
+	.board_fastboot_size_request = usb_read
 };
 
 void* init_board_funcs(void)

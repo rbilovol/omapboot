@@ -460,6 +460,7 @@ static struct board_specific_functions blaze_funcs = {
 	.board_storage_init = blaze_storage_init,
 	.board_pmic_enable = blaze_pmic_enable,
 	.board_pmic_disable = blaze_pmic_disable,
+	.board_fastboot_size_request = usb_read
 };
 
 void* init_board_funcs(void)
