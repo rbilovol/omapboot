@@ -30,6 +30,7 @@
 #include <common.h>
 #include <io.h>
 #include <types.h>
+#include <alloc.h>
 
 #include <string.h>
 
@@ -46,7 +47,6 @@
 #include <fastboot.h>
 
 static struct partition *partitions;
-static struct ptable the_ptable;
 
 static void init_mbr(u8 *mbr, u64 blocks)
 {
@@ -178,7 +178,7 @@ static int add_ptn(struct ptable *ptbl, u64 first, u64 last, const char *name)
 int do_gpt_format(struct fastboot_data *fb_data)
 {
 	/* For testing need to pass this in better */
-	struct ptable *ptbl = &the_ptable;
+	struct ptable *ptbl;
 	u64 total_sectors = 0;
 	u64 next;
 	int n;
@@ -188,8 +188,9 @@ int do_gpt_format(struct fastboot_data *fb_data)
 
 #ifdef DEBUG
 	int i = 0; int j = 0;
-	u8 data[sizeof(struct ptable)];
+	u8 *data;
 	u32 *blocksp = &total_sectors;
+	data = (u8 *)alloc_memory(sizeof(struct ptable));
 #endif
 
 	DBG("do_format\n");
@@ -200,6 +201,11 @@ int do_gpt_format(struct fastboot_data *fb_data)
 	DBG("sector_sz %u\n", sector_sz);
 	DBG("total_sectors 0x%x%08x\n", blocksp[1], blocksp[0]);
 
+	ptbl = (struct ptable *) alloc_memory(sizeof(struct ptable));
+	if (!ptbl) {
+		printf("%s: Unable to alloc mem for ptbl\n", __func__);
+		return -1;
+	}
 	start_ptbl(ptbl, total_sectors);
 	if (fb_data->board_ops->board_get_part_tbl)
 		partitions = fb_data->board_ops->board_get_part_tbl();
@@ -217,8 +223,11 @@ int do_gpt_format(struct fastboot_data *fb_data)
 			sz_sectors = total_sectors - next;
 
 		if (add_ptn(ptbl, next, next + sz_sectors - 1,
-				partitions[n].name))
-			return -1;
+				partitions[n].name)) {
+			printf("Unable to add_ptn\n");
+			ret = -1;
+			goto format_err;
+		}
 
 		next += sz_sectors;
 	}
@@ -227,6 +236,10 @@ int do_gpt_format(struct fastboot_data *fb_data)
 
 	DBG("writing ptable to disk: %d #of sectors\n", ptbl_sectors);
 	ret = fb_data->storage_ops->write(0, ptbl_sectors, (void *)ptbl);
+	if (ret) {
+		printf("Write PTBL failed\n");
+		goto format_err;
+	}
 
 	DBG("writing the GUID Table disk ...\n");
 #ifdef DEBUG
@@ -245,10 +258,14 @@ int do_gpt_format(struct fastboot_data *fb_data)
 	ret = load_ptbl(fb_data->storage_ops, 0);
 	if (ret != 0) {
 		printf("Failed to load partition table\n");
-		return ret;
+		goto format_err;
 	}
-
-	return 0;
+format_err:
+	free_memory(ptbl);
+#ifdef DEBUG
+	free_memory(data);
+#endif
+	return ret;
 }
 
 static u64 get_entry_size_kb(struct efi_entry *entry, const char *ptn)
@@ -275,29 +292,35 @@ char *get_ptn_size(struct fastboot_data *fb_data, char *buf, const char *ptn)
 	int ret = 0;
 	u32 sz_mb;
 	u64 sz = 0;
-	struct ptable gpt;
+	struct ptable *gpt;
 	int sector_sz = fb_data->storage_ops->get_sector_size();
 	u64 ptbl_sectors = 0;
 
+	gpt = (struct ptable *)alloc_memory(sizeof(struct ptable));
+	if (!gpt) {
+		printf("Unable to alloc memory for gpt\n");
+		return buf;
+	}
+
 	if (sector_sz != 512) {
 		printf("Unknown sector size: %d\n", sector_sz);
-		return buf;
+		goto ptn_error;
 	} else
 		ptbl_sectors = sizeof(struct ptable) >> 9;
 
-	ret = fb_data->storage_ops->read(0, ptbl_sectors, (void *)&gpt);
+	ret = fb_data->storage_ops->read(0, ptbl_sectors, (void *)gpt);
 	if (ret != 0) {
 		printf("error reading primary GPT\n");
-		return buf;
+		goto ptn_error;
 	}
 
-	if (memcmp(gpt.header.magic, "EFI PART", 8)) {
-		DBG("efi partition table not found\n");
-		return buf;
+	if (memcmp(gpt->header.magic, "EFI PART", 8)) {
+		printf("efi partition table not found\n");
+		goto ptn_error;
 	}
 
 	for (i = 0; i < EFI_ENTRIES; i++) {
-		sz = get_entry_size_kb(&gpt.entry[i], ptn);
+		sz = get_entry_size_kb(&gpt->entry[i], ptn);
 		if (sz)
 			break;
 	}
@@ -311,8 +334,9 @@ char *get_ptn_size(struct fastboot_data *fb_data, char *buf, const char *ptn)
 		sprintf(buf, "%d KB", (u32)sz);
 	}
 
+ptn_error:
+	free_memory(gpt);
 	return buf;
-
 }
 
 #endif
