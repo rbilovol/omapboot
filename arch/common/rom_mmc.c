@@ -391,7 +391,6 @@ static int mmc_read(u64 start_sec, u64 sectors, void *data)
 				MMCHS_MMCHS_CMD_ACEN_ENABLECMD12 |
 				MMCHS_MMCHS_CMD_BCE_ENABLE |
 				MMCHS_MMCHS_CMD_MSBS_MULTIBLK |
-				MMCHS_MMCHS_CMD_DDIR_READ |
 				MMCHS_MMCHS_CMD_DE_ENABLE));
 
 	do {
