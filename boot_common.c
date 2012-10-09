@@ -142,6 +142,9 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 	if (boot_ops->board_ops->board_pmic_enable)
 		boot_ops->board_ops->board_pmic_enable();
 
+	if (boot_ops->board_ops->board_reset_reason)
+		boot_ops->board_ops->board_reset_reason();
+
 	if (boot_ops->board_ops->board_configure_pwm_mode)
 		boot_ops->board_ops->board_configure_pwm_mode();
 
