@@ -416,29 +416,24 @@ static int mmc_read(u64 start_sec, u64 sectors, void *data)
 
 static int mmc_write(u64 start_sec, u64 sectors, void *data)
 {
-	int n;
+	struct mmc_devicedata *dd;
+	struct mem_device *md;
 	u32 arg;
+	u32 resp[4];
+	int n;
 	u32 blkreg;
-	int ret = 0;
 
 	if ((start_sec > 0xFFFFFFFF) ||
 		(sectors > 0xFFFFFFFF)) {
-		printf("mmc_read failed. start_sec or sectors too large.\n");
+		printf("mmc_write failed. start_sec or sectors too large.\n");
 		return -1;
 	}
 
-	/* Clear any previous Status */
-	if (mmc_clear_status())
-		return -1;
+	/* Get the device data structure */
+	md = &mmcd.mmc.dread;
+	dd = md->device_data;
 
-	n = mmc_reg_read(MMCHS_HCTL_OFFSET);
-	/* Configure the MMC for 32-bit Address ADMA */
-	mmc_reg_write(MMCHS_HCTL_OFFSET, n | MMCADMA_HCTL_DMAS_32BIT);
-	n = mmc_reg_read(MMCHS_CONN_OFFSET);
-	/* Configure the MMC for ADMA */
-	mmc_reg_write(MMCHS_CONN_OFFSET, n | MMCADMA_CONN_DMA_MNS);
-
-	if (mmcd.dd.addressing == MMCSD_ADDRESSING_SECTOR)
+	if (dd->addressing == MMCSD_ADDRESSING_SECTOR)
 		/* In case of sector addressing,
 		the address given is the sector nb */
 		arg = (u32)start_sec;
@@ -449,38 +444,27 @@ static int mmc_write(u64 start_sec, u64 sectors, void *data)
 
 	blkreg = mmc_reg_read(OMAP_HSMMC_BLK_OFFSET);
 	blkreg &= ~HSMMC_BLK_NBLK_MASK;
-	mmc_reg_write(OMAP_HSMMC_BLK_OFFSET, (MMC_SECTOR_SZ |
-			(u32)sectors << HSMMC_BLK_NBLK_SHIFT));
+	mmc_reg_write(OMAP_HSMMC_BLK_OFFSET, (blkreg |
+			(u32)sectors<<HSMMC_BLK_NBLK_SHIFT));
 
-	mmc_pop_dma_desc(sectors, data);
-	mmc_reg_write(MMCHS_ADMASAL_OFFSET, (u32)mmcd.adma_desc);
+	/* Send the CMD25 write command */
+	n = mmcd.rom_hal_mmchs_sendcommand(dd->moduleid,
+			MMCSD_CMD25 | MMCHS_MMCHS_CMD_BCE_ENABLE |
+			MMCHS_MMCHS_CMD_ACEN_ENABLECMD12 |
+			MMCHS_MMCHS_CMD_MSBS_MULTIBLK, arg, resp);
+	if (n) {
+		printf("mmc_sendcommand failed\n");
+		return n;
+	}
 
-	mmc_reg_write(MMCHS_ARG_OFFSET, arg);
-	mmc_reg_write(MMCHS_CMD_OFFSET, (MMCSD_CMD25 |
-				MMCHS_MMCHS_CMD_ACEN_ENABLECMD12 |
-				MMCHS_MMCHS_CMD_BCE_ENABLE |
-				MMCHS_MMCHS_CMD_MSBS_MULTIBLK |
-				MMCHS_MMCHS_CMD_DDIR_WRITE |
-				MMCHS_MMCHS_CMD_DE_ENABLE));
+	/* Write the data */
+	n = mmcd.rom_hal_mmchs_writedata(dd->moduleid, data);
+	if (n) {
+		printf("mmc_writedata failed\n");
+		return n;
+	}
 
-	do {
-		n = mmc_reg_read(MMCHS_STAT_OFFSET);
-		if ((n & (MMC_STAT_TC | MMC_STAT_CC)) ==
-				(MMC_STAT_TC | MMC_STAT_CC))
-			break;
-		if (n & MMC_STAT_ERR) {
-			printf("MMCHS_STAT = 0x%08x\n", n);
-			ret = -1;
-			break;
-		}
-	} while (1);
-	/* Clear the STAT register */
-	mmc_reg_write(MMCHS_STAT_OFFSET, n);
-
-	free_memory(mmcd.adma_desc);
-	mmcd.adma_desc = NULL;
-
-	return ret;
+	return 0;
 }
 
 static int mmc_erase (u64 start_sec, u64 sectors)
