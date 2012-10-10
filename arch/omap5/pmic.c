@@ -39,143 +39,88 @@
 #define DBG(x...)
 #endif /* DEBUG */
 
-int palmas_read_sw_revision(void)
+int pmic_reg_access(hal_i2c i2c_id, u16 slave, u16 reg, u32 value, int read)
 {
-	int ret = 0;
-
-	hal_i2c i2c_id = HAL_I2C1;
-	u32 clk32;
-	u16 slave; u16 reg_addr; u16 cmd;
+	int ret; u32 clk32; u16 cmd;
 
 	ret = i2c_init(i2c_id);
 	if (ret != 0) {
-		printf("Failed to init I2C-%d\n", i2c_id);
-		return ret;
+		printf("Failed to init I2C-%d, ret = %d\n", i2c_id, ret);
+		goto fail;
 	} else
 		DBG("Initialized I2C-%d\n", i2c_id);
 
-	slave = 0x48; reg_addr = 0xB7;
-	cmd = (reg_addr & 0xFF);
 	clk32 = readl(CLK32K_COUNTER_REGISTER);
 
-	ret = i2c_read(i2c_id, slave, 1, &cmd, clk32, 0xFF);
-	if (ret != 0) {
-		printf("I2C read failed, ret = %d\n", ret);
-		return ret;
-	} else
-		printf("PMIC SW REVISION is = 0x%x\n", cmd);
+	if (read) {
+		cmd = (reg & 0xFF);
+		ret = i2c_read(i2c_id, slave, 1, &cmd, clk32, 0xFF);
+		if (ret != 0) {
+			printf("I2C read failed, ret = %d\n", ret);
+			goto fail;
+		}
+	} else {
+		cmd = (reg & 0xFF) | ((value & 0xFF) << 8);
+		ret = i2c_write(i2c_id, slave, 2, &cmd, clk32, 0xFF);
+		if (ret != 0) {
+			printf("I2C write failed, ret = %d\n", ret);
+			goto fail;
+		}
+	}
 
 	ret = i2c_close(i2c_id);
 	if (ret != 0) {
 		printf("i2c close for module %d failed, ret = %d\n",
 							i2c_id, ret);
-		return ret;
+		goto fail;
 	} else
 		DBG("I2C-%d has been disabled\n", i2c_id);
 
-	return ret;
+	return cmd;
+fail:
+	return 0;
 }
 
 int palmas_read_reset_reason(u32 *reason)
 {
-	int ret = 0;
+	int ret;
 
-	hal_i2c i2c_id = HAL_I2C1;
-	u32 clk32;
-	u16 slave; u16 reg_addr; u16 cmd;
-
-	ret = i2c_init(i2c_id);
+	/* SWOFF_STATUS: qualify which switch off events generate a HW RESET */
+	ret = pmic_reg_access(HAL_I2C1, 0x48, 0xB1, 0, 1);
 	if (ret != 0) {
-		printf("Failed to init I2C-%d\n", i2c_id);
-		return ret;
-	} else {
-		DBG("Initialized I2C-%d\n", i2c_id);
+		*reason = ret;
+		return 0;
 	}
-
-	/* SWOFF_STATUS: qualify wich switch off events generate a HW RESET */
-	slave = 0x48;
-	reg_addr = 0xB1;
-	cmd = reg_addr & 0xFF;
-	clk32 = readl(CLK32K_COUNTER_REGISTER);
-
-	ret = i2c_read(i2c_id, slave, 1, &cmd, clk32, 0xFF);
-	if (!ret)
-		*reason = cmd;
-	else {
-		printf("I2C read failed, ret = %d\n", ret);
-		return ret;
-	}
-
-	ret = i2c_close(i2c_id);
-	if (ret != 0) {
-		printf("i2c close for module %d failed, ret = %d\n",
-							i2c_id, ret);
-		return ret;
-	} else {
-		DBG("I2C-%d has been disabled\n", i2c_id);
-	}
-
 
 	return ret;
+}
+
+int palmas_read_sw_revision(void)
+{
+	int ret;
+
+	ret = pmic_reg_access(HAL_I2C1, 0x48, 0xB7, 0, 1);
+	if (ret != 0)
+		return ret;
+
+	return 0;
 }
 
 int palmas_configure_pwm_mode(void)
 {
-	int ret = 0;
+	int ret;
 
-	hal_i2c i2c_id = HAL_I2C1;
-	u32 clk32; u32 value;
-	u16 slave; u16 reg_addr; u16 cmd;
-
-	ret = i2c_init(i2c_id);
+	ret = pmic_reg_access(HAL_I2C1, 0x48, 0x30, 0x0F, 0);
 	if (ret != 0) {
-		printf("Failed to init I2C-%d\n", i2c_id);
-		return ret;
-	} else
-		DBG("Initialized I2C-%d\n", i2c_id);
-
-	/* SMPS7_CTRL: Enable FORCED PWM mode */
-	slave = 0x48; reg_addr = 0x30; value = 0x0F;
-	cmd = (reg_addr & 0xFF) | ((value & 0xFF) << 8);
-	clk32 = readl(CLK32K_COUNTER_REGISTER);
-	ret = i2c_write(i2c_id, slave, 2, &cmd, clk32, 0xFF);
-	if (ret != 0) {
-		printf("I2C write failed, ret = %d\n", ret);
-		return ret;
-	}
-
 #ifdef DEBUG
-	/* SMPS7_CTRL: check if FORCED PWM mode is enabled */
-	if (ret != 0) {
-		printf("re-initialize the I2C\n");
-		ret = rom_hal_i2c_initialize(i2c_id);
-		if (ret != 0) {
-			printf("\nFailed to re-init I2C-%d\n", i2c_id);
+		ret = pmic_reg_access(HAL_I2C1, 0x48, 0x30, 0x0F, 1);
+		if (ret != 0)
+			printf("SMPS7_CTRL = 0x%x\n", ret);
+		else
 			return ret;
-		} else
-			printf("\nInitialized I2C-%d\n", i2c_id);
-	}
-
-	/* read back the value written */
-	slave = 0x48; reg_addr = 0x30;
-	cmd = (reg_addr & 0xFF);
-	clk32 = readl(CLK32K_COUNTER_REGISTER);
-	ret = i2c_read(i2c_id, slave, 1, &cmd, clk32, 0xFF);
-	if (ret != 0) {
-		printf("I2C read failed, ret = %d\n", ret);
-		return ret;
-	} else
-		printf("SMPS7_CTRL = 0x%x\n", cmd);
 #endif
-
-	ret = i2c_close(i2c_id);
-	if (ret != 0) {
-		printf("i2c close for module %d failed, ret = %d\n",
-							i2c_id, ret);
-		return ret;
-	} else
-		DBG("I2C-%d has been disabled\n", i2c_id);
+		return 0;
+	}
 
 	return ret;
 }
-
