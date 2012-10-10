@@ -232,6 +232,12 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer,
 		strcpy(tx_buffer + strlen(tx_buffer),
 						pmic_get_silicon_revision());
 		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
+		/* pmic OTP revision */
+		strcpy(tx_buffer, "INFO");
+		strcpy(tx_buffer + strlen(tx_buffer), "pmic otp rev: ");
+		sprintf(tx_buffer + strlen(tx_buffer), "%x",
+						palmas_read_sw_revision());
+		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 
 		strcpy(tx_buffer, "OKAY");
 	} else {

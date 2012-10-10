@@ -95,7 +95,6 @@ struct board_specific_functions {
 				struct storage_specific_functions *storage_ops);
 	int (*board_pmic_enable)(void);
 	int (*board_pmic_disable)(void);
-	int (*board_read_sw_revision)(void);
 	int (*board_configure_pwm_mode)(void);
 	u32 (*board_get_board_rev)(void);
 	int (*board_reset_reason)(void);

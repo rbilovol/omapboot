@@ -150,17 +150,6 @@ static void omap5uevm_prcm_init(void)
 	prcm_init();
 }
 
-static int omap5uevm_read_sw_revision(void)
-{
-	int ret = 0;
-
-	ret = palmas_read_sw_revision();
-	if (ret != 0)
-		printf("unable to read palmas sw revision\n");
-
-	return ret;
-}
-
 static int omap5uevm_pmic_reset_reason(void)
 {
 	int ret = 0;
@@ -262,7 +251,6 @@ static struct board_specific_functions omap5uevm_funcs = {
 	.board_prcm_init = omap5uevm_prcm_init,
 	.board_scale_vcores = omap5uevm_scale_cores,
 	.board_storage_init = omap5uevm_storage_init,
-	.board_read_sw_revision = omap5uevm_read_sw_revision,
 	.board_configure_pwm_mode = omap5uevm_configure_pwm_mode,
 	.board_get_board_rev = omap5uevm_get_board_rev,
 	.board_reset_reason = omap5uevm_pmic_reset_reason,
