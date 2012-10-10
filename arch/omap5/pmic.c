@@ -81,6 +81,55 @@ fail:
 	return 0;
 }
 
+
+static int palmas_read_silicon_revision(u32 *revision)
+{
+	int ret;
+
+	/* read INTERNAL_DESIGNREV to get silicon revision */
+	ret = pmic_reg_access(HAL_I2C1, 0x4A, 0x57, 0, 1);
+	if (ret != 0) {
+		*revision = ret;
+		return 0;
+	}
+
+	return ret;
+}
+
+char *pmic_get_silicon_revision(void)
+{
+	u32 revision = 0;
+	static char rev_id[8];
+	enum {
+		PALMAS_ES1_DOT_0,
+		PALMAS_ES2_DOT_0,
+		PALMAS_ES2_DOT_1
+	};
+
+	if (palmas_read_silicon_revision(&revision)) {
+		printf("Could not get palmas silicon revision");
+		return NULL;
+	}
+
+	switch (revision) {
+	case PALMAS_ES1_DOT_0:
+		strcpy(rev_id, "ES1.0");
+		break;
+	case PALMAS_ES2_DOT_0:
+		strcpy(rev_id, "ES2.0");
+		break;
+	case PALMAS_ES2_DOT_1:
+		strcpy(rev_id, "ES2.1");
+		break;
+	default:
+		printf("unknown PALMAS revision\n");
+		strcpy(rev_id, "unknown");
+		break;
+	}
+
+	return rev_id;
+}
+
 int palmas_read_reset_reason(u32 *reason)
 {
 	int ret;

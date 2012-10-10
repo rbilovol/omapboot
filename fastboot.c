@@ -34,6 +34,7 @@
 #include <alloc.h>
 #include <omap_rom.h>
 #include <usbboot_common.h>
+#include <common_proc.h>
 
 #include <string.h>
 
@@ -181,6 +182,8 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer,
 		strcpy(tx_buffer + 4, get_proc_type());
 	} else if (!memcmp(rx_buffer, "cpu", 3)) {
 		strcpy(tx_buffer + 4, get_proc_version());
+	} else if (!memcmp(rx_buffer, "pmicrev", 7)) {
+		strcpy(tx_buffer + 4, pmic_get_silicon_revision());
 	} else if (!memcmp(rx_buffer, "downloadsize", 12)) {
 		if (fb_data->getsize)
 			sprintf(tx_buffer + 4, "%08x", fb_data->getsize);
@@ -222,6 +225,12 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer,
 		strcpy(tx_buffer, "INFO");
 		strcpy(tx_buffer + strlen(tx_buffer), "rom version: ");
 		strcpy(tx_buffer + strlen(tx_buffer), get_rom_version());
+		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
+		/* pmic silicon revision */
+		strcpy(tx_buffer, "INFO");
+		strcpy(tx_buffer + strlen(tx_buffer), "pmicrev: ");
+		strcpy(tx_buffer + strlen(tx_buffer),
+						pmic_get_silicon_revision());
 		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 
 		strcpy(tx_buffer, "OKAY");
