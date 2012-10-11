@@ -59,14 +59,6 @@ int usb_open(struct usb *usb)
 	if (n)
 		return n;
 
-#if defined(CONFIG_IS_OMAP5)
-	memset((void *)&trbout, 0, sizeof(trbout));
-	ioconf.mode         = 0;
-	ioconf.conf_timeout = 0;
-	ioconf.trb_pool     = (struct usb_trb *) &trbout;
-	usb->dread.config_object = &ioconf;
-#endif
-
 #if defined(CONFIG_IS_OMAP4)
 	usb->dread.xfer_mode = boot->xfer_mode;
 	usb->dread.config_object = boot->config_object;
@@ -101,6 +93,12 @@ void usb_queue_read(struct usb *usb, void *data, unsigned len)
 	int n;
 
 #if defined(CONFIG_IS_OMAP5)
+	memset((void *)&trbout, 0, sizeof(trbout));
+	ioconf.mode         = 0;
+	ioconf.conf_timeout = 0;
+	ioconf.trb_pool     = (struct usb_trb *) &trbout;
+	usb->dread.config_object = &ioconf;
+
 	trbout.ptrlo    = (u32)data;
 	trbout.ptrhi    = 0;
 	trbout.bufsiz   = ((len >> 9) + ((len & 0x1FF) ? 1 : 0)) << 9;
@@ -115,7 +113,6 @@ void usb_queue_read(struct usb *usb, void *data, unsigned len)
 	usb->dread.length = len;
 	usb->dread.status = -1;
 	usb->dread.device_type = DEVICE_USB;
-	usb->dread.device_data = NULL;
 #if defined(CONFIG_IS_OMAP4)
 	usb->dread.xfer_mode = 1;
 #endif
@@ -155,7 +152,6 @@ void usb_queue_write(struct usb *usb, void *data, unsigned len)
 	usb->dwrite.xfer_mode = 1;
 #endif
 	usb->dwrite.device_type = DEVICE_USB;
-	usb->dwrite.device_data = NULL;
 	usb->dwrite.callback = rom_write_callback;
 	local_write_usb = usb;
 	n = usb->io->write(&usb->dwrite);
