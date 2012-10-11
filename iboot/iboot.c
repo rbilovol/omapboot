@@ -116,8 +116,6 @@ void iboot(unsigned *info)
 
 #ifndef TWO_STAGE_OMAPBOOT
 	usb_write(&boot_ops->usb, &MSG, 4);
-
-	usb_init(&boot_ops->usb);
 	do_fastboot(boot_ops);
 #else
 	do_sboot(boot_ops, bootdevice);

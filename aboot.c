@@ -74,9 +74,6 @@ static int load_from_usb(unsigned *_len, struct usb *usb)
 	unsigned len, n;
 	enable_irqs();
 
-	if (usb_open(usb))
-		return -1;
-
 	usb_queue_read(usb, &len, 4);
 	usb_write(usb, &MSG, 4);
 	n = usb_wait_read(usb);

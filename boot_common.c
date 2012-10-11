@@ -139,13 +139,13 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 	dev_to_devstr(bootdevice, buf);
 	printf("sram: boot device: %s\n", buf);
 
-	if (bootdevice == DEVICE_USB)
+	if (bootdevice == DEVICE_USB) {
 		bootdevice = boot_ops->board_ops->board_get_flash_slot();
-
-	ret = usb_open(&boot_ops->usb);
-	if (ret != 0) {
-		printf("\nusb_open failed\n");
-		goto fail;
+		ret = usb_open(&boot_ops->usb);
+		if (ret != 0) {
+			printf("\nusb_open failed\n");
+			goto fail;
+		}
 	}
 
 	boot_ops->storage_ops = boot_ops->board_ops->board_set_flash_slot
