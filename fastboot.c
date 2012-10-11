@@ -115,6 +115,39 @@ static int *fastboot_alloc_mem(void)
 	}
 }
 
+#ifdef DEBUG
+static void debug_compare(u8 *tb, u32 sector, u32 sectors, int sector_size)
+{
+	int i, ret;
+	u8 *rbp, *tbp;
+	u8 *rb;
+	rb = (u8 *) alloc_memory(sectors * sector_size);
+	if (!rb) {
+		printf("%s: Mem Alloc failed\n", __func__);
+		return;
+	}
+	ret = fb_data->storage_ops->read(sector, sectors, rb);
+	if (ret) {
+		printf("%s: Storage Read failed\n");
+		goto compare_fail;
+	}
+	rbp = rb;
+	tbp = tb;
+	for (i = 0; i < sectors; i++) {
+		if (memcmp(rbp, tbp, sector_size)) {
+			printf("Compare fail at sector: %d\n",
+				sector + i);
+			goto compare_fail;
+		}
+		rbp += sector_size;
+		tbp += sector_size;
+	}
+	printf("Compare sector: %d, sectors:%d Success\n", sector, sectors);
+compare_fail:
+	free_memory(rb);
+}
+#endif
+
 static int fastboot_free_mem(void *mem_ptr)
 {
 	int ret = 0;
@@ -308,6 +341,7 @@ static int flash_sparse_formatted_image(struct usb *usb)
 	u32 num_sectors = 0;
 	u32 out_blocks = 0;
 	u32 total_blocks = 0;
+	int sector_size;
 	char response[65];
 	void *ptr_to_buffer = transfer_buffer;
 	chunk_header_t *chunk_header;
@@ -356,6 +390,7 @@ static int flash_sparse_formatted_image(struct usb *usb)
 	DBG("total_chunks: %d\n", fb_data->sparse_header->total_chunks);
 
 	/* Start processing chunks */
+	sector_size = fb_data->storage_ops->get_sector_size();
 	for (chunk = 0; chunk < fb_data->sparse_header->total_chunks; chunk++) {
 
 		/* Read and skip over chunk header */
@@ -383,7 +418,7 @@ static int flash_sparse_formatted_image(struct usb *usb)
 						chunk_header->chunk_sz);
 		DBG("chunk_data_sz = %d\n", chunk_data_sz);
 
-		num_sectors = (chunk_data_sz/512);
+		num_sectors = (chunk_data_sz/sector_size);
 		DBG("writing to sector %d and # of sectors %d\n",
 			fb_data->sector, num_sectors);
 
@@ -408,56 +443,19 @@ static int flash_sparse_formatted_image(struct usb *usb)
 								"sparse");
 				goto out;
 			}
-
-			#ifdef DEBUG
-			int sector_count;
-
-			read_buffer = fastboot_alloc_mem();
-			if (read_buffer == NULL) {
-				sprintf(response, "FAILINVALID read_buffer");
-				ret = -1;
-				goto out;
-			}
-
-			/*read back the data and compare */
-			for (sector_count = 0; sector_count < num_sectors;
-							sector_count++) {
-
-				ret = fb_data->storage_ops->read
-				(fb_data->sector + sector_count, 1,
-					read_buffer + (sector_count*512));
-				if (ret != 0) {
-					printf("mmc read failed\n");
-					strcpy(response, "FAILMMC read FAILED "
-								"sparse");
-					goto out;
-				}
-
-				if (memcmp(read_buffer + (sector_count*512),
-				transfer_buffer + (sector_count*512), 512)) {
-					printf("data mismatch sector %d\n",
-					fb_data->sector + sector_count);
-
-					strcpy(response, "INFO");
-					sprintf(response + strlen(response),
-						"data mismatch sector %d",
-						fb_data->sector+sector_count);
-					fastboot_tx_status(response,
-							strlen(response), usb);
-
-				}
-			}
-			#endif
-
+#ifdef DEBUG
+			debug_compare(transfer_buffer, fb_data->sector,
+						num_sectors, sector_size);
+#endif
 			total_blocks += chunk_header->chunk_sz;
-			fb_data->sector += (chunk_data_sz/512);
+			fb_data->sector += (chunk_data_sz / sector_size);
 			transfer_buffer += chunk_data_sz;
 			break;
 
 		case CHUNK_TYPE_DONT_CARE:
 
 			total_blocks += chunk_header->chunk_sz;
-			fb_data->sector += (chunk_data_sz/512);
+			fb_data->sector += (chunk_data_sz / sector_size);
 			DBG("bogus chunk size for chunktype DONT_CARE %d\n",
 									chunk);
 			out_blocks += chunk_data_sz;
@@ -473,7 +471,7 @@ static int flash_sparse_formatted_image(struct usb *usb)
 			}
 
 			total_blocks += chunk_header->chunk_sz;
-			fb_data->sector += (chunk_data_sz/512);
+			fb_data->sector += (chunk_data_sz / sector_size);
 			transfer_buffer += chunk_data_sz;
 			out_blocks += chunk_data_sz;
 
@@ -505,16 +503,6 @@ out:
 		fastboot_tx_status(response, strlen(response), usb);
 	}
 
-#ifdef DEBUG
-	ret = fastboot_free_mem(read_buffer);
-	if (ret != 0) {
-		strcpy(response, "INFO");
-		strcpy(response + strlen(response),
-				"Unable to free read_buffer");
-		fastboot_tx_status(response, strlen(response), usb);
-	}
-#endif
-
 	fastboot_tx_status(response, strlen(response), usb);
 
 	return ret;
@@ -525,6 +513,7 @@ static u32 fastboot_get_boot_ptn(boot_img_hdr *hdr, char *response,
 {
 	u32 hdr_sectors = 0;
 	int ret = -1;
+	u32 sector_size;
 
 	strcpy(response, "OKAY");
 
@@ -535,7 +524,8 @@ static u32 fastboot_get_boot_ptn(boot_img_hdr *hdr, char *response,
 	}
 
 	/* Read the boot image header */
-	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), 512);
+	sector_size = fb_data->storage_ops->get_sector_size();
+	hdr_sectors = CEIL(sizeof(struct boot_img_hdr), sector_size);
 	if (fb_data->storage_ops->read(fb_data->e->start,
 			hdr_sectors, (void *)hdr)) {
 		strcpy(response, "FAILCannot read hdr from boot partition");
@@ -595,7 +585,7 @@ static int fastboot_update_zimage(char *response, struct usb *usb)
 						sectors_per_page;
 
 	ramdisk_buffer = (u8 *)hdr;
-	ramdisk_buffer += hdr_sectors *512;
+	ramdisk_buffer += (hdr_sectors * 512);
 	if (fb_data->storage_ops->read(ramdisk_sector_start,
 		ramdisk_sectors, ramdisk_buffer)) {
 		sprintf(response, "FAILCannot read ramdisk from boot "
@@ -685,7 +675,7 @@ static int fastboot_update_ramdisk(char *response, struct usb *usb)
 				       sectors_per_page;
 
 	/* Make sure ramdisk image is not too large */
-	if ((fb_data->e->start + fb_data->e->length/512) <
+	if ((fb_data->e->start + fb_data->e->length / 512) <
 		(ramdisk_sector_start + ramdisk_sectors)) {
 		sprintf(response, "FAILNew Ramdisk too large");
 		ret = -1;
@@ -750,40 +740,9 @@ static int flash_non_sparse_formatted_image(struct usb *usb)
 		goto out;
 	}
 
-	#ifdef DEBUG
-	int sector_count;
-
-	read_buffer = fastboot_alloc_mem();
-	if (read_buffer == NULL) {
-		sprintf(response, "FAILINVALID read_buffer");
-		ret = -1;
-		goto out;
-	}
-
-	for (sector_count = 0; sector_count < num_sectors; sector_count++) {
-		/*read back the data and compare */
-		ret = fb_data->storage_ops->read(fb_data->sector +
-			sector_count, 1, read_buffer + (sector_count*512));
-		if (ret != 0) {
-			printf("mmc read failed\n");
-			strcpy(response, "FAILMMC read FAILED non sparse");
-			goto out;
-		}
-
-		if (memcmp(read_buffer + (sector_count*512),
-			transfer_buffer + (sector_count*512), 512)) {
-			printf("data mismatch sector %d\n",
-				fb_data->sector+sector_count);
-
-			strcpy(response, "INFO");
-			sprintf(response + strlen(response),
-					"data mismatch sector %d",
-					fb_data->sector+sector_count);
-			fastboot_tx_status(response, strlen(response), usb);
-		}
-	}
-	#endif
-
+#ifdef DEBUG
+	debug_compare(transfer_buffer, fb_data->sector, num_sectors, 512);
+#endif
 out:
 	ret = fastboot_free_mem(transfer_buffer);
 	if (ret != 0) {
@@ -792,16 +751,6 @@ out:
 				"Unable to free tranfer_buffer");
 		fastboot_tx_status(response, strlen(response), usb);
 	}
-
-#ifdef DEBUG
-	ret = fastboot_free_mem(read_buffer);
-	if (ret != 0) {
-		strcpy(response, "INFO");
-		strcpy(response + strlen(response),
-				"Unable to free read_buffer");
-		fastboot_tx_status(response, strlen(response), usb);
-	}
-#endif
 
 	fastboot_tx_status(response, strlen(response), usb);
 
