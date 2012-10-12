@@ -77,6 +77,6 @@
 
 #define CONFIG_OMAP5_ANDROID_CMD_LINE
 
-#define EXTENDED_CMDLINE        "earlyprintk " ;
+#define EXTENDED_CMDLINE        " earlyprintk " ;
 
 #endif /* _CONFIG_OMAPU5EVM_H_ */

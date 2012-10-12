@@ -77,7 +77,7 @@
 */
 #define CONFIG_OMAP5_ANDROID_CMD_LINE
 
-#define EXTENDED_CMDLINE        "earlyprintk ";
+#define EXTENDED_CMDLINE        " earlyprintk ";
 
 #define USER_FASTBOOT_RQ	(KEY_VOLUME_UP | KEY_VOLUME_DOWN)
 #endif

@@ -121,7 +121,7 @@ static void boot_settings(struct bootloader_ops *boot_ops, boot_img_hdr *hdr,
 	serial_len = sprintf(serial_str, " androidboot.serialno=%s",
 		boot_ops->proc_ops->proc_get_serial_num());
 
-	strcpy((char *)hdr->cmdline, temp_cmdline);
+	strcat((char *)hdr->cmdline, temp_cmdline);
 	if (sizeof(hdr->cmdline) >= (serial_len +
 		strlen((const char *)hdr->cmdline) + 1))
 		strcat((char *)hdr->cmdline, serial_str);
