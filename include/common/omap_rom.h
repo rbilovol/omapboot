@@ -244,7 +244,10 @@ struct usb_ioconf {
 };
 #endif
 
-int usb_open(struct usb *usb);
+#define INIT_USB	1
+#define NO_INIT_USB	0
+
+int usb_open(struct usb *usb, int init);
 void usb_init(struct usb *usb);
 void usb_close(struct usb *usb);
 

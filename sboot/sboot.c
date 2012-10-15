@@ -88,12 +88,11 @@ void sboot(u32 bootops_addr, int bootdevice)
 
 fastboot:
 	if (bootdevice != DEVICE_USB) {
-		ret = usb_open(&boot_ops->usb);
+		ret = usb_open(&boot_ops->usb, INIT_USB);
 		if (ret != 0) {
 			printf("\nusb_open failed\n");
 			goto fail;
 		}
-		usb_init(&boot_ops->usb);
 	}
 
 	do_fastboot(boot_ops);

@@ -124,12 +124,11 @@ void eboot(unsigned *info)
 	do_booti(boot_ops, "storage", NULL);
 
 fastboot:
-	ret = usb_open(&boot_ops->usb);
+	ret = usb_open(&boot_ops->usb, INIT_USB);
 	if (ret != 0) {
 		printf("\nusb_open failed\n");
 		goto fail;
 	}
-	usb_init(&boot_ops->usb);
 	do_fastboot(boot_ops);
 
 #endif

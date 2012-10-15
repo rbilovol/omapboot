@@ -29,52 +29,61 @@
 #include <aboot.h>
 #include <io.h>
 #include <omap_rom.h>
+#include <string.h>
 
 #if defined(CONFIG_IS_OMAP5)
-static struct usb_ioconf ioconf;
+static struct usb_ioconf ioconf_read;
+static struct usb_ioconf ioconf_write;
 volatile struct usb_trb trbout;
 #endif
 
-int usb_open(struct usb *usb)
+int usb_open(struct usb *usb, int init)
 {
 	struct per_handle *boot;
+	u16 options = 1;
 	int n;
 
 	/*clear global usb structure*/
 	memset(usb, 0, sizeof(*usb));
 
-	/* get peripheral device descriptor
-	that was used during rom usb boot */
-	n = rom_get_per_device(&boot);
-	if (n)
-		return n;
+	if (init) {
+		usb->dread.config_object = NULL;
+		usb->dread.options = &options;
+		usb->dread.device_type = DEVICE_USB;
 
-	if ((boot->device_type != DEVICE_USB) &&
-	    (boot->device_type != DEVICE_USBEXT))
-		/* set the default device to be USB */
-		boot->device_type = DEVICE_USB;
+		usb->dwrite.config_object = NULL;
+		usb->dwrite.options = &options;
+		usb->dwrite.device_type = DEVICE_USB;
+
+#if defined(CONFIG_IS_OMAP4)
+		usb->dread.xfer_mode = 1;
+		usb->dwrite.xfer_mode = 1;
+#endif
+
+		n = rom_get_device_data((void *)&usb->dread.device_data);
+		if (n)
+			return n;
+
+		usb->dwrite.device_data = usb->dread.device_data;
+	} else {
+		/* get peripheral device descriptor
+		that was used during rom usb boot */
+		n = rom_get_per_device(&boot);
+		if (n)
+			return n;
+
+		memcpy(&usb->dread, boot, sizeof(struct per_handle));
+		memcpy(&usb->dwrite, boot, sizeof(struct per_handle));
+	}
+
 
 	/* get rom usb driver */
 	n = rom_get_per_driver(&usb->io, boot->device_type);
 	if (n)
 		return n;
 
-#if defined(CONFIG_IS_OMAP4)
-	usb->dread.xfer_mode = boot->xfer_mode;
-	usb->dread.config_object = boot->config_object;
-#endif
-
-	usb->dread.options = boot->options;
-	usb->dread.device_type = boot->device_type;
-	usb->dread.device_data = boot->device_data;
-
-#if defined(CONFIG_IS_OMAP4)
-	usb->dwrite.xfer_mode = boot->xfer_mode;
-#endif
-	usb->dwrite.config_object = boot->config_object;
-	usb->dwrite.options = boot->options;
-	usb->dwrite.device_type = boot->device_type;
-	usb->dwrite.device_data = boot->device_data;
+	if (init)
+		usb_init(usb);
 
 	return 0;
 }
@@ -94,10 +103,11 @@ void usb_queue_read(struct usb *usb, void *data, unsigned len)
 
 #if defined(CONFIG_IS_OMAP5)
 	memset((void *)&trbout, 0, sizeof(trbout));
-	ioconf.mode         = 0;
-	ioconf.conf_timeout = 0;
-	ioconf.trb_pool     = (struct usb_trb *) &trbout;
-	usb->dread.config_object = &ioconf;
+
+	ioconf_read.mode         = 0;
+	ioconf_read.conf_timeout = 0;
+	ioconf_read.trb_pool     = (struct usb_trb *) &trbout;
+	usb->dread.config_object = &ioconf_read;
 
 	trbout.ptrlo    = (u32)data;
 	trbout.ptrhi    = 0;
@@ -145,6 +155,13 @@ static void rom_write_callback(struct per_handle *rh)
 void usb_queue_write(struct usb *usb, void *data, unsigned len)
 {
 	int n;
+
+#if defined(CONFIG_IS_OMAP5)
+	ioconf_write.mode         = 0;
+	ioconf_write.conf_timeout = 0;
+	ioconf_write.trb_pool     = 0;
+	usb->dwrite.config_object = &ioconf_write;
+#endif
 	usb->dwrite.data = data;
 	usb->dwrite.length = len;
 	usb->dwrite.status = -1;
