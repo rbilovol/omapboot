@@ -88,6 +88,7 @@ struct fastboot_data {
 	struct board_specific_functions *board_ops;
 	struct proc_specific_functions *proc_ops;
 	struct storage_specific_functions *storage_ops;
+	struct pmic_specific_functions *pmic_ops;
 	struct fastboot_ptentry *e;
 	struct fastboot_ptentry fb_ptable[MAX_PTN];
 	u32 getsize;

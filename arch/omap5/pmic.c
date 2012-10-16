@@ -142,7 +142,7 @@ static void palmas_read_reset_reason(void)
 	printf("PMIC reset reason SWOFF_STATUS = 0x%02x\n", ret);
 }
 
-int palmas_read_sw_revision(void)
+static int palmas_read_sw_revision(void)
 {
 	int ret;
 
@@ -175,6 +175,7 @@ static int palmas_configure_pwm_mode(void)
 struct pmic_specific_functions pmic_funcs = {
 	.pmic_configure_pwm_mode = palmas_configure_pwm_mode,
 	.pmic_read_reset_reason = palmas_read_reset_reason,
+	.pmic_read_sw_revision = palmas_read_sw_revision,
 };
 
 void *init_pmic_funcs(void)

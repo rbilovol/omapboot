@@ -235,8 +235,12 @@ static int fastboot_getvar(const char *rx_buffer, char *tx_buffer,
 		/* pmic OTP revision */
 		strcpy(tx_buffer, "INFO");
 		strcpy(tx_buffer + strlen(tx_buffer), "pmic otp rev: ");
-		sprintf(tx_buffer + strlen(tx_buffer), "%x",
-						palmas_read_sw_revision());
+		if (fb_data->pmic_ops->pmic_read_sw_revision)
+			sprintf(tx_buffer + strlen(tx_buffer), "%x",
+				fb_data->pmic_ops->pmic_read_sw_revision());
+		else
+			strcpy(tx_buffer, "not supported");
+
 		fastboot_tx_status(tx_buffer, strlen(tx_buffer), usb);
 
 		strcpy(tx_buffer, "OKAY");
@@ -916,6 +920,11 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 		return;
 	else
 		fb_data->storage_ops = boot_ops->storage_ops;
+
+	if (!boot_ops->pmic_ops)
+		return;
+	else
+		fb_data->pmic_ops = boot_ops->pmic_ops;
 
 	load_ptbl(fb_data->storage_ops, 1);
 

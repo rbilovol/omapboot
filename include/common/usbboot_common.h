@@ -102,6 +102,7 @@ struct board_specific_functions {
 struct pmic_specific_functions {
 	int (*pmic_configure_pwm_mode)(void);
 	void (*pmic_read_reset_reason)(void);
+	int (*pmic_read_sw_revision)(void);
 };
 
 struct bootloader_ops {
