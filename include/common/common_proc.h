@@ -38,7 +38,6 @@ void prcm_init(void);
 int pmic_enable(void);
 int pbias_config(void);
 int pmic_disable(void);
-char *pmic_get_silicon_revision(void);
 void setup_emif_config(void);
 
 #endif

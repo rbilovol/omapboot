@@ -97,7 +97,7 @@ static int palmas_read_silicon_revision(u32 *revision)
 	return ret;
 }
 
-char *pmic_get_silicon_revision(void)
+char *palmas_get_silicon_revision(void)
 {
 	u32 revision = 0;
 	static char rev_id[8];
@@ -176,6 +176,7 @@ struct pmic_specific_functions pmic_funcs = {
 	.pmic_configure_pwm_mode = palmas_configure_pwm_mode,
 	.pmic_read_reset_reason = palmas_read_reset_reason,
 	.pmic_read_sw_revision = palmas_read_sw_revision,
+	.pmic_get_silicon_revision = palmas_get_silicon_revision,
 };
 
 void *init_pmic_funcs(void)
