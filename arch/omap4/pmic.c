@@ -31,8 +31,37 @@
 #include <hw.h>
 #include <omap_rom.h>
 #include <string.h>
+#include <usbboot_common.h>
 
-int pmic_enable(void)
+#ifdef DEBUG
+#define DBG(x...) printf(x)
+#else
+#define DBG(x...)
+#endif /* DEBUG */
+
+static int phoenix_pbias_config(void)
+{
+	int ret = 0;
+	u32 value;
+
+	value = readl(CONTROL_PBIAS_LITE);
+
+	value = value | (1 << 22) | (1 << 26);
+
+	writel(value, CONTROL_PBIAS_LITE);
+
+	value = readl(CONTROL_CONF_MMC1);
+
+	value = value | (1 << 31) | (1 << 30) | (1 << 27) | (1 << 26) |
+								(1 << 25);
+
+	writel(value, CONTROL_CONF_MMC1);
+
+	printf("pbias-configured\n");
+	return ret;
+}
+
+static int phoenix_enable(void)
 {
 	int ret = 0;
 
@@ -47,9 +76,8 @@ int pmic_enable(void)
 	if (ret != 0) {
 		printf("\nFailed to init I2C-%d\n", i2c_id);
 		return ret;
-	} else {
-		printf("\nInitialized I2C-%d\n", i2c_id);
-	}
+	} else
+		DBG("\nInitialized I2C-%d\n", i2c_id);
 
 	reg_addr = 0x98; value = 0x01;
 	cmd = (reg_addr & 0xFF) | ((value & 0xFF) << 8);
@@ -88,32 +116,19 @@ int pmic_enable(void)
 	}
 
 	printf("pmic-enabled\n");
+	if (ret != 0) {
+		printf("could not enable the pmic\n");
+		return ret;
+	} else {
+		printf("Configure the pbias\n");
+		ret = phoenix_pbias_config();
+		return ret;
+	}
+
 	return ret;
 }
 
-int pbias_config(void)
-{
-	int ret = 0;
-	u32 value;
-
-	value = readl(CONTROL_PBIAS_LITE);
-
-	value = value | (1 << 22) | (1 << 26);
-
-	writel(value, CONTROL_PBIAS_LITE);
-
-	value = readl(CONTROL_CONF_MMC1);
-
-	value = value | (1 << 31) | (1 << 30) | (1 << 27) | (1 << 26) |
-								(1 << 25);
-
-	writel(value, CONTROL_CONF_MMC1);
-
-	printf("pbias-configured\n");
-	return ret;
-}
-
-int pmic_disable(void)
+static int phoenix_disable(void)
 {
 	int ret = 0;
 	hal_i2c i2c_id = HAL_I2C1;
@@ -127,4 +142,14 @@ int pmic_disable(void)
 
 	printf("pmic-disabled\n");
 	return ret;
+}
+
+struct pmic_specific_functions pmic_funcs = {
+	.pmic_enable = phoenix_enable,
+	.pmic_disable = phoenix_disable,
+};
+
+void *init_pmic_funcs(void)
+{
+	return &pmic_funcs;
 }

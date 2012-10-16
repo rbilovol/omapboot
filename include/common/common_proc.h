@@ -35,9 +35,6 @@ void prcm_init(void);
 void gpmc_init(void);
 int mmc_init(u8 device);
 void prcm_init(void);
-int pmic_enable(void);
-int pbias_config(void);
-int pmic_disable(void);
 void setup_emif_config(void);
 
 #endif

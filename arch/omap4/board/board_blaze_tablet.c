@@ -371,32 +371,6 @@ static void blaze_tablet_prcm_init(void)
 	prcm_init();
 }
 
-static int blaze_tablet_pmic_enable(void)
-{
-	int ret = 0;
-
-	ret = pmic_enable();
-	if (ret != 0) {
-		printf("could not enable the pmic\n");
-		return ret;
-	} else {
-		printf("Configure the pbias\n");
-		ret = pbias_config();
-		return ret;
-	}
-}
-
-static int blaze_tablet_pmic_disable(void)
-{
-	int ret = 0;
-
-	ret = pmic_disable();
-	if (ret != 0)
-		printf("Unable to disable the pmic\n");
-
-	return ret;
-}
-
 static int blaze_tablet_storage_init(u8 dev,
 				struct storage_specific_functions *storage_ops)
 {
@@ -456,8 +430,6 @@ static struct board_specific_functions blaze_tablet_funcs = {
 	.board_gpmc_init = blaze_tablet_gpmc_init,
 	.board_prcm_init = blaze_tablet_prcm_init,
 	.board_storage_init = blaze_tablet_storage_init,
-	.board_pmic_enable = blaze_tablet_pmic_enable,
-	.board_pmic_disable = blaze_tablet_pmic_disable,
 	.board_fastboot_size_request = usb_read
 };
 

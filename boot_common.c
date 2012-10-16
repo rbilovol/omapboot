@@ -124,8 +124,8 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 	printf("%s\n", ABOOT_VERSION);
 	printf("Build Info: "__DATE__ " - " __TIME__ "\n");
 
-	if (boot_ops->board_ops->board_pmic_enable)
-		boot_ops->board_ops->board_pmic_enable();
+	if (boot_ops->pmic_ops->pmic_enable)
+		boot_ops->pmic_ops->pmic_enable();
 
 	if (boot_ops->pmic_ops->pmic_read_reset_reason)
 		boot_ops->pmic_ops->pmic_read_reset_reason();

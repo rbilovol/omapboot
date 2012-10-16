@@ -388,32 +388,6 @@ static void panda_prcm_init(void)
 	prcm_init();
 }
 
-static int panda_pmic_enable(void)
-{
-	int ret = 0;
-
-	ret = pmic_enable();
-	if (ret != 0) {
-		printf("could not enable the pmic\n");
-		return ret;
-	} else {
-		printf("Configure the pbias\n");
-		ret = pbias_config();
-		return ret;
-	}
-}
-
-static int panda_pmic_disable(void)
-{
-	int ret = 0;
-
-	ret = pmic_disable();
-	if (ret != 0)
-		printf("Unable to disable the pmic\n");
-
-	return ret;
-}
-
 static struct board_specific_functions panda_funcs = {
 	.board_get_flash_slot = panda_get_flash_slot,
 	.board_set_flash_slot = panda_set_flash_slot,
@@ -425,8 +399,6 @@ static struct board_specific_functions panda_funcs = {
 	.board_gpmc_init = panda_gpmc_init,
 	.board_prcm_init = panda_prcm_init,
 	.board_storage_init = panda_storage_init,
-	.board_pmic_enable = panda_pmic_enable,
-	.board_pmic_disable = panda_pmic_disable,
 	.board_fastboot_size_request = usb_read
 };
 

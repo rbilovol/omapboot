@@ -92,14 +92,14 @@ struct board_specific_functions {
 	struct storage_specific_functions *(*board_set_flash_slot)(u8 dev,
 				struct proc_specific_functions *proc_ops,
 				struct storage_specific_functions *storage_ops);
-	int (*board_pmic_enable)(void);
-	int (*board_pmic_disable)(void);
 	u32 (*board_get_board_rev)(void);
 	int (*board_fastboot_size_request)(struct usb *usb,
 						void *data, unsigned len);
 };
 
 struct pmic_specific_functions {
+	int (*pmic_enable)(void);
+	int (*pmic_disable)(void);
 	int (*pmic_configure_pwm_mode)(void);
 	void (*pmic_read_reset_reason)(void);
 	int (*pmic_read_sw_revision)(void);
