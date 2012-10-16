@@ -131,18 +131,15 @@ char *pmic_get_silicon_revision(void)
 	return rev_id;
 }
 
-int palmas_read_reset_reason(u32 *reason)
+static void palmas_read_reset_reason(void)
 {
 	int ret;
 
+	printf("OMAP reset reason PRM_RSTST = 0x%04x\n", readl(PRM_RSTST));
+
 	/* SWOFF_STATUS: qualify which switch off events generate a HW RESET */
 	ret = pmic_reg_access(HAL_I2C1, 0x48, 0xB1, 0, 1);
-	if (ret != 0) {
-		*reason = ret;
-		return 0;
-	}
-
-	return ret;
+	printf("PMIC reset reason SWOFF_STATUS = 0x%02x\n", ret);
 }
 
 int palmas_read_sw_revision(void)
@@ -177,6 +174,7 @@ static int palmas_configure_pwm_mode(void)
 
 struct pmic_specific_functions pmic_funcs = {
 	.pmic_configure_pwm_mode = palmas_configure_pwm_mode,
+	.pmic_read_reset_reason = palmas_read_reset_reason,
 };
 
 void *init_pmic_funcs(void)

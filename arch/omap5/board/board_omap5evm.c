@@ -385,22 +385,6 @@ static void omap5evm_prcm_init(void)
 	prcm_init();
 }
 
-static int omap5evm_pmic_reset_reason(void)
-{
-	int ret = 0;
-	u32 pmic_reason;
-
-	printf("OMAP reset reason PRM_RSTST = 0x%04x\n", readl(PRM_RSTST));
-
-	ret = palmas_read_reset_reason(&pmic_reason);
-	if (ret != 0)
-		printf("unable to read palmas reset reason\n");
-
-	printf("PMIC reset reason SWOFF_STATUS = 0x%02x\n", pmic_reason);
-
-	return ret;
-}
-
 static int omap5evm_storage_init(u8 dev,
 				struct storage_specific_functions *storage_ops)
 {
@@ -525,7 +509,6 @@ static struct board_specific_functions omap5evm_funcs = {
 	.board_prcm_init = omap5evm_prcm_init,
 	.board_storage_init = omap5evm_storage_init,
 	.board_get_board_rev = omap5evm_get_board_rev,
-	.board_reset_reason = omap5evm_pmic_reset_reason,
 };
 
 void* init_board_funcs(void)

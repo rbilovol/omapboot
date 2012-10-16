@@ -95,13 +95,13 @@ struct board_specific_functions {
 	int (*board_pmic_enable)(void);
 	int (*board_pmic_disable)(void);
 	u32 (*board_get_board_rev)(void);
-	int (*board_reset_reason)(void);
 	int (*board_fastboot_size_request)(struct usb *usb,
 						void *data, unsigned len);
 };
 
 struct pmic_specific_functions {
 	int (*pmic_configure_pwm_mode)(void);
+	void (*pmic_read_reset_reason)(void);
 };
 
 struct bootloader_ops {
