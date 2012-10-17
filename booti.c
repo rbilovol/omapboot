@@ -219,7 +219,7 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 		} else
 			bootimg_print_image_hdr(hdr);
 
-		ret = memcmp(hdr->magic, "ANDROID!", 8);
+		ret = memcmp(hdr->magic, BOOT_MAGIC, 8);
 		if (ret != 0) {
 			printf("booti: bad boot image magic\n");
 			goto fail;
@@ -268,7 +268,7 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 		DBG("user wants to boot an image downloaded using "
 							"fastboot\n");
 
-		ret = memcmp(hdr->magic, "ANDROID!", 8);
+		ret = memcmp(hdr->magic, BOOT_MAGIC, 8);
 		if (ret != 0) {
 			printf("booti: bad boot image magic\n");
 			goto fail;

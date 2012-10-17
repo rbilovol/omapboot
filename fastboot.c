@@ -562,7 +562,7 @@ static u32 fastboot_get_boot_ptn(boot_img_hdr *hdr, char *response,
 		goto out;
 	}
 
-	if (memcmp(hdr->magic, "ANDROID!", 8) != 0) {
+	if (memcmp(hdr->magic, BOOT_MAGIC, 8) != 0) {
 		printf("booti: bad boot image magic\n");
 		strcpy(response, "FAILBoot partition not initialized");
 		goto out;
