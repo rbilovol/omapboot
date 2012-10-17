@@ -31,7 +31,7 @@
 
 #include <types.h>
 #include <version.h>
-#include <omap_rom.h>
+#include <rom_usb.h>
 
 #define CEIL(a, b) (((a) / (b)) + ((a % b) > 0 ? 1 : 0))
 

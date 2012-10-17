@@ -29,10 +29,16 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ROM_ROM_H_
-#define _ROM_ROM_H_
+#ifndef _OMAP_ROM_H_
+#define _OMAP_ROM_H_
+
+#include <rom_usb.h>
+#include <rom_mmc.h>
+#include <rom_sata.h>
 
 extern u32 public_rom_base;
+
+#define API(n) ((void *) (*((u32 *) (n))))
 
 /* public api */
 #define PUBLIC_API_BASE_4430		(0x28400)
@@ -61,33 +67,7 @@ extern u32 public_rom_base;
 #define PUBLIC_HAL_CM_DISABLEMODULECLOCKS_OFFSET	(0xA4)
 #define PUBLIC_HAL_CTRL_CONFIGUREPADS_OFFSET		(0xA8)
 
-#define DEVICE_NULL	0x40
-#define DEVICE_UART1	0x41
-#define DEVICE_UART2	0x42
-#define DEVICE_UART3	0x43
-#define DEVICE_UART4	0x44
-#define DEVICE_USB	0x45
-#define DEVICE_USBEXT	0x46
-
-#define DEVICE_TYPE_NULL	0x00
-#define DEVICE_TYPE_XIP		0x01
-#define DEVICE_TYPE_XIP_WAIT	0x02
-#define DEVICE_TYPE_NAND	0x03
-#define DEVICE_TYPE_ONENAND	0x04
-#define DEVICE_SDCARD		0x05
-#if defined CONFIG_IS_OMAP4
-#define DEVICE_EMMC		0x06
-#define DEVICE_EMMC_MUX5	0x07
-#define DEVICE_SATA		DEVICE_TYPE_NULL
-#elif defined CONFIG_IS_OMAP5
-#define DEVICE_EMMC_BOOT	0x06
-#define DEVICE_EMMC		0x07
-#define DEVICE_SATA		0x09
-#endif
-
-#define XFER_MODE_CPU 0
-#define XFER_MODE_DMA 1
-
+/* rom status messages */
 #define STATUS_OKAY		0
 #define STATUS_FAILED		1
 #define STATUS_TIMEOUT		2
@@ -96,6 +76,7 @@ extern u32 public_rom_base;
 #define STATUS_NO_MEMORY	5
 #define STATUS_INVALID_PTR	6
 
+/* rom hal module lists */
 typedef enum {
 	HAL_MODULE_NULL = (0x00),
 	HAL_MODULE_MMC,
@@ -110,139 +91,6 @@ typedef enum {
 
 } hal_module;
 
-/* Memory ROM interface */
-struct read_desc {
-	u32 sector_start;
-	u32 sector_count;
-	void *destination;
-};
-
-struct mem_device {
-	u32 initialized;
-	u8 device_type;
-	u8 trials_count;
-	u32 xip_device;
-	u16 search_size;
-	u32 base_address;
-	u16 hs_toc_mask;
-	u16 gp_toc_mask;
-	void *device_data;
-	u16 *boot_options;
-};
-
-struct mem_driver {
-	int (*init)(struct mem_device *md);
-	int (*read)(struct mem_device *md, struct read_desc *rd);
-	int (*configure)(struct mem_device *md, void *config);
-};
-
-/* MMC */
-struct mmc_config {
-	u32 configid;
-	u32 value;
-};
-
-struct mmc {
-	struct mem_device dread;
-	struct mem_driver *io;
-};
-
-/* mmc device data */
-#define MMCSD_TYPE_MMC			(1)
-#define MMCSD_TYPE_SD			(2)
-#define MMCSD_MODE_RAW			(1)
-#define MMCSD_MODE_FAT			(2)
-#define MMCSD_ADDRESSING_BYTE		(1)
-#define MMCSD_ADDRESSING_SECTOR		(2)
-
-/* This is an approximation since all the fields are not defined here */
-#define SIZEOF_MMC_DEVICE_DATA		2500
-struct mmc_devicedata {
-	u32 moduleid;
-	u32 type;      /* memory type (MMC/SD)  */
-	u32 mode;      /* opmode (BOOT/RAW/FAT) */
-	u32 copy;
-	u32 version;
-	u32 addressing; /* sector or byte addressed */
-	u32 buswidth;
-	u32 size;
-}; /* did not include the remaining fields */
-
-/* Peripheral ROM interface */
-struct per_handle {
-	void *config_object;
-	void (*callback)(struct per_handle *rh);
-	void *data;
-	u32 length;
-	u16 *options;
-#if defined(CONFIG_IS_OMAP4)
-	u32 xfer_mode;
-#endif
-	u32 device_type;
-	volatile u32 status;
-	u16 hs_toc_mask;
-	u16 gp_toc_mask;
-	u32 *device_data;
-};
-
-struct per_driver {
-	int (*init)(struct per_handle *rh);
-	int (*read)(struct per_handle *rh);
-	int (*write)(struct per_handle *rh);
-	int (*close)(struct per_handle *rh);
-	int (*config)(struct per_handle *rh, void *x);
-};
-
-#define USB_SETCONFIGDESC_ATTRIBUTES      (0)
-#define USB_SETCONFIGDESC_MAXPOWER        (1)
-#define USB_SETSUSPEND_CALLBACK           (2)
-struct per_usb_config {
-	u32 configid;
-	u32 value;
-};
-
-#define API(n) ((void *) (*((u32 *) (n))))
-/* ROM API End */
-
-struct usb {
-	struct per_handle dread;
-	struct per_handle dwrite;
-	struct per_driver *io;
-};
-
-#if defined(CONFIG_IS_OMAP5)
-
-#define HAL_USB_TRB_HWO_HW_OWNED		(1)
-#define HAL_USB_TRB_CHN_NO_CHAIN		(0)
-#define HAL_USB_TRB_LST_LAST			(1)
-#define HAL_USB_TRB_CSP_NO_CONT_SHORT_PACKET	(0)
-#define HAL_USB_TRB_TRBCTL_TYPE_NORMAL		(1)
-
-struct usb_trb {
-	u32 ptrlo;       /* buffer ptr low */
-	u32 ptrhi;       /* buffer ptr high */
-	u32 bufsiz:24;   /* buffer size */
-	u32 pcm1:2;      /* packet count */
-	u32 rsvd1:2;     /* reserved */
-	u32 trbsts:4;    /* trb status */
-	u32 hwo:1;       /* hardware owned */
-	u32 lst:1;       /* last trb */
-	u32 chn:1;       /* chained */
-	u32 csp:1;       /* continue on short pkt */
-	u32 trbctl:6;    /* trb control */
-	u32 ispimi:1;    /* interrupt on short pkt */
-	u32 ioc:1;       /* interrupt on completion */
-	u32 rsvd3:2;     /* reserved */
-	u32 streamid:16; /* streamid */
-	u32 rsvd2:2;     /* reserved */
-} __attribute__ ((packed));
-
-struct usb_ioconf {
-	u32 mode;                  /* Data transfer mode (deprecated) */
-	u32 conf_timeout;          /* Redefines the USB timeout       */
-	struct usb_trb *trb_pool;  /* User defined Trb pool           */
-};
-#endif
 
 #define INIT_USB	1
 #define NO_INIT_USB	0

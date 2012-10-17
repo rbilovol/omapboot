@@ -36,31 +36,6 @@
 #include <string.h>
 #include <hw.h>
 
-/* TODO: Query real device size and sector size
- * 32GB in number of sectors
- * If we write 0x4000000, for some reason, the partitions
- * are not being recognized.
- * But if we take the 0x3b70000 (which is what we get when
- * we query EMMC of size 32GB), then all partitions are
- * being recognized.
- */
-#define SATA_SIZE_IN_SECTORS	0x3b70000
-#define SATA_SECTOR_SZ		512
-
-#define SATA_RW_SECTOR_LIMIT	256
-
-struct sata {
-	struct mem_device dread;
-	struct mem_driver *io;
-};
-
-struct sata_devicedata {
-	u32 mode;
-	u32 copy;
-	u32 size;
-	u32 rsv[509];
-};
-
 /* SATA driver specific data */
 struct sata_storage_data {
 	u8 storage_device;
