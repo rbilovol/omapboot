@@ -31,6 +31,46 @@
 
 #include <rom_peripheral.h>
 
+#define LC_STRING_DESC_MAX_LENGTH	(48)
+#define HAL_USB_STRING_DESC		(3)
+
+/* USB String descriptor */
+struct usb_string_desc {
+	u8  blength;
+	u8  bdescriptortype;
+	u8  bstring[LC_STRING_DESC_MAX_LENGTH];
+} __attribute__ ((packed));
+
+/* USB Custom descriptor */
+struct usb_custom_desc {
+	/* Device descriptor */
+	struct {
+		u8  bdeviceclass;	/* class */
+		u8  bdevicesubclass;	/* subclass */
+		u8  bdeviceprotocol;	/* protocol */
+		u16 idvendor;		/* vendor id */
+		u16 idproduct;		/* product id */
+		u16 bcddevice;		/* bcddevice */
+		u8  imanufacturer;	/* imanufacturer(defined by rom apis) */
+		u8  iproduct;		/* iproduct(defined by rom apis) */
+		u8  iserialnumber;	/* iserialnumber(defined by rom apis) */
+	} __attribute__ ((packed));
+
+	/* Configuration descriptor */
+	struct {
+		u8 iConfiguration;	/*iconfiguration(defined by rom apis) */
+		u8 binterfaceclass;	/* binterfaceclass */
+		u8 binterfacesubclass;	/* binterfacesubclass */
+		u8 binterfaceprotocol;	/* binterfaceprotocol */
+		u8 iinterface;		/* iinterface(defined by rom apis) */
+		u8 reserved[3];		/* reserved */
+	} __attribute__ ((packed));
+
+	/* String descriptors */
+	struct usb_string_desc *str[5];
+
+} __attribute__ ((packed));
+
 struct per_usb_config {
 	u32 configid;
 	u32 value;
@@ -76,6 +116,7 @@ struct usb_ioconf {
 	u32 mode;                  /* Data transfer mode (deprecated) */
 	u32 conf_timeout;          /* Redefines the USB timeout       */
 	struct usb_trb *trb_pool;  /* User defined Trb pool           */
+	struct usb_custom_desc *usr_desc; /* User defined usb descriptors */
 };
 #endif
 

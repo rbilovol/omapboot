@@ -30,11 +30,103 @@
 #include <io.h>
 #include <omap_rom.h>
 #include <string.h>
+#include <usbboot_common.h>
+#if defined(CONFIG_IS_OMAP5)
+#include <rom_usb_descriptors.h>
+#endif
+
+static struct proc_specific_functions *local_proc_ops;
 
 #if defined(CONFIG_IS_OMAP5)
 static struct usb_ioconf ioconf_read;
 static struct usb_ioconf ioconf_write;
 volatile struct usb_trb trbout;
+
+static struct usb_string_desc usb_fastboot_manufacturer_string_desc;
+static struct usb_string_desc usb_fastboot_product_string_desc;
+static struct usb_string_desc usb_fastboot_serial_string_desc;
+static struct usb_string_desc usb_fastboot_configuration_string_desc;
+static struct usb_string_desc usb_fastboot_interface_string_desc;
+
+static struct usb_custom_desc usb_fastboot_desc = {
+	{
+		/* Device descriptor */
+		ROM_USB_DESCRIPTOR_CLASS,		/* class */
+		ROM_USB_DESCRIPTOR_SUBCLASS,		/* subclass */
+		ROM_USB_DESCRIPTOR_PROTOCOL,		/* protocol */
+		VENDOR_ID,				/* vendor id */
+		PRODUCT_ID,				/* product id */
+		ROM_USB_DESCRIPTOR_BCDDEVICE,		/* bcddevice */
+		ROM_USB_DESCRIPTOR_MANUFACTURER,	/* imanufacturer */
+		ROM_USB_DESCRIPTOR_PRODUCT,		/* iproduct */
+		ROM_USB_DESCRIPTOR_SERIAL,		/* iserialnumber */
+	},
+	{
+		/* Configuration descriptor */
+		ROM_USB_DESCRIPTOR_CONFIGURATION,	/* iconfiguration */
+		ROM_USB_DESCRIPTOR_INTERFACE_CLASS,	/* binterfaceclass */
+		ROM_USB_DESCRIPTOR_INTERFACE_SUBCLASS,	/* binterfacesubclass */
+		ROM_USB_DESCRIPTOR_INTERFACE_PROTOCOL,	/* binterfaceprotocol */
+		ROM_USB_DESCRIPTOR_INTERFACE,		/* iinterface */
+		{0x00, 0x00, 0x00}			/* reserved */
+	},
+	{
+		/* String descriptors */
+		&usb_fastboot_manufacturer_string_desc,
+		&usb_fastboot_product_string_desc,
+		&usb_fastboot_serial_string_desc,
+		&usb_fastboot_configuration_string_desc,
+		&usb_fastboot_interface_string_desc
+	}
+};
+
+static void usb_desc_configure(u8 desc_string)
+{
+	char str[48];
+
+	switch (desc_string) {
+	case ROM_USB_DESCRIPTOR_MANUFACTURER:
+		usb_fastboot_manufacturer_string_desc.blength =
+						strlen(MANUFACTURER_NAME);
+		usb_fastboot_manufacturer_string_desc.bdescriptortype =
+							HAL_USB_STRING_DESC;
+		sprintf((char *) usb_fastboot_manufacturer_string_desc.bstring,
+							MANUFACTURER_NAME);
+		break;
+	case ROM_USB_DESCRIPTOR_PRODUCT:
+		usb_fastboot_product_string_desc.blength = strlen(PRODUCT_NAME);
+		usb_fastboot_product_string_desc.bdescriptortype =
+							HAL_USB_STRING_DESC;
+		sprintf((char *) usb_fastboot_product_string_desc.bstring,
+								PRODUCT_NAME);
+		break;
+	case ROM_USB_DESCRIPTOR_SERIAL:
+		strcpy(str, local_proc_ops->proc_get_serial_num());
+		usb_fastboot_serial_string_desc.blength = strlen(str);
+		usb_fastboot_serial_string_desc.bdescriptortype =
+							HAL_USB_STRING_DESC;
+		sprintf((char *)usb_fastboot_serial_string_desc.bstring, str);
+		break;
+	case ROM_USB_DESCRIPTOR_CONFIGURATION:
+		strcpy(str, "Android Fastboot");
+		usb_fastboot_configuration_string_desc.blength = strlen(str);
+		usb_fastboot_configuration_string_desc.bdescriptortype =
+							HAL_USB_STRING_DESC;
+		sprintf((char *) usb_fastboot_configuration_string_desc.bstring,
+									str);
+		break;
+	case ROM_USB_DESCRIPTOR_INTERFACE:
+		strcpy(str, "Android Fastboot");
+		usb_fastboot_interface_string_desc.blength = strlen(str);
+		usb_fastboot_interface_string_desc.bdescriptortype =
+							HAL_USB_STRING_DESC;
+		sprintf((char *) usb_fastboot_interface_string_desc.bstring,
+									str);
+		break;
+	}
+
+	return;
+}
 #endif
 
 int usb_open(struct usb *usb, int init,
@@ -46,6 +138,8 @@ int usb_open(struct usb *usb, int init,
 
 	/*clear global usb structure*/
 	memset(usb, 0, sizeof(*usb));
+
+	local_proc_ops = proc_ops;
 
 	if (init) {
 		usb->dread.config_object = NULL;
@@ -88,7 +182,6 @@ int usb_open(struct usb *usb, int init,
 
 	return 0;
 }
-
 
 static struct usb *local_read_usb;
 static void rom_read_callback(struct per_handle *rh)
