@@ -56,8 +56,8 @@ int usb_open(struct usb *usb, int init)
 		usb->dwrite.device_type = DEVICE_USB;
 
 #if defined(CONFIG_IS_OMAP4)
-		usb->dread.xfer_mode = 1;
-		usb->dwrite.xfer_mode = 1;
+		usb->dread.xfer_mode = XFER_MODE_DMA;
+		usb->dwrite.xfer_mode = XFER_MODE_DMA;
 #endif
 
 		n = rom_get_device_data((void *)&usb->dread.device_data);
@@ -124,7 +124,7 @@ void usb_queue_read(struct usb *usb, void *data, unsigned len)
 	usb->dread.status = -1;
 	usb->dread.device_type = DEVICE_USB;
 #if defined(CONFIG_IS_OMAP4)
-	usb->dread.xfer_mode = 1;
+	usb->dread.xfer_mode = XFER_MODE_DMA;
 #endif
 	usb->dread.callback = rom_read_callback;
 	local_read_usb = usb;
@@ -166,7 +166,7 @@ void usb_queue_write(struct usb *usb, void *data, unsigned len)
 	usb->dwrite.length = len;
 	usb->dwrite.status = -1;
 #if defined(CONFIG_IS_OMAP4)
-	usb->dwrite.xfer_mode = 1;
+	usb->dwrite.xfer_mode = XFER_MODE_DMA;
 #endif
 	usb->dwrite.device_type = DEVICE_USB;
 	usb->dwrite.callback = rom_write_callback;
