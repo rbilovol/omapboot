@@ -51,7 +51,7 @@ typedef struct chunk_header {
 	u16	chunk_type;	/* 0xCAC1 -> raw; 0xCAC2 -> fill;
 				0xCAC3 -> don't care */
 	u16	reserved1;
-	u16	chunk_sz;	/* in blocks in output image */
+	u32	chunk_sz;	/* in blocks in output image */
 	u32	total_sz;	/* in bytes of chunk input file
 				including chunk header and data */
 } chunk_header_t;
