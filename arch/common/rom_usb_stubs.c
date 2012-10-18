@@ -31,9 +31,10 @@
 #include <omap_rom.h>
 #include <string.h>
 
-void usb_queue_read(struct usb *usb, void *data, unsigned len)
+int usb_queue_read(struct usb *usb, void *data, unsigned len)
 {
 	printf("ERROR! this %s should never be called\n", __func__);
+	return 0;
 }
 
 int usb_wait_read(struct usb *usb)
@@ -48,9 +49,10 @@ int usb_read(struct usb *usb, void *data, unsigned len)
 	return 0;
 }
 
-void usb_queue_write(struct usb *usb, void *data, unsigned len)
+int usb_queue_write(struct usb *usb, void *data, unsigned len)
 {
 	printf("ERROR! this %s should never be called\n", __func__);
+	return 0;
 }
 
 int usb_wait_write(struct usb *usb)

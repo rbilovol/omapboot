@@ -101,10 +101,10 @@ int usb_open(struct usb *usb, int init,
 void usb_init(struct usb *usb);
 void usb_close(struct usb *usb);
 
-void usb_queue_read(struct usb *usb, void *data, unsigned len);
+int usb_queue_read(struct usb *usb, void *data, unsigned len);
 int usb_wait_read(struct usb *usb);
 
-void usb_queue_write(struct usb *usb, void *data, unsigned len);
+int usb_queue_write(struct usb *usb, void *data, unsigned len);
 int usb_wait_write(struct usb *usb);
 
 int usb_read(struct usb *usb, void *data, unsigned len);

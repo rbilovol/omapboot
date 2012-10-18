@@ -191,7 +191,7 @@ static void rom_read_callback(struct per_handle *rh)
 	return;
 }
 
-void usb_queue_read(struct usb *usb, void *data, unsigned len)
+int usb_queue_read(struct usb *usb, void *data, unsigned len)
 {
 	int n;
 
@@ -226,6 +226,8 @@ void usb_queue_read(struct usb *usb, void *data, unsigned len)
 	n = usb->io->read(&usb->dread);
 	if (n)
 		usb->dread.status = n;
+
+	return n;
 }
 
 int usb_wait_read(struct usb *usb)
@@ -246,7 +248,7 @@ static void rom_write_callback(struct per_handle *rh)
 	return;
 }
 
-void usb_queue_write(struct usb *usb, void *data, unsigned len)
+int usb_queue_write(struct usb *usb, void *data, unsigned len)
 {
 	int n;
 
@@ -268,6 +270,8 @@ void usb_queue_write(struct usb *usb, void *data, unsigned len)
 	n = usb->io->write(&usb->dwrite);
 	if (n)
 		usb->dwrite.status = n;
+
+	return n;
 }
 
 int usb_wait_write(struct usb *usb)
@@ -290,10 +294,15 @@ int usb_read(struct usb *usb, void *data, unsigned len)
 
 	while (len > 0) {
 		xfer = (len > USB_MAX_IO) ? USB_MAX_IO : len;
-		usb_queue_read(usb, x, xfer);
+
+		n = usb_queue_read(usb, x, xfer);
+		if (n)
+			return n;
+
 		n = usb_wait_read(usb);
 		if (n)
 			return n;
+
 		x += xfer;
 		len -= xfer;
 	}
@@ -302,7 +311,12 @@ int usb_read(struct usb *usb, void *data, unsigned len)
 
 int usb_write(struct usb *usb, void *data, unsigned len)
 {
-	usb_queue_write(usb, data, len);
+	int n;
+
+	n = usb_queue_write(usb, data, len);
+	if (n)
+		return n;
+
 	return usb_wait_write(usb);
 }
 
