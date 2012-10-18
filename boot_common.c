@@ -81,6 +81,7 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 	boot_ops->board_ops = init_board_funcs();
 	boot_ops->proc_ops = init_processor_id_funcs();
 	boot_ops->storage_ops = NULL;
+	boot_ops->pmic_ops = init_pmic_funcs();
 
 	if (boot_ops->proc_ops->proc_check_lpddr2_temp)
 		boot_ops->proc_ops->proc_check_lpddr2_temp();
@@ -129,8 +130,11 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 	if (boot_ops->board_ops->board_reset_reason)
 		boot_ops->board_ops->board_reset_reason();
 
-	if (boot_ops->board_ops->board_configure_pwm_mode)
-		boot_ops->board_ops->board_configure_pwm_mode();
+	if (boot_ops->pmic_ops->pmic_configure_pwm_mode) {
+		ret = boot_ops->pmic_ops->pmic_configure_pwm_mode();
+		if (ret != 0)
+			printf("unable to configure PWM mode\n");
+	}
 
 	if (!boot_ops->board_ops->board_get_flash_slot ||
 			!boot_ops->board_ops->board_set_flash_slot)

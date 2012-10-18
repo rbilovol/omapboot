@@ -401,17 +401,6 @@ static int omap5evm_pmic_reset_reason(void)
 	return ret;
 }
 
-static int omap5evm_configure_pwm_mode(void)
-{
-	int ret = 0;
-
-	ret = palmas_configure_pwm_mode();
-	if (ret != 0)
-		printf("unable to configure PWM mode\n");
-
-	return ret;
-}
-
 static int omap5evm_storage_init(u8 dev,
 				struct storage_specific_functions *storage_ops)
 {
@@ -535,7 +524,6 @@ static struct board_specific_functions omap5evm_funcs = {
 	.board_scale_vcores = omap5evm_scale_cores,
 	.board_prcm_init = omap5evm_prcm_init,
 	.board_storage_init = omap5evm_storage_init,
-	.board_configure_pwm_mode = omap5evm_configure_pwm_mode,
 	.board_get_board_rev = omap5evm_get_board_rev,
 	.board_reset_reason = omap5evm_pmic_reset_reason,
 };

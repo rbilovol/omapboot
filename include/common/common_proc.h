@@ -41,7 +41,6 @@ int pmic_disable(void);
 int palmas_read_sw_revision(void);
 int palmas_read_reset_reason(u32 *reason);
 char *pmic_get_silicon_revision(void);
-int palmas_configure_pwm_mode(void);
 void setup_emif_config(void);
 
 #endif

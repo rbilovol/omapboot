@@ -32,6 +32,7 @@
 #include <omap_rom.h>
 #include <common_proc.h>
 #include <string.h>
+#include <usbboot_common.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)
@@ -155,7 +156,7 @@ int palmas_read_sw_revision(void)
 	return 0;
 }
 
-int palmas_configure_pwm_mode(void)
+static int palmas_configure_pwm_mode(void)
 {
 	int ret;
 
@@ -172,4 +173,13 @@ int palmas_configure_pwm_mode(void)
 	}
 
 	return ret;
+}
+
+struct pmic_specific_functions pmic_funcs = {
+	.pmic_configure_pwm_mode = palmas_configure_pwm_mode,
+};
+
+void *init_pmic_funcs(void)
+{
+	return &pmic_funcs;
 }
