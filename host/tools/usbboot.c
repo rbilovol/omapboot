@@ -256,8 +256,11 @@ int main(int argc, char **argv)
 					return -1;
 
 #ifdef TWO_STAGE_OMAPBOOT
-				sz2 = SECOND_STAGE_OBJECT_SIZE;
-				data2 = load_file("sboot.bin", &sz2);
+				fprintf(stderr, "using built-in sboot of size "
+						"%d-KB\n", sboot_size/1024);
+				data2 = sboot_data;
+				sz2 = sboot_size;
+
 				if (data2 == 0) {
 					usage();
 

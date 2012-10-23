@@ -43,6 +43,9 @@ extern unsigned aboot_size;
 extern unsigned char iboot_data[];
 extern unsigned iboot_size;
 
+extern unsigned char sboot_data[];
+extern unsigned sboot_size;
+
 typedef struct tocentry {
 	unsigned offset;
 	unsigned length;

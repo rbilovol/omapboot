@@ -278,6 +278,14 @@ $(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	$(QUIET)./$(OUT)/bin2c iboot < $@ > $(OUT)/secondstage.c
 	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/secondstage.c
 
+ifeq ($(DUAL_STAGE), 1)
+$(OUT_HOST_OBJ)/sboot-bin.o: $(OUT)/sboot.bin $(OUT)/bin2c
+	@echo generate $@
+	$(QUIET)cat $(OUT)/sboot.bin >> $@
+	$(QUIET)$(OUT)/bin2c sboot < $@ > $(OUT)/sboot-bin.c
+	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/sboot-bin.c
+endif
+
 _clean_generic::
 	$(QUIET)rm -f include/common/config.h
 	$(QUIET)rm -f include/common/version.h
