@@ -35,18 +35,7 @@
 #include <string.h>
 #include "../../include/common/user_params.h"
 #include "usb.h"
-
-typedef struct tocentry {
-	unsigned offset;
-	unsigned length;
-	unsigned flags;
-	unsigned align;
-	unsigned spare;
-	char name[12];
-} tocentry;
-
-#define USE_TOC 0
-#define USER_RQ_MASK		0x00FF0000
+#include "usbboot.h"
 
 static char *usb_boot_read_chip_info(usb_handle *usb)
 {
@@ -57,10 +46,6 @@ static char *usb_boot_read_chip_info(usb_handle *usb)
 	uint8_t gp_device_crc1[4] = {0, 0, 0, 0};
 	int i;
 
-#define OFF_CHIP	0x04
-#define OFF_ROM_REV	0x07
-#define OFF_ID		0x0F
-#define OFF_MPKH	0x26
 	memset(id, 0xee, 81);
 	fprintf(stderr,"reading ASIC ID\n");
 	usb_write(usb, &msg_getid, sizeof(msg_getid));
@@ -215,12 +200,6 @@ static int usage(void)
 
 	return 0;
 }
-
-extern unsigned char aboot_data[];
-extern unsigned aboot_size;
-
-extern unsigned char iboot_data[];
-extern unsigned iboot_size;
 
 int main(int argc, char **argv)
 {
