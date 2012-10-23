@@ -246,16 +246,6 @@ static void configure_efuse(void)
 {
 	u32 reg;
 
-	/* Put EMIF in self-refresh */
-	set_modify(EMIF1_POWER_MANAGEMENT_CONTROL, LP_MODE_MASK,
-						DDR_SELF_REFRESH_MODE_ENABLE);
-
-	set_modify(EMIF2_POWER_MANAGEMENT_CONTROL, LP_MODE_MASK,
-						DDR_SELF_REFRESH_MODE_ENABLE);
-
-	/* Wait some time for memories to enter self-refresh */
-	ldelay(100);
-
 	reg = readl(CONTROL_WKUP_STD_FUSE_DIE_ID1);
 	switch (reg) {
 
@@ -310,12 +300,6 @@ void omap5_ddrio_init(struct ddr_io *ddrio_config)
 				writel(ddr_io->value, ddr_io->reg);
 		}
 	}
-
-	/* Disable self-refresh */
-	set_modify(EMIF1_POWER_MANAGEMENT_CONTROL, LP_MODE_MASK,
-						DDR_SELF_REFRESH_MODE_DISABLE);
-	set_modify(EMIF2_POWER_MANAGEMENT_CONTROL, LP_MODE_MASK,
-						DDR_SELF_REFRESH_MODE_DISABLE);
 
 	/* Wait some time for IOs to be configured */
 	ldelay(100);
