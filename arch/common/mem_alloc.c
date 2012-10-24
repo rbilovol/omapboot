@@ -87,10 +87,9 @@ int *alloc_memory(int size)
 #endif
 
 	if (size < 1) {
-		DBG("user has requested an invalid amount of memory\n");
+		printf("user has requested an invalid amount of memory\n");
 		return NULL;
 	}
-
 	size = align_size_requested(size);
 
 	/*
@@ -108,10 +107,12 @@ int *alloc_memory(int size)
 		}
 		hdr = hdr->next;
 	}
+
 	if (!hdr->next) {
 		printf("Reached end of heap. Requested size not available\n");
 		return NULL;
 	}
+
 	/* Break segment if segment is too big */
 	if (hdr->section_size > (size + FRAGMENT_THRESH)) {
 		tptr = hdr->data + size;
@@ -126,6 +127,8 @@ int *alloc_memory(int size)
 		hdr->section_size = size;
 	}
 	hdr->status = 1;
+	DBG("allocated: %p data %p size %d\n",
+		hdr, hdr->data, hdr->section_size);
 	return (int *) hdr->data;
 }
 
@@ -152,22 +155,34 @@ int free_memory(void *ptr_to_data)
 {
 	struct mem_alloc_header *hdr = &head;
 	u8 *free;
-	struct mem_alloc_header *curr;
+	struct mem_alloc_header *curr, *tofree = NULL;
 	free = (u8 *) (ptr_to_data - MALLOC_HDR_SIZE);
 	curr = (struct mem_alloc_header *)free;
 
 	while (hdr->next) {
 		if (hdr == curr)
-			break;
+			/* found the segment to free */
+			tofree = hdr;
+
+		/* if the next segment is not the last one in the heap
+		   and both consecutive segments are free, concatenate them */
+		if ((hdr->next->next) && ((hdr->status == 0) &&
+			(hdr->next->status == 0))) {
+			/* the new segment size is the size of both segments
+			   added to the size of the discarded header */
+			hdr->section_size += hdr->next->section_size + MALLOC_HDR_SIZE;
+			hdr->next = hdr->next->next;
+		}
 		hdr = hdr->next;
 	}
-	if (!hdr->next) {
+
+	if ((!tofree) || (!tofree->next)) {
 		printf("Invalid pointer: 0x%08x\n", ptr_to_data);
 		return -1;
 	}
-	hdr->status = 0;
+
+	tofree->status = 0;
 	DBG("user has freed memory section 0x%x of size 0x%x\n",
-					hdr, hdr->section_size);
+				tofree, tofree->section_size);
 	return 0;
 }
-
