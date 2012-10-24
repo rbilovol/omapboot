@@ -28,26 +28,27 @@
 
 MEMORY
 	{
-	sdram (Arw) : ORIGIN = 0x90000000, LENGTH = 10m
+	dram (Arw) : ORIGIN = 0x90000000, LENGTH = 10m
+	sdram (Arw) : ORIGIN = 0xA0BFFFFF, LENGTH = 500m
 	}
 
 
 ENTRY(_start)
 SECTIONS {
-	.text : { *(.text) } > sdram
+	.text : { *(.text) } > dram
 
 	. = ALIGN(4);
 	.got : { *(.got) }
 
 	. = ALIGN(4);
-	.rodata : { *(.rodata) } > sdram
+	.rodata : { *(.rodata) } > dram
 
 	. = ALIGN(4);
-	.data : { *(.data) } >sdram
+	.data : { *(.data) } >dram
 
 	. = ALIGN(4);
 	__bss_start = .;
-	.bss : { *(.bss) }>sdram
+	.bss : { *(.bss) }>dram
 	. = ALIGN(4);
 	__bss_end = .;
 
