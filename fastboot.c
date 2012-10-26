@@ -531,6 +531,61 @@ static int flash_sparse_formatted_image(struct usb *usb)
 			out_blocks += chunk_data_sz;
 
 			break;
+
+		case CHUNK_TYPE_FILL:
+			if (sparse_check_chunk_sizes(sector_size,
+					chunk_header)) {
+				strcpy(response,
+					"FAILError detected in Chunk Header");
+				goto out;
+			}
+
+			total_blocks += chunk_header->chunk_sz;
+			fb_data->sector += (chunk_data_sz / sector_size);
+
+			transfer_buffer += sizeof(chunk_header_t);
+			fill = (u32 *)transfer_buffer;
+			fill_pattern = *fill;
+			transfer_buffer += sizeof(u32);
+
+			fill_chunk = alloc_memory(chunk_data_sz);
+			if (fill_chunk == NULL) {
+				sprintf(response,
+					"FAILUnto allocate chunk fill size: %d",
+							chunk_data_sz);
+				ret = -1;
+				break;
+			}
+			for (fill = fill_chunk;
+				fill < (u32 *)(fill_chunk + (chunk_data_sz/4));
+				fill++)
+				*fill = fill_pattern;
+
+			out_blocks += chunk_data_sz;
+			ret = fb_data->storage_ops->write(fb_data->sector,
+					num_sectors, fill_chunk);
+			if (ret != 0) {
+				printf("mmc write failed\n");
+				strcpy(response, "FAILMMC write FAILED sparse");
+				ret = fastboot_free_mem(fill_chunk);
+				if (ret != 0) {
+					strcpy(response, "INFO");
+					strcpy(response + strlen(response),
+						"Unable to free tranfer_buffer");
+					fastboot_tx_status(response,
+							strlen(response), usb);
+				}
+			}
+			break;
+
+		default:
+
+			sprintf(response, "FAILUnknown chunk type");
+			ret = -1;
+			break;
+
+			goto out;
+		}
 	}
 
 	DBG("Wrote %d blocks, expected to write %d blocks\n", total_blocks,
