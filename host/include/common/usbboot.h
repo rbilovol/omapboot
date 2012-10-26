@@ -40,8 +40,8 @@
 extern unsigned char aboot_data[];
 extern unsigned aboot_size;
 
-extern unsigned char iboot_data[];
-extern unsigned iboot_size;
+extern unsigned char iboot_gp_data[];
+extern unsigned iboot_gp_size;
 
 extern unsigned char sboot_data[];
 extern unsigned sboot_size;

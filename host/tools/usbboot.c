@@ -247,9 +247,9 @@ int main(int argc, char **argv)
 				} else {
 					fprintf(stderr, "using built-in GP "
 						"iboot of size %d-KB\n",
-							iboot_size/1024);
-					data = iboot_data;
-					sz = iboot_size;
+							iboot_gp_size/1024);
+					data = iboot_gp_data;
+					sz = iboot_gp_size;
 				}
 
 				if (!data)

@@ -252,17 +252,12 @@ $(OUT)/eboot.ift: $(OUT)/eboot.bin $(OUT)/mkheader
 	@echo Renaming eboot.ift to MLO ...Done!
 	$(QUIET)cp $(OUT)/eboot.ift $(OUT)/MLO
 
-$(OUT)/iboot.ift: $(OUT)/iboot.bin $(OUT)/mkheader
-	@echo generate $@
-	$(QUIET)./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
-	$(QUIET)cat $(OUT)/iboot.bin >> $@
-
 $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
 	@echo generate $@
 	$(QUIET)./$(OUT)/mkheader $(ABOOT_TEXT_BASE) `wc -c $(OUT)/aboot.bin` no_gp_hdr > $@
 	$(QUIET)cat $(OUT)/aboot.bin >> $@
 
-ALL += boot_modules $(OUT)/aboot.ift $(OUT)/iboot.ift $(OUT)/eboot.ift
+ALL += boot_modules $(OUT)/aboot.ift $(OUT)/eboot.ift
 
 $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@
@@ -271,12 +266,13 @@ $(OUT_HOST_OBJ)/2ndstage.o: $(OUT)/aboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	$(QUIET)./$(OUT)/bin2c aboot < $@ > $(OUT)/2ndstage.c
 	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/2ndstage.c
 
-$(OUT_HOST_OBJ)/secondstage.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
+$(OUT_HOST_OBJ)/iboot_gp.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@
 	$(QUIET)./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/iboot.bin` no_gp_hdr > $@
 	$(QUIET)cat $(OUT)/iboot.bin >> $@
-	$(QUIET)./$(OUT)/bin2c iboot < $@ > $(OUT)/secondstage.c
-	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/secondstage.c
+	$(QUIET)./$(OUT)/bin2c iboot_gp < $@ > $(OUT)/iboot_gp.c
+	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/iboot_gp.c
+	@echo ...Done!
 
 ifeq ($(DUAL_STAGE), 1)
 $(OUT_HOST_OBJ)/sboot-bin.o: $(OUT)/sboot.bin $(OUT)/bin2c
