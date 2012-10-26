@@ -357,6 +357,26 @@ out:
 	return ret;
 }
 
+static int sparse_check_chunk_sizes(int sector_size,
+				chunk_header_t *chunk_header)
+{
+	u32 chunk_sz  = chunk_header->chunk_sz;
+	u32 chunk_data_sz = (fb_data->sparse_header->blk_sz *
+						chunk_sz);
+
+	/* check chunk header for size error */
+	/* number of chunks * chunk size != total size */
+	if (chunk_header->total_sz - sizeof(chunk_header_t) !=
+		chunk_data_sz) {
+		printf("Incorrect chunk header total size:\n");
+		printf("Total size sb %d was %d\n", chunk_data_sz +
+				sizeof(chunk_header_t),
+				chunk_header->total_sz);
+		return -1;
+	}
+	return 0;
+}
+
 static int flash_sparse_formatted_image(struct usb *usb)
 {
 	int ret = 0;
@@ -369,6 +389,9 @@ static int flash_sparse_formatted_image(struct usb *usb)
 	char response[65];
 	void *ptr_to_buffer = transfer_buffer;
 	chunk_header_t *chunk_header;
+	void *fill_chunk;
+	u32 *fill;
+	u32 fill_pattern;
 
 	strcpy(response, "OKAY");
 
@@ -391,7 +414,6 @@ static int flash_sparse_formatted_image(struct usb *usb)
 			ret = -1;
 			goto out;
 	}
-
 	/* Read and skip over sparse image header */
 	transfer_buffer += fb_data->sparse_header->file_hdr_sz;
 
@@ -414,7 +436,19 @@ static int flash_sparse_formatted_image(struct usb *usb)
 	DBG("total_chunks: %d\n", fb_data->sparse_header->total_chunks);
 
 	/* Start processing chunks */
-	sector_size = fb_data->storage_ops->get_sector_size();
+	if (fb_data->storage_ops->get_sector_size)
+		sector_size = fb_data->storage_ops->get_sector_size();
+	else
+		sector_size = 512;
+
+	/* reject chunk header with unsupported sizes */
+	if (fb_data->sparse_header->blk_sz % sector_size) {
+		printf("Unsupported partial chunk size: %d\n",
+					fb_data->sparse_header->blk_sz);
+		strcpy(response, "FAILUnsupported partial chunk");
+		goto out;
+	}
+
 	for (chunk = 0; chunk < fb_data->sparse_header->total_chunks; chunk++) {
 
 		/* Read and skip over chunk header */
@@ -445,18 +479,18 @@ static int flash_sparse_formatted_image(struct usb *usb)
 		num_sectors = (chunk_data_sz/sector_size);
 		DBG("writing to sector %d and # of sectors %d\n",
 			fb_data->sector, num_sectors);
+		fill_chunk = NULL;
 
 		switch (chunk_header->chunk_type) {
 
 		case CHUNK_TYPE_RAW:
 
-			if (chunk_header->total_sz !=
-				(fb_data->sparse_header->chunk_hdr_sz +
-							chunk_data_sz)) {
-				DBG("bogus chunk size for chunk type RAW "
-							"%d\n", chunk);
+			if (sparse_check_chunk_sizes(sector_size,
+							chunk_header)) {
+				strcpy(response,
+					"FAILError detected in Chunk Header");
+				goto out;
 			}
-
 			out_blocks += chunk_data_sz;
 
 			ret = fb_data->storage_ops->write(fb_data->sector,
@@ -480,19 +514,16 @@ static int flash_sparse_formatted_image(struct usb *usb)
 
 			total_blocks += chunk_header->chunk_sz;
 			fb_data->sector += (chunk_data_sz / sector_size);
-			DBG("bogus chunk size for chunktype DONT_CARE %d\n",
-									chunk);
+			if (chunk_header->total_sz != sizeof(chunk_header_t)) {
+				strcpy(response,
+					"FAILError detected in Don't Care Chunk Header");
+				goto out;
+			}
 			out_blocks += chunk_data_sz;
 
 			break;
 
 		case CHUNK_TYPE_CRC:
-
-			if (chunk_header->total_sz !=
-					fb_data->sparse_header->chunk_hdr_sz) {
-				DBG("bogus chunk size for chunktype CRC %d"
-								"\n", chunk);
-			}
 
 			total_blocks += chunk_header->chunk_sz;
 			fb_data->sector += (chunk_data_sz / sector_size);
@@ -500,15 +531,6 @@ static int flash_sparse_formatted_image(struct usb *usb)
 			out_blocks += chunk_data_sz;
 
 			break;
-
-		default:
-
-			sprintf(response, "FAILUnknown chunk type");
-			ret = -1;
-			break;
-
-		goto out;
-		}
 	}
 
 	DBG("Wrote %d blocks, expected to write %d blocks\n", total_blocks,
