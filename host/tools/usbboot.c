@@ -201,9 +201,24 @@ static int usage(void)
 	return 0;
 }
 
+static int *load_data_file(void *file, unsigned size)
+{
+	if (!file)
+		file = load_file("iboot.ift", &size);
+
+	else
+		file = load_file(file, &size);
+
+	if (!file) {
+		fprintf(stderr, "unable to load signed HS/HD iboot.ift\n");
+		return NULL;
+	} else
+		return file;
+}
+
 int main(int argc, char **argv)
 {
-	void *data, *data2;
+	void *data = NULL, *data2 = NULL;
 	unsigned sz, sz2;
 	usb_handle *usb = NULL;
 	int once = 1;
@@ -224,20 +239,21 @@ int main(int argc, char **argv)
 			if (usb) {
 				strcpy(proctype, usb_boot_read_chip_info(usb));
 				if (!memcmp(proctype, "EMU", 3)) {
-					data = load_file("iboot.ift", &sz);
-					if (!data) {
-						fprintf(stderr, "unable to "
-						"load signed ED/HD (EMU/HS)"
-						"iboot.ift\n");
-						return -1;
-					}
-				 } else {
+					if (argc == 3)
+						data = load_data_file(argv[2],
+							sz);
+					else
+						data = load_data_file(NULL, sz);
+				} else {
 					fprintf(stderr, "using built-in GP "
 						"iboot of size %d-KB\n",
 							iboot_size/1024);
 					data = iboot_data;
 					sz = iboot_size;
 				}
+
+				if (!data)
+					return -1;
 
 #ifdef TWO_STAGE_OMAPBOOT
 				sz2 = SECOND_STAGE_OBJECT_SIZE;
