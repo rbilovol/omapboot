@@ -76,7 +76,7 @@ static char *usb_boot_read_chip_info(usb_handle *usb)
 	return proc_type;
 }
 
-int usb_boot(usb_handle *usb, int fastboot_mode,
+static int usb_boot(usb_handle *usb, int fastboot_mode,
 	     void *data, unsigned sz,
 	     void *data2, unsigned sz2)
 {
@@ -128,7 +128,7 @@ int usb_boot(usb_handle *usb, int fastboot_mode,
 	return 0;
 }
 
-int match_omap_bootloader(usb_ifc_info *ifc)
+static int match_omap_bootloader(usb_ifc_info *ifc)
 {
 	if (ifc->dev_vendor != 0x0451)
 		return -1;
@@ -138,7 +138,7 @@ int match_omap_bootloader(usb_ifc_info *ifc)
 	return 0;
 }
 
-void *load_file(const char *file, unsigned *sz)
+static void *load_file(const char *file, unsigned *sz)
 {
 	void *data;
 	struct stat s;
