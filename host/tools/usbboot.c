@@ -244,6 +244,16 @@ int main(int argc, char **argv)
 							sz);
 					else
 						data = load_data_file(NULL, sz);
+#ifdef EMBED_IBOOT_HS
+					if (!data) {
+						fprintf(stderr, "using built-in"
+						" HS iboot of size %d-KB\n",
+							iboot_hs_size/1024);
+
+						data = iboot_hs_data;
+						sz = iboot_hs_size;
+					}
+#endif
 				} else {
 					fprintf(stderr, "using built-in GP "
 						"iboot of size %d-KB\n",

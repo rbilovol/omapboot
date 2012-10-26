@@ -43,6 +43,11 @@ extern unsigned aboot_size;
 extern unsigned char iboot_gp_data[];
 extern unsigned iboot_gp_size;
 
+#ifdef EMBED_IBOOT_HS
+extern unsigned char iboot_hs_data[];
+extern unsigned iboot_hs_size;
+#endif
+
 extern unsigned char sboot_data[];
 extern unsigned sboot_size;
 

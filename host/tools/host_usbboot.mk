@@ -32,6 +32,9 @@ M_OBJS := host/tools/usbboot.o
 M_OBJS += host/tools/usb_linux.o
 M_OBJS += 2ndstage.o
 M_OBJS += iboot_gp.o
+ifneq ("$(MSHIELD)", "")
+M_OBJS += iboot_hs.o
+endif
 ifeq ($(DUAL_STAGE), 1)
 M_OBJS += sboot-bin.o
 endif

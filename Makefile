@@ -55,6 +55,7 @@ else
 	CROSS_COMPILE ?= arm-eabi-
 endif
 
+MSHIELD := $(MSHIELD)
 BOARD ?= panda
 ARCH ?= arm
 MACH ?= omap4
@@ -274,6 +275,19 @@ $(OUT_HOST_OBJ)/iboot_gp.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/iboot_gp.c
 	@echo ...Done!
 
+ifneq ("$(MSHIELD)", "")
+$(OUT_HOST_OBJ)/iboot_hs.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
+	@echo generate $@
+	@echo Signing iboot.bin to generate signed ULO ...Done!
+	$(QUIET)/$(MSHIELD)/generate_ULO OMAP5430 ES1.0 $(OUT)/iboot.bin
+	$(QUIET)mv ULO $(OUT)/ULO
+	$(QUIET)./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/ULO` no_gp_hdr > $@
+	$(QUIET)cat $(OUT)/ULO >> $@
+	$(QUIET)rm $(OUT)/ULO
+	$(QUIET)./$(OUT)/bin2c iboot_hs < $@ > $(OUT)/iboot_hs.c
+	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/iboot_hs.c
+endif
+
 ifeq ($(DUAL_STAGE), 1)
 $(OUT_HOST_OBJ)/sboot-bin.o: $(OUT)/sboot.bin $(OUT)/bin2c
 	@echo generate $@
@@ -301,7 +315,7 @@ distclean::
 
 .PHONY:	tags
 
-all:: usbboot user_params version target_dep $(ALL)
+all:: user_params usbboot version target_dep $(ALL)
 
 version:
 	$(QUIET)echo -n "#define ABOOT_VERSION \""$(ORGANIZATION)" Bootloader " > $(VERSION_FILE); \
@@ -320,6 +334,11 @@ ifeq ($(DUAL_STAGE), 1)
 	@echo "defining TWO_STAGE_OMAPBOOT"
 	$(QUIET)rm -rf out/$(BOARD)
 	$(QUIET)echo -n "#define TWO_STAGE_OMAPBOOT  1" > $(USER_PARAMS_FILE)
+	$(QUIET)echo "" >> $(USER_PARAMS_FILE)
+endif
+ifneq ("$(MSHIELD)", "")
+	@echo "defining EMBED_IBOOT_HS"
+	$(QUIET)echo -n "#define EMBED_IBOOT_HS 1" >> $(USER_PARAMS_FILE)
 	$(QUIET)echo "" >> $(USER_PARAMS_FILE)
 endif
 
