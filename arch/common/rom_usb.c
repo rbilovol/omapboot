@@ -133,6 +133,7 @@ int usb_open(struct usb *usb, int init,
 				struct proc_specific_functions *proc_ops)
 {
 	struct per_handle *boot;
+	u32 device;
 	u16 options = 1;
 	int n;
 
@@ -142,6 +143,7 @@ int usb_open(struct usb *usb, int init,
 	local_proc_ops = proc_ops;
 
 	if (init) {
+		device = DEVICE_USB;
 		usb->dread.config_object = NULL;
 		usb->dread.options = &options;
 		usb->dread.device_type = DEVICE_USB;
@@ -167,13 +169,14 @@ int usb_open(struct usb *usb, int init,
 		if (n)
 			return n;
 
+		device = boot->device_type;
 		memcpy(&usb->dread, boot, sizeof(struct per_handle));
 		memcpy(&usb->dwrite, boot, sizeof(struct per_handle));
 	}
 
 
 	/* get rom usb driver */
-	n = rom_get_per_driver(&usb->io, boot->device_type);
+	n = rom_get_per_driver(&usb->io, device);
 	if (n)
 		return n;
 
