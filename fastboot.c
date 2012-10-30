@@ -98,7 +98,7 @@ static int fastboot_tx_status(const char *buffer, unsigned int buffer_size,
 								struct usb *usb)
 {
 	/* send response back to host */
-	usb_write(usb, (void *)buffer, strlen(buffer));
+	fb_data->usb_ops->usb_write(usb, (void *)buffer, strlen(buffer));
 
 	return 0;
 }
@@ -339,7 +339,8 @@ static int download_image(char *dsize, char *response, struct usb *usb)
 
 	/* read the data */
 	printf("Reading %u amount of data ...\n", fb_data->getsize);
-	ret = usb_read(usb, transfer_buffer, fb_data->getsize);
+	ret = fb_data->usb_ops->usb_read(usb, transfer_buffer,
+					fb_data->getsize);
 	if (ret < 0) {
 		DBG("failed to read the fastboot command\n");
 		strcpy(response, "FAILUnable to read FASTBOOT command");
@@ -870,11 +871,11 @@ static int fastboot_flash(char *cmd, char *response, struct usb *usb)
 static int fastboot_boot(struct bootloader_ops *boot_ops, char *cmd,
 						char *response)
 {
-	struct usb *usb = &boot_ops->usb;
+	struct usb *usb = boot_ops->usb_ops->usb;
 	strcpy(response, "OKAY");
 	fastboot_tx_status(response, strlen(response), usb);
 
-	usb_close(usb);
+	fb_data->usb_ops->usb_close(usb);
 
 	printf("booting kernel...\n");
 	do_booti(boot_ops, "ram", transfer_buffer);
@@ -913,7 +914,7 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 	/* Use 65 instead of 64, null gets dropped
 	strcpy's need the extra byte */
 	char response[65];
-	struct usb *usb = &boot_ops->usb;
+	struct usb *usb = boot_ops->usb_ops->usb;
 
 	fb_data->getsize = 0;
 
@@ -937,6 +938,11 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 	else
 		fb_data->pmic_ops = boot_ops->pmic_ops;
 
+	if (!boot_ops->usb_ops)
+		return;
+	else
+		fb_data->usb_ops = boot_ops->usb_ops;
+
 	load_ptbl(fb_data->storage_ops, 1);
 
 	/* enable irqs */
@@ -958,7 +964,8 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 
 		if (boot_ops->board_ops->board_fastboot_size_request) {
 			ret = boot_ops->board_ops->
-			board_fastboot_size_request(usb, &cmdsize, 4);
+			board_fastboot_size_request(boot_ops->usb_ops,
+							&cmdsize, 4);
 			if (ret < 0) {
 				printf("failed to get fastboot command size\n");
 				strcpy(response, "FAIL");
@@ -967,7 +974,7 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 		}
 
 		/* receive the fastboot command from host */
-		ret = usb_read(usb, &cmd, cmdsize);
+		ret = fb_data->usb_ops->usb_read(usb, &cmd, cmdsize);
 		if (ret < 0) {
 			printf("failed to read the fastboot command\n");
 			strcpy(response, "FAIL");

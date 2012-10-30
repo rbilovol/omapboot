@@ -69,21 +69,21 @@ static int load_from_mmc(struct storage_specific_functions *storage_ops,
 }
 #endif
 
-static int load_from_usb(unsigned *_len, struct usb *usb)
+static int load_from_usb(struct usb_specific_functions *usb_ops, unsigned *_len)
 {
 	unsigned len, n;
 	enable_irqs();
 
-	usb_queue_read(usb, &len, 4);
-	usb_write(usb, &MSG, 4);
-	n = usb_wait_read(usb);
+	usb_ops->usb_queue_read(usb_ops->usb, &len, 4);
+	usb_ops->usb_write(usb_ops->usb, &MSG, 4);
+	n = usb_ops->usb_wait_read(usb_ops->usb);
 	if (n)
 		return -1;
 
-	if (usb_read(usb, (void*) CONFIG_ADDR_DOWNLOAD, len))
+	if (usb_ops->usb_read(usb_ops->usb, (void *)CONFIG_ADDR_DOWNLOAD, len))
 		return -1;
 
-	usb_close(usb);
+	usb_ops->usb_close(usb_ops->usb);
 
 	disable_irqs();
 	*_len = len;
@@ -107,7 +107,7 @@ void aboot(unsigned *info)
 
 
 #if !WITH_FLASH_BOOT
-	n = load_from_usb(&len, &boot_ops->usb);
+	n = load_from_usb(boot_ops->usb_ops, &len);
 #else
 	unsigned bootdevice;
 
@@ -120,7 +120,7 @@ void aboot(unsigned *info)
 	switch (bootdevice) {
 	case 0x45: /* USB */
 		serial_puts("boot device: USB\n\n");
-		n = load_from_usb(&len, &boot_ops->usb);
+		n = load_from_usb(boot_ops->usb_ops->usb, &len);
 		break;
 	case 0x05:
 	case 0x06:

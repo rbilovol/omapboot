@@ -388,6 +388,12 @@ static void panda_prcm_init(void)
 	prcm_init();
 }
 
+int panda_usb_len_request(struct usb_specific_functions *usb_ops,
+				void *data, unsigned len)
+{
+	return usb_ops->usb_read(usb_ops->usb, data, len);
+}
+
 static struct board_specific_functions panda_funcs = {
 	.board_get_flash_slot = panda_get_flash_slot,
 	.board_set_flash_slot = panda_set_flash_slot,
@@ -399,7 +405,7 @@ static struct board_specific_functions panda_funcs = {
 	.board_gpmc_init = panda_gpmc_init,
 	.board_prcm_init = panda_prcm_init,
 	.board_storage_init = panda_storage_init,
-	.board_fastboot_size_request = usb_read
+	.board_fastboot_size_request = panda_usb_len_request
 };
 
 void* init_board_funcs(void)

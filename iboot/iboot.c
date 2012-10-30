@@ -49,23 +49,24 @@ static unsigned MSG = 0xaabbccdd;
 
 #ifdef TWO_STAGE_OMAPBOOT
 
-static u32 load_from_usb(u32 addr, unsigned *_len, struct usb *usb)
+static u32 load_from_usb(u32 addr, unsigned *_len,
+			struct usb_specific_functions *usb_ops)
 {
 	unsigned len, n, param = 0;
 	enable_irqs();
 
-	usb_queue_read(usb, &param, 4);
-	usb_write(usb, &MSG, 4);
-	n = usb_wait_read(usb);
+	usb_ops->usb_queue_read(usb_ops->usb, &param, 4);
+	usb_ops->usb_write(usb_ops->usb, &MSG, 4);
+	n = usb_ops->usb_wait_read(usb_ops->usb);
 	if (n)
 		return 0;
 
-	if (usb_read(usb, &len, 4))
+	if (usb_ops->usb_read(usb_ops->usb, &len, 4))
 		return 0;
 
-	usb_write(usb, &MSG, 4);
+	usb_ops->usb_write(usb_ops->usb, &MSG, 4);
 
-	if (usb_read(usb, (void *) addr, len))
+	if (usb_ops->usb_read(usb_ops->usb, (void *) addr, len))
 		return 0;
 
 	*_len = len;
@@ -89,7 +90,7 @@ static int do_sboot(struct bootloader_ops *boot_ops, int bootdevice)
 
 	u32 addr = CONFIG_ADDR_SBOOT;
 
-	ret = load_from_usb(addr, &len, &boot_ops->usb);
+	ret = load_from_usb(addr, &len, boot_ops->usb_ops);
 	if (ret == 0)
 		return -1;
 
@@ -115,7 +116,7 @@ void iboot(unsigned *info)
 		goto fail;
 
 #ifndef TWO_STAGE_OMAPBOOT
-	usb_write(&boot_ops->usb, &MSG, 4);
+	boot_ops->usb_ops->usb_write(boot_ops->usb_ops->usb, &MSG, 4);
 	do_fastboot(boot_ops);
 #else
 	do_sboot(boot_ops, bootdevice);

@@ -27,77 +27,37 @@
 */
 
 #include <aboot.h>
-#include <common.h>
 #include <io.h>
-
-#include <common_proc.h>
-#include <fastboot.h>
 #include <omap_rom.h>
-#include <usbboot_common.h>
+#include <string.h>
 #include <alloc.h>
 
-#ifdef DEBUG
-#define DBG(x...) printf(x)
-#else
-#define DBG(x...)
-#endif /* DEBUG */
-
-u32 public_rom_base;
-
-#ifdef BOARD_PROCESS_CMDLINE
-static void process_cmdline(struct bootloader_ops *boot_ops,
-				int bootdevice)
+struct usb *usb_enable(void)
 {
-	/* Insert here command prompt processing */
-	printf("Omapboot> ");
-	ldelay(0x10000000);
-	printf(". ");
-	ldelay(0x10000000);
-	printf(". ");
-	ldelay(0x10000000);
-	printf(".\n");
+	struct usb *usb;
+
+	usb = (struct usb *) alloc_memory(sizeof(struct usb));
+	if (usb != NULL)
+		return usb;
+
+	printf("unable to allocate memory usb structure\n");
+	return NULL;
 }
-#endif
 
-void sboot(u32 bootops_addr, int bootdevice)
+struct usb_specific_functions usb_funcs = {
+	.usb_open = usb_open,
+	.usb_init = usb_init,
+	.usb_close = usb_close,
+	.usb_queue_read = usb_queue_read,
+	.usb_wait_read = usb_wait_read,
+	.usb_queue_write = usb_queue_write,
+	.usb_wait_write = usb_wait_write,
+	.usb_write = usb_write,
+	.usb_read = usb_read,
+	.usb_enable = usb_enable,
+};
+
+void *init_usb_funcs(void)
 {
-	int ret = 0;
-	char buf[DEV_STR_LENGTH];
-	struct bootloader_ops *boot_ops = (struct bootloader_ops *)bootops_addr;
-
-	if (boot_ops->proc_ops->proc_get_api_base)
-		public_rom_base = boot_ops->proc_ops->proc_get_api_base();
-
-	dev_to_devstr(bootdevice, buf);
-	printf("Second Stage Boot: boot device: %s\n", buf);
-	if (boot_ops->board_ops->board_user_fastboot_request) {
-		if (boot_ops->board_ops->board_user_fastboot_request())
-			goto fastboot;
-	}
-
-#ifdef BOARD_PROCESS_CMDLINE
-	do_cmdline(boot_ops, bootdevice);
-#endif
-
-	if (bootdevice == DEVICE_USB)
-		goto fastboot;
-	else
-		do_booti(boot_ops, "storage", NULL);
-
-fastboot:
-	if (bootdevice != DEVICE_USB) {
-		ret = boot_ops->usb_ops->usb_open(boot_ops->usb_ops->usb,
-							INIT_USB);
-		if (ret != 0) {
-			printf("\nusb_open failed\n");
-			goto fail;
-		}
-	}
-
-	do_fastboot(boot_ops);
-
-fail:
-	printf("boot failed\n");
-	while (1)
-		;
+	return &usb_funcs;
 }

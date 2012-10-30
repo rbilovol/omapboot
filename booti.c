@@ -300,7 +300,7 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 	theKernel(0, cfg_machine_type, (void *)dbt_addr);
 
 fail:
-	ret = usb_open(&boot_ops->usb, INIT_USB);
+	ret = boot_ops->usb_ops->usb_open(boot_ops->usb_ops->usb, INIT_USB);
 	if (ret != 0) {
 		printf("\nusb_open failed\n");
 		return ret;

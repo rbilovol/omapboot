@@ -73,6 +73,20 @@ struct storage_specific_functions {
 	int (*erase)(u64 start_sec, u64 sectors);
 };
 
+struct usb_specific_functions {
+	int (*usb_open)(struct usb *usb, int init);
+	void (*usb_init)(struct usb *usb);
+	void (*usb_close)(struct usb *usb);
+	void (*usb_queue_read)(struct usb *usb, void *data, unsigned len);
+	int (*usb_wait_read)(struct usb *usb);
+	void (*usb_queue_write)(struct usb *usb, void *data, unsigned len);
+	int (*usb_wait_write)(struct usb *usb);
+	int (*usb_read)(struct usb *usb, void *data, unsigned len);
+	int (*usb_write)(struct usb *usb, void *data, unsigned len);
+	struct usb* (*usb_enable)();
+	struct usb *usb;
+};
+
 /* Use these functions to override the
  * default configuration for the processor */
 struct board_specific_functions {
@@ -93,8 +107,9 @@ struct board_specific_functions {
 				struct proc_specific_functions *proc_ops,
 				struct storage_specific_functions *storage_ops);
 	u32 (*board_get_board_rev)(void);
-	int (*board_fastboot_size_request)(struct usb *usb,
-						void *data, unsigned len);
+	int (*board_fastboot_size_request)(
+					struct usb_specific_functions *usb_ops,
+					void *data, unsigned len);
 };
 
 struct pmic_specific_functions {
@@ -111,12 +126,13 @@ struct bootloader_ops {
 	struct proc_specific_functions *proc_ops;
 	struct storage_specific_functions *storage_ops;
 	struct pmic_specific_functions *pmic_ops;
-	struct usb usb;
+	struct usb_specific_functions *usb_ops;
 };
 
 void* init_board_funcs(void);
 void* init_processor_id_funcs(void);
 void *init_pmic_funcs(void);
+void *init_usb_funcs(void);
 
 unsigned long crc32(unsigned long crc, const unsigned char *buf,
 						unsigned int len);

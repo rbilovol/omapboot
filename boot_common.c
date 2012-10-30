@@ -82,6 +82,7 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 	boot_ops->proc_ops = init_processor_id_funcs();
 	boot_ops->storage_ops = NULL;
 	boot_ops->pmic_ops = init_pmic_funcs();
+	boot_ops->usb_ops = init_usb_funcs();
 
 	if (boot_ops->proc_ops->proc_check_lpddr2_temp)
 		boot_ops->proc_ops->proc_check_lpddr2_temp();
@@ -136,21 +137,30 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 			printf("unable to configure PWM mode\n");
 	}
 
+	if (boot_ops->usb_ops->usb_enable) {
+		boot_ops->usb_ops->usb = boot_ops->usb_ops->usb_enable();
+		if (!boot_ops->usb_ops->usb)
+			goto fail;
+	} else
+		goto fail;
+
+	if (bootdevice == DEVICE_USB) {
+
+		bootdevice = boot_ops->board_ops->board_get_flash_slot();
+		ret = boot_ops->usb_ops->usb_open(boot_ops->usb_ops->usb,
+							NO_INIT_USB);
+		if (ret != 0) {
+			printf("\nusb_open failed\n");
+			goto fail;
+		}
+	}
+
 	if (!boot_ops->board_ops->board_get_flash_slot ||
 			!boot_ops->board_ops->board_set_flash_slot)
 		goto fail;
 
 	dev_to_devstr(bootdevice, buf);
 	printf("sram: boot device: %s\n", buf);
-
-	if (bootdevice == DEVICE_USB) {
-		bootdevice = boot_ops->board_ops->board_get_flash_slot();
-		ret = usb_open(&boot_ops->usb, NO_INIT_USB);
-		if (ret != 0) {
-			printf("\nusb_open failed\n");
-			goto fail;
-		}
-	}
 
 	boot_ops->storage_ops = boot_ops->board_ops->board_set_flash_slot
 			(bootdevice, boot_ops->proc_ops, boot_ops->storage_ops);

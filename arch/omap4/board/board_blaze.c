@@ -421,6 +421,12 @@ struct storage_specific_functions *blaze_set_flash_slot(u8 dev,
 	return storage_ops;
 }
 
+int blaze_usb_len_request(struct usb_specific_functions *usb_ops,
+				void *data, unsigned len)
+{
+	return usb_ops->usb_read(usb_ops->usb, data, len);
+}
+
 static struct board_specific_functions blaze_funcs = {
 	.board_get_flash_slot = blaze_get_flash_slot,
 	.board_set_flash_slot = blaze_set_flash_slot,
@@ -432,7 +438,7 @@ static struct board_specific_functions blaze_funcs = {
 	.board_gpmc_init = blaze_gpmc_init,
 	.board_prcm_init = blaze_prcm_init,
 	.board_storage_init = blaze_storage_init,
-	.board_fastboot_size_request = usb_read
+	.board_fastboot_size_request = blaze_usb_len_request
 };
 
 void* init_board_funcs(void)
