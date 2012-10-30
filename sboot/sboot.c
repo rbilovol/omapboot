@@ -68,8 +68,6 @@ void sboot(u32 bootops_addr, int bootdevice)
 	if (boot_ops->proc_ops->proc_get_api_base)
 		public_rom_base = boot_ops->proc_ops->proc_get_api_base();
 
-	init_memory_alloc();
-
 	dev_to_devstr(bootdevice, buf);
 	printf("Second Stage Boot: boot device: %s\n", buf);
 	if (boot_ops->board_ops->board_user_fastboot_request) {
