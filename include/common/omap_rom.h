@@ -35,6 +35,7 @@
 #include <rom_usb.h>
 #include <rom_mmc.h>
 #include <rom_sata.h>
+#include <usbboot_common.h>
 
 extern u32 public_rom_base;
 
@@ -95,7 +96,8 @@ typedef enum {
 #define INIT_USB	1
 #define NO_INIT_USB	0
 
-int usb_open(struct usb *usb, int init);
+int usb_open(struct usb *usb, int init,
+				struct proc_specific_functions *proc_ops);
 void usb_init(struct usb *usb);
 void usb_close(struct usb *usb);
 

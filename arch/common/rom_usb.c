@@ -37,7 +37,8 @@ static struct usb_ioconf ioconf_write;
 volatile struct usb_trb trbout;
 #endif
 
-int usb_open(struct usb *usb, int init)
+int usb_open(struct usb *usb, int init,
+				struct proc_specific_functions *proc_ops)
 {
 	struct per_handle *boot;
 	u16 options = 1;

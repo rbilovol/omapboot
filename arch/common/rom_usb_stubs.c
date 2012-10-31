@@ -75,7 +75,8 @@ void usb_close(struct usb *usb)
 	printf("ERROR! this %s should never be called\n", __func__);
 }
 
-int usb_open(struct usb *usb, int init)
+int usb_open(struct usb *usb, int init,
+				struct proc_specific_functions *proc_ops)
 {
 	printf("ERROR! this %s should never be called\n", __func__);
 	return 0;

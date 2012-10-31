@@ -148,7 +148,7 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 
 		bootdevice = boot_ops->board_ops->board_get_flash_slot();
 		ret = boot_ops->usb_ops->usb_open(boot_ops->usb_ops->usb,
-							NO_INIT_USB);
+					NO_INIT_USB, boot_ops->proc_ops);
 		if (ret != 0) {
 			printf("\nusb_open failed\n");
 			goto fail;

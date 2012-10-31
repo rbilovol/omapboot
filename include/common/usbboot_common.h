@@ -74,7 +74,8 @@ struct storage_specific_functions {
 };
 
 struct usb_specific_functions {
-	int (*usb_open)(struct usb *usb, int init);
+	int (*usb_open)(struct usb *usb, int init,
+				struct proc_specific_functions *proc_ops);
 	void (*usb_init)(struct usb *usb);
 	void (*usb_close)(struct usb *usb);
 	void (*usb_queue_read)(struct usb *usb, void *data, unsigned len);
