@@ -36,8 +36,8 @@ typedef struct dpll_param dpll_param;
 
 /* OPP NOM */
 static struct dpll_param core_dpll_params[2] = {
-	{665, 11,  2,  5,  8,  4, 62,  5,   5,  7},	/* 19.2 MHz */
-	{665, 23,  2,  5,  8,  4, 62,  5,  5,   7}	/* 38.4 MHz */
+	{277, 4,  2,  5,  8,  4, 62,  4,   5,  7},	/* 19.2 MHz */
+	{277, 9,  2,  5,  8,  8, 62,  10,  10, 14}	/* 38.4 MHz */
 };
 #define CORE_VOLTAGE	1040000
 
@@ -50,15 +50,15 @@ static struct dpll_param usb_dpll_params[2] = {
 #ifndef CONFIG_FORCE_IVA_OPPNOM
 /* OPP_LOW */
 static struct dpll_param iva_dpll_params[2] = {
-	{1881, 30, -1, -1, 10, 12, -1, -1, -1, -1},	/* 19.2 MHz */
-	{1972, 64, -1, -1, 10, 12, -1, -1, -1, -1}	/* 38.4 MHz */
+	{182, 2, -1, -1, 10, 12, -1, -1, -1, -1},	/* 19.2 MHz */
+	{91, 1, -1, -1, 10, 12, -1, -1, -1, -1}		/* 38.4 MHz */
 };
 #define IVA_VOLTAGE	950000
 #else
 /* OPP_NOM: in the customer specific need of having to go to OPP NOM */
 static struct dpll_param iva_dpll_params[2] = {
-	{1881, 30, -1, -1,  5,  6,  -1, -1, -1, -1},	/* 19.2 MHz */
-	{1972, 64, -1, -1,  5,  6,  -1, -1, -1, -1}	/* 38.4 MHz */
+	{182, 2, -1, -1,  5,  6,  -1, -1, -1, -1},	/* 19.2 MHz */
+	{91, 2, -1, -1,  5,  6,  -1, -1, -1, -1}	/* 38.4 MHz */
 };
 #define IVA_VOLTAGE	1040000
 #endif
@@ -78,7 +78,7 @@ static struct dpll_param mpu_dpll_params[2] = {
 /* OPP NOM */
 static struct dpll_param per_dpll_params[2] = {
 	{20, 0, 4, 3, 6, 4, -1, 2, -1, -1},	/* 19.2 MHz */
-	{10, 0, 4, 3, 6, 4, -1, 2, -1, -1}	/* 38.4 MHz */
+	{10, 0, 4, 3, 6, 4, -1, 4, -1, -1}	/* 38.4 MHz */
 };
 
 static void setup_clocks(void)
