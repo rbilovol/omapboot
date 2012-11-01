@@ -136,8 +136,10 @@
 #define CM_DIV_H14_DPLL_CORE		0x4A004144
 #define CM_SSC_DELTAMSTEP_DPLL_CORE	0x4A004148
 #define CM_SSC_MODFREQDIV_DPLL_CORE	0x4A00414C
+#define CM_DIV_H21_DPLL_CORE		0x4A004150
 #define CM_DIV_H22_DPLL_CORE		0x4A004154
 #define CM_DIV_H23_DPLL_CORE		0x4A004158
+#define CM_DIV_H24_DPLL_CORE		0x4A00415C
 #define CM_CLKMODE_DPLL_PER		0x4A008140
 #define CM_IDLEST_DPLL_PER		0x4A008144
 #define CM_AUTOIDLE_DPLL_PER		0x4A008148
@@ -498,8 +500,10 @@ struct dpll_param {
 	char        	h12;
 	char         	h13;
 	char		h14;
+	char		h21;
 	char		h22;
 	char		h23;
+	char		h24;
 };
 
 struct ddr_io {
