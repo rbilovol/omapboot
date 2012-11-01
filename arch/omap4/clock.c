@@ -459,7 +459,7 @@ static void enable_all_clocks(void)
 }
 
 /* must be called from sram or flash */
-void prcm_init(void)
+void prcm_init(struct proc_specific_functions *proc_ops)
 {
 	u32 clk_index;
 	/* Get the sysclk speed from cm_sys_clksel

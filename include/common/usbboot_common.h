@@ -93,7 +93,7 @@ struct usb_specific_functions {
 struct board_specific_functions {
 	void (*board_scale_vcores)(void);
 	struct partition *(*board_get_part_tbl)(void);
-	void (*board_prcm_init)(void);
+	void (*board_prcm_init)(struct proc_specific_functions *proc_ops);
 	void (*board_gpmc_init)(void);
 	void (*board_late_init)(void);
 	void (*board_mux_init)(void);

@@ -31,10 +31,9 @@
 
 /* OMAP default configuration functions */
 void scale_vcores(void);
-void prcm_init(void);
+void prcm_init(struct proc_specific_functions *proc_ops);
 void gpmc_init(void);
 int mmc_init(u8 device);
-void prcm_init(void);
 void setup_emif_config(void);
 
 #endif

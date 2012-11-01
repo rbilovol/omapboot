@@ -414,7 +414,7 @@ void scale_vcores(void)
 	return;
 }
 
-void prcm_init(void)
+void prcm_init(struct proc_specific_functions *proc_ops)
 {
 	u32 temp;
 

@@ -145,9 +145,9 @@ static u8 omap5uevm_get_flash_slot(void)
 	return device;
 }
 
-static void omap5uevm_prcm_init(void)
+static void omap5uevm_prcm_init(struct proc_specific_functions *proc_ops)
 {
-	prcm_init();
+	prcm_init(proc_ops);
 }
 
 static int omap5uevm_storage_init(u8 dev,

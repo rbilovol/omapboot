@@ -108,7 +108,7 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 		boot_ops->board_ops->board_scale_vcores();
 
 	if (boot_ops->board_ops->board_prcm_init)
-		boot_ops->board_ops->board_prcm_init();
+		boot_ops->board_ops->board_prcm_init(boot_ops->proc_ops);
 
 	init_memory_alloc();
 

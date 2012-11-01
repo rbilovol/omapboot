@@ -379,10 +379,10 @@ static void omap5evm_scale_cores(void)
 	scale_vcores();
 }
 
-static void omap5evm_prcm_init(void)
+static void omap5evm_prcm_init(struct proc_specific_functions *proc_ops)
 {
 	/* Use default OMAP prcm init function */
-	prcm_init();
+	prcm_init(proc_ops);
 }
 
 static int omap5evm_storage_init(u8 dev,

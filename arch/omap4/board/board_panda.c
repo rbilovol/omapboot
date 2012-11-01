@@ -382,10 +382,10 @@ static void panda_gpmc_init(void)
 	gpmc_init();
 }
 
-static void panda_prcm_init(void)
+static void panda_prcm_init(struct proc_specific_functions *proc_ops)
 {
 	/* Use default OMAP gpmc init function */
-	prcm_init();
+	prcm_init(proc_ops);
 }
 
 int panda_usb_len_request(struct usb_specific_functions *usb_ops,

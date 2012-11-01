@@ -367,10 +367,10 @@ static void blaze_gpmc_init(void)
 	gpmc_init();
 }
 
-static void blaze_prcm_init(void)
+static void blaze_prcm_init(struct proc_specific_functions *proc_ops)
 {
 	/* Use default OMAP gpmc init function */
-	prcm_init();
+	prcm_init(proc_ops);
 }
 
 static int blaze_storage_init(u8 dev,
