@@ -417,9 +417,15 @@ void scale_vcores(void)
 void prcm_init(struct proc_specific_functions *proc_ops)
 {
 	u32 temp;
+	u8 n = 1;
+
+	if (proc_ops->proc_get_proc_id) {
+		if (proc_ops->proc_get_proc_id() < OMAP_5430_ES2_DOT_0)
+			n = 0;
+	}
 
 	/* Configure CORE DPLL but don't lock it */
-	configure_core_dpll(&core_dpll_params[0]);
+	configure_core_dpll(&core_dpll_params[n]);
 
 	temp = (CLKSEL_CORE_X2_DIV_1 << CLKSEL_CORE_SHIFT) |
 	(CLKSEL_L3_CORE_DIV_2 << CLKSEL_L3_SHIFT) |
@@ -427,16 +433,16 @@ void prcm_init(struct proc_specific_functions *proc_ops)
 	writel(temp, CM_CLKSEL_CORE);
 
 	/* Configure PER DPLL and LOCK it */
-	configure_per_dpll(&per_dpll_params[0]);
+	configure_per_dpll(&per_dpll_params[n]);
 
 	/* Configure MPU DPLL and LOCK it */
-	configure_mpu_dpll(&mpu_dpll_params[0]);
+	configure_mpu_dpll(&mpu_dpll_params[n]);
 
 	/* Configure IVA DPLL and LOCK it */
-	configure_iva_dpll(&iva_dpll_params[0]);
+	configure_iva_dpll(&iva_dpll_params[n]);
 
 	/* Configure ABE DPLL and LOCK it */
-	configure_abe_dpll(&abe_dpll_params[0]);
+	configure_abe_dpll(&abe_dpll_params[n]);
 
 #ifndef CONFIG_USE_CH_RAM_CONFIG
 	/* Configure EMIF controller */
@@ -455,7 +461,7 @@ void prcm_init(struct proc_specific_functions *proc_ops)
 #endif
 
 	/* Configure USB DPLL and LOCK it */
-	configure_usb_dpll(&usb_dpll_params[0]);
+	configure_usb_dpll(&usb_dpll_params[n]);
 
 	/* Configure CLOCKS */
 	setup_clocks();
