@@ -53,6 +53,9 @@ copy:
 		str r6, [r9], #-4
 		cmp r9, r8
 		bne copy
+		ldr     sp, = CONFIG_STACK_SRAM
+		bic     sp, sp, #7 /* 8-byte alignment for ABI compliance */
+
 
 		ldr r8, =iboot
 		bx r8

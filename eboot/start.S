@@ -51,6 +51,8 @@ copy:
 		cmp r9, r8
 		bne copy
 
+		ldr     sp, = CONFIG_STACK_SRAM
+		bic     sp, sp, #7 /* 8-byte alignment for ABI compliance */
 		ldr r8, =eboot
 		bx r8
 		b .
