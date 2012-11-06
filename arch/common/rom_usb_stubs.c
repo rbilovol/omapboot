@@ -83,3 +83,9 @@ int usb_open(struct usb *usb, int init,
 	printf("ERROR! this %s should never be called\n", __func__);
 	return 0;
 }
+
+void usb_reopen(struct usb *usb)
+{
+	printf("ERROR! this %s should never be called\n", __func__);
+	return;
+}

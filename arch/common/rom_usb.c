@@ -186,6 +186,29 @@ int usb_open(struct usb *usb, int init,
 	return 0;
 }
 
+/* from omap5 ES2.0 onwards, close the connection
+*  and reconnect using custom usb descriptors
+*/
+void usb_reopen(struct usb *usb)
+{
+#if defined(CONFIG_IS_OMAP5)
+	usb_desc_configure(ROM_USB_DESCRIPTOR_MANUFACTURER);
+	usb_desc_configure(ROM_USB_DESCRIPTOR_PRODUCT);
+	usb_desc_configure(ROM_USB_DESCRIPTOR_SERIAL);
+	usb_desc_configure(ROM_USB_DESCRIPTOR_CONFIGURATION);
+	usb_desc_configure(ROM_USB_DESCRIPTOR_INTERFACE);
+
+	ioconf_read.usr_desc     = &usb_fastboot_desc;
+	ioconf_write.usr_desc     = &usb_fastboot_desc;
+
+	usb->dread.config_object = &ioconf_read;
+	usb->dwrite.config_object = &ioconf_write;
+#endif
+	usb_init(usb);
+
+	return;
+}
+
 static struct usb *local_read_usb;
 static void rom_read_callback(struct per_handle *rh)
 {

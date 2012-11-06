@@ -98,6 +98,7 @@ typedef enum {
 
 int usb_open(struct usb *usb, int init,
 				struct proc_specific_functions *proc_ops);
+void usb_reopen(struct usb *usb);
 void usb_init(struct usb *usb);
 void usb_close(struct usb *usb);
 
