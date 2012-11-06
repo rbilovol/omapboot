@@ -35,49 +35,56 @@
 typedef struct dpll_param dpll_param;
 
 /* OPP NOM */
-static struct dpll_param core_dpll_params[2] = {
+static struct dpll_param core_dpll_params[3] = {
 	{277, 4, 2, 5, 8, 4, 62,  4, -1,  5,  7, -1}, /* 19.2MHz ES1.0 */
+	{277, 4, 2, 5, 8, 4, 62, 63,  6,  5,  7,  6}, /* 19.2MHz ES2.0 */
 	{277, 9, 2, 5, 8, 8, 62, 10, -1, 10, 14, -1}  /* 38.4MHz ES1.0 */
 };
 #define CORE_VOLTAGE	1040000
 
 /* OPP NOM */
-static struct dpll_param usb_dpll_params[2] = {
+static struct dpll_param usb_dpll_params[3] = {
 	{400, 7,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
+	{400, 7,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES2.0 */
 	{400, 15, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1}  /* 38.4MHz ES1.0*/
 };
 
 #ifndef CONFIG_FORCE_IVA_OPPNOM
 /* OPP_LOW */
-static struct dpll_param iva_dpll_params[2] = {
+static struct dpll_param iva_dpll_params[3] = {
 	{182, 2, -1, -1, 10, 12, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
+	{182, 2, -1, -1, 10, 12, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES2.0 */
 	{91,  1, -1, -1, 10, 12, -1, -1, -1, -1, -1, -1}  /* 38.4MHz ES1.0 */
 };
 #define IVA_VOLTAGE	950000
 #else
 /* OPP_NOM: in the customer specific need of having to go to OPP NOM */
-static struct dpll_param iva_dpll_params[2] = {
+static struct dpll_param iva_dpll_params[3] = {
 	{182, 2, -1, -1,  5,  6,  -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
+	{182, 2, -1, -1,  5,  6,  -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES2.0 */
 	{91,  2, -1, -1,  5,  6,  -1, -1, -1, -1, -1, -1}  /* 38.4MHz ES1.0 */
 };
 #define IVA_VOLTAGE	1040000
 #endif
 
 /* OPP NOM */
-static struct dpll_param abe_dpll_params[1] = {
+static struct dpll_param abe_dpll_params[2] = {
 	{750, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
+	{750, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1} /* 19.2MHz ES2.0 */
 };
 
 /* OPP NOM */
-static struct dpll_param mpu_dpll_params[2] = {
+static struct dpll_param mpu_dpll_params[3] = {
 	{375,  8, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
+	{125,  1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2 MHz ES2.0 */
 	{375, 17, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}  /* 38.4MHz ES1.0 */
 };
 #define MPU_VOLTAGE	1040000
 
 /* OPP NOM */
-static struct dpll_param per_dpll_params[2] = {
+static struct dpll_param per_dpll_params[3] = {
 	{20, 0, 4, 3, 6, 4, -1, 2, -1, -1, -1, -1},	/* 19.2 MHz ES1.0 */
+	{20, 0, 4, 3, 3, 4, -1, 2, -1, -1, -1, -1},	/* 19.2 MHz ES2.0 */
 	{10, 0, 4, 3, 6, 4, -1, 4, -1, -1, -1, -1}	/* 38.4 MHz ES1.0 */
 };
 
@@ -429,7 +436,7 @@ void prcm_init(void)
 	configure_iva_dpll(&iva_dpll_params[0]);
 
 	/* Configure ABE DPLL and LOCK it */
-	configure_abe_dpll(&abe_dpll_params);
+	configure_abe_dpll(&abe_dpll_params[0]);
 
 #ifndef CONFIG_USE_CH_RAM_CONFIG
 	/* Configure EMIF controller */
