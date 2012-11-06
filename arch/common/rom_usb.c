@@ -199,21 +199,30 @@ int usb_queue_read(struct usb *usb, void *data, unsigned len)
 	int n;
 
 #if defined(CONFIG_IS_OMAP5)
-	memset((void *)&trbout, 0, sizeof(trbout));
+	/* only applicable to omap5 ES1.0 */
+	if (local_proc_ops->proc_get_proc_id) {
+		if (local_proc_ops->proc_get_proc_id() <
+							OMAP_5430_ES2_DOT_0) {
 
-	ioconf_read.mode         = 0;
-	ioconf_read.conf_timeout = 0;
-	ioconf_read.trb_pool     = (struct usb_trb *) &trbout;
-	usb->dread.config_object = &ioconf_read;
+			memset((void *)&trbout, 0, sizeof(trbout));
+			ioconf_read.mode         = 0;
+			ioconf_read.conf_timeout = 0;
+			ioconf_read.trb_pool     = (struct usb_trb *) &trbout;
+			usb->dread.config_object = &ioconf_read;
 
-	trbout.ptrlo    = (u32)data;
-	trbout.ptrhi    = 0;
-	trbout.bufsiz   = ((len >> 9) + ((len & 0x1FF) ? 1 : 0)) << 9;
-	trbout.hwo      = HAL_USB_TRB_HWO_HW_OWNED;
-	trbout.chn      = HAL_USB_TRB_CHN_NO_CHAIN;
-	trbout.lst      = HAL_USB_TRB_LST_LAST;
-	trbout.csp      = HAL_USB_TRB_CSP_NO_CONT_SHORT_PACKET;
-	trbout.trbctl   = HAL_USB_TRB_TRBCTL_TYPE_NORMAL;
+			trbout.ptrlo    = (u32)data;
+			trbout.ptrhi    = 0;
+			trbout.bufsiz   =
+				((len >> 9) + ((len & 0x1FF) ? 1 : 0)) << 9;
+			trbout.hwo      = HAL_USB_TRB_HWO_HW_OWNED;
+			trbout.chn      = HAL_USB_TRB_CHN_NO_CHAIN;
+			trbout.lst      = HAL_USB_TRB_LST_LAST;
+			trbout.csp      = HAL_USB_TRB_CSP_NO_CONT_SHORT_PACKET;
+			trbout.trbctl   = HAL_USB_TRB_TRBCTL_TYPE_NORMAL;
+
+		}
+	} else
+		return -1;
 #endif
 
 	usb->dread.data = data;
@@ -256,10 +265,17 @@ int usb_queue_write(struct usb *usb, void *data, unsigned len)
 	int n;
 
 #if defined(CONFIG_IS_OMAP5)
-	ioconf_write.mode         = 0;
-	ioconf_write.conf_timeout = 0;
-	ioconf_write.trb_pool     = 0;
-	usb->dwrite.config_object = &ioconf_write;
+	/* only applicable to omap5 ES1.0 */
+	if (local_proc_ops->proc_get_proc_id) {
+		if (local_proc_ops->proc_get_proc_id() <
+							OMAP_5430_ES2_DOT_0) {
+			ioconf_write.mode         = 0;
+			ioconf_write.conf_timeout = 0;
+			ioconf_write.trb_pool     = 0;
+			usb->dwrite.config_object = &ioconf_write;
+		}
+	} else
+		return -1;
 #endif
 	usb->dwrite.data = data;
 	usb->dwrite.length = len;
