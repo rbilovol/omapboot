@@ -94,7 +94,7 @@ TARGET_FLAGS += -include include/common/config.h
 # Newer GCC require +sec postfix to build secure instructions
 plus_sec := $(shell set -e;						\
 		if (echo ".arch_extension sec" |			\
-		$(TARGET_CC) -c -x assembler -)>/dev/null 2>/dev/null;	\
+		$(TARGET_CC) -c -march-armv7-a -x assembler -)>/dev/null 2>/dev/null;	\
 		then echo "+sec";					\
 		else echo "";						\
 		fi)
