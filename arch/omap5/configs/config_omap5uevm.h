@@ -30,7 +30,9 @@
 #define _CONFIG_OMAPU5EVM_H_
 
 #define CONFIG_OMAP5UEVM
+
 /* CH Header defines */
+#define CONFIG_USE_CH			1
 #define CONFIG_USE_CH_SETTINGS_CONFIG	1
 #define CONFIG_USE_CH_RAM_CONFIG	1
 

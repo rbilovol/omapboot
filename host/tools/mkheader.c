@@ -41,10 +41,15 @@ int main(int argc, char **argv)
 
 	x[1] = strtoul(argv[1], NULL, 0);
 	x[0] = strtoul(argv[2], NULL, 0);
-	
+
+#ifdef CONFIG_USE_CH
+	fprintf(stderr, "Append Configuration Header...\n");
 	if (write(1, basic_header, sizeof(basic_header)) < 0)
 		return -1;
+#endif
+
 	if (!strcmp(argv[4], "add_gp_hdr")) {
+		fprintf(stderr, "Append GP Header...");
 		if (write(1, x, sizeof(x)) < 0)
 			return -1;
 	}
