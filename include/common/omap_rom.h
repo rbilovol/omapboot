@@ -111,8 +111,6 @@ int usb_wait_write(struct usb *usb);
 int usb_read(struct usb *usb, void *data, unsigned len);
 int usb_write(struct usb *usb, void *data, unsigned len);
 
-struct usb *usb_enable(void);
-
 /* I2C */
 typedef enum {
 	HAL_I2C1 = (0x00),
