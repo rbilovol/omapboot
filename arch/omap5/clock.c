@@ -31,9 +31,7 @@
 #include <io.h>
 #include <hw.h>
 #include <clock.h>
-
 typedef struct dpll_param dpll_param;
-
 /* OPP NOM */
 static struct dpll_param core_dpll_params[3] = {
 	{277, 4, 2, 5, 8, 4, 62,  4, -1,  5,  7, -1}, /* 19.2MHz ES1.0 */
@@ -88,28 +86,81 @@ static struct dpll_param per_dpll_params[3] = {
 	{10, 0, 4, 3, 6, 4, -1, 4, -1, -1, -1, -1}	/* 38.4 MHz ES1.0 */
 };
 
-static void setup_clocks(void)
+static void setup_clocks(struct proc_specific_functions *proc_ops)
 {
-	struct omap_clocks * oclock;
-	for (oclock = &omap5_clocks[0]; oclock->ad > 0; oclock++) {
-		switch (oclock->ctrl) {
-		case WRITEL:
-			writel(oclock->value, oclock->ad);
-			break;
-		case MODIFY:
-		case MODIFY_WAIT:
-			set_modify(oclock->ad, oclock->mask,
-						oclock->value);
-			if (oclock->ctrl == MODIFY_WAIT) {
-				if (!check_loop(BIT(16) | BIT(17), 0,
-						oclock->ad))
-				;
-			}
-			break;
-		default:
-			break;
+	u32 reg_addr_base;
+
+	if (proc_ops->proc_get_proc_id) {
+		if (proc_ops->proc_get_proc_id() < OMAP_5430_ES2_DOT_0) {
+			reg_addr_base = L4PER_CM_CORE_BASE;
+		} else {
+			reg_addr_base = CORE_CM_CORE_L4PER_BASE;
 		}
-	}
+
+		set_modify(reg_addr_base + CM_L4PER_CLKSTCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+		set_modify(reg_addr_base + CM_L4PER_GPTIMER2_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+		set_modify(reg_addr_base + CM_L4PER_GPIO2_CLKCTRL_OFFSET,
+				GPIO_CTRL_FIELD_MASK, 0);
+		set_modify(reg_addr_base + CM_L4PER_GPIO3_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_NO_SLEEP);
+		set_modify(reg_addr_base + CM_L4PER_GPIO4_CLKCTRL_OFFSET,
+				GPIO_CTRL_FIELD_MASK, 0);
+		set_modify(reg_addr_base + CM_L4PER_GPIO4_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_NO_SLEEP);
+		set_modify(reg_addr_base + CM_L4PER_GPIO5_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_NO_SLEEP);
+		set_modify(reg_addr_base + CM_L4PER_GPIO6_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_NO_SLEEP);
+		set_modify(reg_addr_base + CM_L4PER_I2C1_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+		set_modify(reg_addr_base + CM_L4PER_UART1_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+		set_modify(reg_addr_base + CM_L4PER_UART2_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+		set_modify(reg_addr_base + CM_L4PER_UART3_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+		set_modify(reg_addr_base + CM_L4PER_UART4_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+		set_modify(reg_addr_base + CM_L4PER_CLKSTCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_HW_AUTO);
+	} else
+		return;
+
+
+	set_modify(CORE_CM_CORE_BASE + CM_EMIF_CLKSTCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+	set_modify(CORE_CM_CORE_BASE + CM_EMIF_EMIF1_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_NO_SLEEP);
+	set_modify(CORE_CM_CORE_BASE + CM_EMIF_EMIF2_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_NO_SLEEP);
+	set_modify(CORE_CM_CORE_BASE + CM_L4CFG_CLKSTCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+	set_modify(CORE_CM_CORE_BASE + CM_L4CFG_L4_CFG_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_NO_SLEEP);
+	set_modify(CORE_CM_CORE_BASE + CM_L4CFG_CLKSTCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_HW_AUTO);
+	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_MMC1_CLKCTRL_OFFSET,
+				L3INIT_CTRL_FIELD_MASK, MMC_CLK_192MHZ_DPLL);
+	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_MMC2_CLKCTRL_OFFSET,
+				L3INIT_CTRL_FIELD_MASK, MMC_CLK_192MHZ_DPLL);
+	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_CLKSTCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_MMC1_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_MMC2_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_CLKSTCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_HW_AUTO);
+	set_modify(WKUPAON_CM_BASE + CM_WKUPAON_TIMER1_CLKCTRL_OFFSET,
+				L3INIT_CTRL_FIELD_MASK, 0);
+	set_modify(WKUPAON_CM_BASE + CM_WKUPAON_GPIO1_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_NO_SLEEP);
+	set_modify(WKUPAON_CM_BASE + CM_WKUPAON_TIMER1_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+	set_modify(WKUPAON_CM_BASE + CM_WKUPAON_WD_TIMER2_CLKCTRL_OFFSET,
+				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
 }
 
 static void configure_core_dpll(dpll_param *dpll_param_p)
@@ -173,7 +224,7 @@ static void configure_per_dpll(dpll_param *dpll_param_p)
 	if (dpll_param_p->h13 >= 0)
 		writel(dpll_param_p->h14, CM_DIV_H14_DPLL_PER);
 
-	writel(0x00000002, CM_L4PER_CLKSTCTRL);
+	writel(0x00000002, CORE_CM_CORE_L4PER_BASE);
 
 	/* Program DPLL frequency (M and N) */
 	set_modify(CM_CLKSEL_DPLL_PER, 0x0007ff00, dpll_param_p->m << 8);
@@ -186,14 +237,12 @@ static void configure_per_dpll(dpll_param *dpll_param_p)
 	if (!check_loop(BIT(0), 1, CM_IDLEST_DPLL_PER)) {
 		/* do nothing */
 	}
-
-	writel(0x00000001, CM_EMIF_EMIF1_CLKCTRL);
-	writel(0x00000001, CM_EMIF_EMIF2_CLKCTRL);
-	writel(0x00000002, CM_L4PER_UART1_CLKCTRL);
-	writel(0x00000002, CM_L4PER_UART2_CLKCTRL);
-	writel(0x00000002, CM_L4PER_UART3_CLKCTRL);
-	writel(0x00000002, CM_L4PER_UART4_CLKCTRL);
-
+       writel(0x00000001, CM_EMIF_EMIF1_CLKCTRL);
+       writel(0x00000001, CM_EMIF_EMIF2_CLKCTRL);
+       writel(0x2, (CORE_CM_CORE_L4PER_BASE + CM_L4PER_UART1_CLKCTRL_OFFSET));
+       writel(0x2, (CORE_CM_CORE_L4PER_BASE + CM_L4PER_UART2_CLKCTRL_OFFSET));
+       writel(0x2, (CORE_CM_CORE_L4PER_BASE + CM_L4PER_UART3_CLKCTRL_OFFSET));
+       writel(0x2, (CORE_CM_CORE_L4PER_BASE + CM_L4PER_UART4_CLKCTRL_OFFSET));
 	return;
 }
 
@@ -447,9 +496,8 @@ void prcm_init(struct proc_specific_functions *proc_ops)
 #ifndef CONFIG_USE_CH_RAM_CONFIG
 	/* Configure EMIF controller */
 	setup_emif_config();
-
-	/* Put EMIF clock domain in sw wakeup mode */
 	writel(0x00000002, CM_EMIF_CLKSTCTRL);
+
 #endif
 
 #ifndef CONFIG_USE_CH_SETTINGS_CONFIG
@@ -464,6 +512,6 @@ void prcm_init(struct proc_specific_functions *proc_ops)
 	configure_usb_dpll(&usb_dpll_params[n]);
 
 	/* Configure CLOCKS */
-	setup_clocks();
+	setup_clocks(proc_ops);
 
 }
