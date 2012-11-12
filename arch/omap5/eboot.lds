@@ -54,7 +54,7 @@ SECTIONS {
 	__bss_end = .;
 
 	. = ALIGN(4);
-	.mram : { *(.mram) } >mram
+	.mram (NOLOAD): { *(.mram) } >mram
 
 	. = ALIGN(4);
 	.sdram (NOLOAD): { *(.sdram) } > sdram

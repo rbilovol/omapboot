@@ -46,13 +46,13 @@ SECTIONS {
 	.data : { *(.data) } > sram
 
 	. = ALIGN(4);
-	.mram : { *(.mram) } > mram
-
-	. = ALIGN(4);
 	__bss_start = .;
 	.bss : { *(.bss) } > sram
 	. = ALIGN(4);
 	__bss_end = .;
+
+	. = ALIGN(4);
+	.mram (NOLOAD): { *(.mram) } > mram
 
         . = ALIGN(4);
         .sdram (NOLOAD): { *(.sdram) } > sdram
