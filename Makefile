@@ -99,7 +99,8 @@ plus_sec := $(shell set -e;						\
 		else echo "";						\
 		fi)
 TARGET_AFLAGS := $(TARGET_FLAGS) -Wa,-march=armv7-a$(plus_sec)
-TARGET_CFLAGS := $(TARGET_FLAGS) -march=armv7-a
+#TARGET_CFLAGS := $(TARGET_FLAGS) -march=armv7-a
+TARGET_CFLAGS := $(TARGET_FLAGS) -march=armv7-a -mthumb -ffunction-sections -fdata-sections
 TARGET_CC_LOC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-search-dirs|grep ^install|cut -d ':' -f2|tr -d ' ')
 
 TARGET_LIBGCC := $(shell $(TARGET_CC) $(TARGET_CFLAGS) -print-libgcc-file-name)

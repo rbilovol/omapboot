@@ -49,7 +49,8 @@ $(OUT)/$(M_NAME): _LDS := $(M_LDS)
 $(OUT)/$(M_NAME): _MAP := $(M_MAP)
 $(OUT)/$(M_NAME): $(M_OBJS)
 	@echo link $@
-	$(QUIET)$(TARGET_LD) -Bstatic -Map $(_MAP) -T $(_LDS) -Ttext $(_BASE) $(_OBJS) $(_LIBS) -o $@
+#	$(QUIET)$(TARGET_LD) -Bstatic -Map $(_MAP) -T $(_LDS) -Ttext $(_BASE) $(_OBJS) $(_LIBS) -o $@
+	$(QUIET)$(TARGET_LD) -Bstatic --gc-sections -Map $(_MAP) -T $(_LDS) -Ttext $(_BASE) $(_OBJS) $(_LIBS) -o $@
 
 M_OBJS :=
 M_NAME :=
