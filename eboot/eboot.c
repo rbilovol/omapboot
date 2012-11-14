@@ -70,7 +70,7 @@ static int do_sboot(struct bootloader_ops *boot_ops, int bootdevice)
 
 	pte = fastboot_flash_find_ptn("bootloader");
 	if (!pte) {
-		printf("eboot: cannot find '%s' partition\n");
+		printf("eboot: cannot find bootloader partition\n");
 		return -1;
 	}
 
