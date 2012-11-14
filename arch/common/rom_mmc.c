@@ -357,7 +357,7 @@ static int mmc_rdwr_limited(u64 start_sec, u64 sectors, void *data, u8 ddir)
 	int ret = 0;
 
 	if (start_sec > 0xFFFFFFFF) {
-		printf("%s: failed. start_sec too large.\n");
+		printf("%s: failed. start_sec too large.\n", __func__);
 		return -1;
 	}
 
