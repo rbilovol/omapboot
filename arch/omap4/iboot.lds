@@ -27,8 +27,8 @@
 */
 
 MEMORY {
-	sram (A): ORIGIN = 0x40300200, LENGTH = 28K
-	mram (A): ORIGIN = 0x40300200 + 28K, LENGTH = 1K
+	sram (A): ORIGIN = 0x40309000, LENGTH = 18K
+	mram (A): ORIGIN = 0x40309000 + 18K, LENGTH = 1K
 	sdram (Arw) : ORIGIN = 0xA0BFFFFF, LENGTH = 500m
 }
 
