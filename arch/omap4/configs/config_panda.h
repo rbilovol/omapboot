@@ -65,6 +65,7 @@
 #endif
 
 #define CONFIG_OMAP4_ANDROID_CMD_LINE
+#define CONFIG_USE_CH			1
 
 #define EXTENDED_CMDLINE	"mem=1024M@0x80000000 " \
 				"mem=512M@0xA0000000 " \

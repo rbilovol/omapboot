@@ -53,3 +53,4 @@
 #define MANUFACTURER_NAME	"Texas Instruments"
 
 #define CONFIG_OMAP4_ANDROID_CMD_LINE
+#define CONFIG_USE_CH			1
