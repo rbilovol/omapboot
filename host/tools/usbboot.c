@@ -253,6 +253,16 @@ int main(int argc, char **argv)
 						data = iboot_hs_data;
 						sz = iboot_hs_size;
 					}
+#else
+					if (!data) {
+						fprintf(stderr, "No embedded HS"
+						" iboot has been found and user"
+						" didn't provide a valid "
+						"iboot.ift either!");
+						fprintf(stderr, " User needs to"
+						" rebuild with MSHIELD.\n");
+						return -1;
+					}
 #endif
 				} else {
 					fprintf(stderr, "using built-in GP "
