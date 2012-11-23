@@ -292,7 +292,7 @@ static void blaze_tablet_mux_init(void)
 }
 
 
-static struct ddr_regs elpida2G_400mhz_2cs = {
+static struct ddr_regs elpida2G_400_mhz_2cs = {
 	/* tRRD changed from 10ns to 12.5ns because of the tFAW requirement*/
 	.tim1		= 0x10eb0662,
 	.tim2		= 0x20370dd2,
@@ -329,15 +329,25 @@ static void blaze_tablet_ddr_init(struct proc_specific_functions *proc_ops)
 	writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
 
 	omap_rev = proc_ops->proc_get_proc_id();
-	if (omap_rev >= OMAP_4460_ES1_DOT_0 && omap_rev <= OMAP_4460_ES1_DOT_1) {
+	switch (omap_rev) {
+	case OMAP_4430_ES2_DOT_2:
+	case OMAP_4430_ES2_DOT_3:
+		ddr_regs = &elpida2G_400_mhz_2cs;
+		break;
+	case OMAP_4460_ES1_DOT_0:
+	case OMAP_4460_ES1_DOT_1:
 		writel(0x80640300, MA_BASE + DMM_LISA_MAP_0);
-		elpida2G_400mhz_2cs.phy_ctrl_1	= 0x449FF408;
-		ddr_regs = &elpida2G_400mhz_2cs;
-	}
-
-	if (omap_rev == OMAP_4470_ES1_DOT_0) {
+		elpida2G_400_mhz_2cs.phy_ctrl_1	= 0x449FF408;
+		ddr_regs = &elpida2G_400_mhz_2cs;
+		break;
+	case OMAP_4470_ES1_DOT_0:
 		writel(0x80640300, MA_BASE + DMM_LISA_MAP_3);
 		ddr_regs = &elpida4G_400_mhz_1cs;
+		break;
+	case OMAP_REV_INVALID:
+	default:
+		printf("%s: unsupported OMAP4 revision %d",
+					__func__, omap_rev);
 	}
 
 	omap4_ddr_init(ddr_regs, ddr_regs);
