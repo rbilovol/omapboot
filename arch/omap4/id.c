@@ -190,7 +190,7 @@ static u32 get_public_rom_base(void)
 {
 	u32 public_rom_base = PUBLIC_API_BASE_4430;
 
-	if (get_omap_rev() >= OMAP_4460_ES1_DOT_1)
+	if (get_omap_rev() >= OMAP_4460_ES1_DOT_0)
 		public_rom_base = PUBLIC_API_BASE_4460;
 
 	return public_rom_base;
