@@ -201,13 +201,13 @@ static int usage(void)
 	return 0;
 }
 
-static int *load_data_file(void *file, unsigned size)
+static int *load_data_file(void *file, unsigned *size)
 {
 	if (!file)
-		file = load_file("iboot.ift", &size);
+		file = load_file("iboot.ift", size);
 
 	else
-		file = load_file(file, &size);
+		file = load_file(file, size);
 
 	if (!file) {
 		fprintf(stderr, "unable to load signed HS/HD iboot.ift\n");
@@ -241,9 +241,10 @@ int main(int argc, char **argv)
 				if (!memcmp(proctype, "EMU", 3)) {
 					if (argc == 3)
 						data = load_data_file(argv[2],
-							sz);
+							&sz);
 					else
-						data = load_data_file(NULL, sz);
+						data = load_data_file(NULL,
+							&sz);
 #ifdef EMBED_IBOOT_HS
 					if (!data) {
 						fprintf(stderr, "using built-in"
