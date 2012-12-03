@@ -243,7 +243,14 @@ static void configure_usb_dpll(dpll_param *dpll_param_p)
 
 void configure_core_dpll_no_lock(struct proc_specific_functions *proc_ops)
 {
-	dpll_param *dpll_param_p = &core_dpll_param_ddr400mhz;
+	int omap_rev;
+	dpll_param *dpll_param_p;
+
+	omap_rev = proc_ops->proc_get_proc_id();
+	if (omap_rev >= OMAP_4470_ES1_DOT_0)
+		dpll_param_p = &core_dpll_param_ddr466mhz;
+	else
+		dpll_param_p = &core_dpll_param_ddr400mhz;
 
 	/* Get the sysclk speed from cm_sys_clksel
 	 * Set it to 38.4 MHz, in case ROM code is bypassed
@@ -278,7 +285,8 @@ void lock_core_dpll(void)
 
 void lock_core_dpll_shadow(struct proc_specific_functions *proc_ops)
 {
-	dpll_param *dpll_param_p = &core_dpll_param_ddr400mhz;
+	int omap_rev;
+	dpll_param *dpll_param_p;
 	u32 temp;
 	temp = readl(CM_MEMIF_CLKSTCTRL);
 	temp &= (~3);
@@ -290,6 +298,12 @@ void lock_core_dpll_shadow(struct proc_specific_functions *proc_ops)
 
 	while(readl(CM_MEMIF_EMIF_2_CLKCTRL) & 0x30000)
 		;
+
+	omap_rev = proc_ops->proc_get_proc_id();
+	if (omap_rev >= OMAP_4470_ES1_DOT_0)
+		dpll_param_p = &core_dpll_param_ddr466mhz;
+	else
+		dpll_param_p = &core_dpll_param_ddr400mhz;
 
 	/* Lock the core dpll using freq update method */
 	/*(CM_CLKMODE_DPLL_CORE) */
