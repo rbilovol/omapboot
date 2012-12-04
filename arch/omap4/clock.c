@@ -55,18 +55,6 @@
 /* clk sel is 12M / 13M / 16.8M / 19.2M / 26M / 27M / 38.4M */
 /* we only support 38.4M here */
 
-/* #define CONFIG_MPU_1000 1 */
-
-struct dpll_param mpu_dpll_param = {
-#ifdef CONFIG_MPU_600
-	0x7d, 0x07, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-#elif CONFIG_MPU_1000
-	0x69, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-#else /* 400MHz */
-	0x1a, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,	
-#endif
-};
-
 struct dpll_param mpu_dpll_param_800mhz = {
 	0x7d, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
@@ -120,9 +108,37 @@ typedef struct dpll_param dpll_param;
 static void configure_mpu_dpll(dpll_param *dpll_param_p,
 			struct proc_specific_functions *proc_ops)
 {
+	int omap_rev;
+	u32 emif_div_4, abe_div_8, dcc_en;
+
 	/* Unlock the MPU dpll */
 	set_modify(CM_CLKMODE_DPLL_MPU, 0x00000007, PLL_MN_POWER_BYPASS);
 	check_loop(BIT0, 0, CM_IDLEST_DPLL_MPU);
+
+	omap_rev = proc_ops->proc_get_proc_id();
+	if (omap_rev >= OMAP_4470_ES1_DOT_0) {
+		/*
+		* Same M, N as for 800 MHz from M2 output will
+		* give 1600 MHz from M3 output
+		*/
+		dpll_param_p = &mpu_dpll_param_800mhz;
+	} else if (omap_rev >= OMAP_4460_ES1_DOT_0) {
+		/*
+		 * Same M, N as for 700 MHz from M2 output will
+		 * give 1400 MHz from M3 output
+		 */
+		dpll_param_p = &mpu_dpll_param_700mhz;
+
+		emif_div_4 = 1;
+		abe_div_8 = 1;
+
+		set_modify(CM_MPU_MPU_CLKCTRL, 0x01000000, emif_div_4 << 24);
+		set_modify(CM_MPU_MPU_CLKCTRL, 0x02000000, abe_div_8 << 25);
+
+		dcc_en = 0;
+		/* Enable / disable DCC on 4460 */
+		set_modify(CM_CLKSEL_DPLL_MPU, 0x00400000, dcc_en << 22);
+	}
 
 	/* Disable DPLL autoidle */
 	set_modify(CM_AUTOIDLE_DPLL_MPU, 0x00000007, 0x0);
@@ -502,7 +518,7 @@ void prcm_init(struct proc_specific_functions *proc_ops)
 		return;
 
 	/* Configure all DPLL's at 100% OPP */
-	configure_mpu_dpll(&mpu_dpll_param, proc_ops);
+	configure_mpu_dpll(&mpu_dpll_param_600mhz, proc_ops);
 	configure_iva_dpll(&iva_dpll_param);
 	configure_per_dpll(&per_dpll_param);
 	configure_abe_dpll(&abe_dpll_param);
