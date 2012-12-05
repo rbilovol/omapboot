@@ -292,7 +292,7 @@ static void panda_mux_init(void)
 }
 
 
-static struct ddr_regs elpida2G_400mhz_2cs = {
+static struct ddr_regs elpida2G_400_mhz_2cs = {
 	/* tRRD changed from 10ns to 12.5ns because of the tFAW requirement*/
 	.tim1		= 0x10eb0662,
 	.tim2		= 0x20370dd2,
@@ -306,21 +306,51 @@ static struct ddr_regs elpida2G_400mhz_2cs = {
 	.mr2		= 0x4
 };
 
+static struct ddr_regs elpida4G_400_mhz_1cs = {
+	.tim1		= 0x10eb0662,
+	.tim2		= 0x20370dd2,
+	.tim3		= 0x00b1c33f,
+	.phy_ctrl_1	= 0x449FF408,
+	.ref_ctrl	= 0x00000618,
+	.config_init	= 0x80800eb2,
+	.config_final	= 0x80801ab2,
+	.zq_config	= 0xd00b3215,
+	.mr1		= 0x83,
+	.mr2		= 0x4
+};
+
 static void panda_ddr_init(struct proc_specific_functions *proc_ops)
 {
+	const struct ddr_regs *ddr_regs = 0;
+	int omap_rev = OMAP_REV_INVALID;
 	/* 1GB, 128B interleaved */
 	writel(0x80640300, DMM_BASE + DMM_LISA_MAP_0);
 	writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
 	writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
 
-	if (proc_ops->proc_get_proc_id() >= OMAP_4460_ES1_DOT_0) {
+	omap_rev = proc_ops->proc_get_proc_id();
+	switch (omap_rev) {
+	case OMAP_4430_ES2_DOT_2:
+	case OMAP_4430_ES2_DOT_3:
+		ddr_regs = &elpida2G_400_mhz_2cs;
+		break;
+	case OMAP_4460_ES1_DOT_0:
+	case OMAP_4460_ES1_DOT_1:
 		writel(0x80640300, MA_BASE + DMM_LISA_MAP_0);
-		elpida2G_400mhz_2cs.phy_ctrl_1	= 0x449FF408;
+		elpida2G_400_mhz_2cs.phy_ctrl_1	= 0x449FF408;
+		ddr_regs = &elpida2G_400_mhz_2cs;
+		break;
+	case OMAP_4470_ES1_DOT_0:
+		writel(0x80640300, MA_BASE + DMM_LISA_MAP_3);
+		ddr_regs = &elpida4G_400_mhz_1cs;
+		break;
+	case OMAP_REV_INVALID:
+	default:
+		printf("%s: unsupported OMAP4 revision %d",
+					__func__, omap_rev);
 	}
 
-	omap4_ddr_init(&elpida2G_400mhz_2cs,
-		       &elpida2G_400mhz_2cs);
-
+	omap4_ddr_init(ddr_regs, ddr_regs);
 }
 
 static int panda_check_fastboot(void)
