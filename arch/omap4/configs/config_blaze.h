@@ -53,7 +53,7 @@
 #define CONFIG_FASTBOOT			/* enable FASTBOOT for BLAZE */
 
 #ifdef CONFIG_FASTBOOT
-	#define PRODUCT_NAME		"blaze"
+	#define PRODUCT_NAME		"Blaze"
 	#define FASTBOOT_VERSION	"0.5"
 	#define MANUFACTURER_NAME	"Texas Instruments"
 #else

@@ -48,7 +48,7 @@
 #define CONFIG_ADDR_RAMDISK		(MEMORY_BASE + 0x01000000)
 #define CONFIG_ADDR_DOWNLOAD		(MEMORY_BASE + 0x02000000)
 
-#define PRODUCT_NAME		"blaze"
+#define PRODUCT_NAME		"Blaze_Tablet"
 #define FASTBOOT_VERSION	"0.5"
 #define MANUFACTURER_NAME	"Texas Instruments"
 
