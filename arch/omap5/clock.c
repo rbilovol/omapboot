@@ -89,12 +89,14 @@ static struct dpll_param per_dpll_params[3] = {
 static void setup_clocks(struct proc_specific_functions *proc_ops)
 {
 	u32 reg_addr_base;
-
+	u32 l3init_cm_core_addr_base;
 	if (proc_ops->proc_get_proc_id) {
 		if (proc_ops->proc_get_proc_id() < OMAP_5430_ES2_DOT_0) {
 			reg_addr_base = L4PER_CM_CORE_BASE;
+			l3init_cm_core_addr_base = L3INIT_CM_CORE_BASE_ES1_0;
 		} else {
 			reg_addr_base = CORE_CM_CORE_L4PER_BASE;
+			l3init_cm_core_addr_base = L3INIT_CM_CORE_BASE;
 		}
 
 		set_modify(reg_addr_base + CM_L4PER_CLKSTCTRL_OFFSET,
@@ -141,17 +143,17 @@ static void setup_clocks(struct proc_specific_functions *proc_ops)
 				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_NO_SLEEP);
 	set_modify(CORE_CM_CORE_BASE + CM_L4CFG_CLKSTCTRL_OFFSET,
 				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_HW_AUTO);
-	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_MMC1_CLKCTRL_OFFSET,
+	set_modify(l3init_cm_core_addr_base + CM_L3INIT_MMC1_CLKCTRL_OFFSET,
 				L3INIT_CTRL_FIELD_MASK, MMC_CLK_192MHZ_DPLL);
-	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_MMC2_CLKCTRL_OFFSET,
+	set_modify(l3init_cm_core_addr_base + CM_L3INIT_MMC2_CLKCTRL_OFFSET,
 				L3INIT_CTRL_FIELD_MASK, MMC_CLK_192MHZ_DPLL);
-	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_CLKSTCTRL_OFFSET,
+	set_modify(l3init_cm_core_addr_base + CM_L3INIT_CLKSTCTRL_OFFSET,
 				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
-	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_MMC1_CLKCTRL_OFFSET,
+	set_modify(l3init_cm_core_addr_base + CM_L3INIT_MMC1_CLKCTRL_OFFSET,
 				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
-	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_MMC2_CLKCTRL_OFFSET,
+	set_modify(l3init_cm_core_addr_base + CM_L3INIT_MMC2_CLKCTRL_OFFSET,
 				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
-	set_modify(L3INIT_CM_CORE_BASE + CM_L3INIT_CLKSTCTRL_OFFSET,
+	set_modify(l3init_cm_core_addr_base + CM_L3INIT_CLKSTCTRL_OFFSET,
 				CLKTRCTRL_FIELD_MASK, CLKTRCTRL_HW_AUTO);
 	set_modify(WKUPAON_CM_BASE + CM_WKUPAON_TIMER1_CLKCTRL_OFFSET,
 				L3INIT_CTRL_FIELD_MASK, 0);
