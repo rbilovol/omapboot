@@ -521,6 +521,56 @@ static void omap_vc_init(u8 hscll, u8 hsclh, u8 scll, u8 sclh)
 	writel(val, PRM_VC_CFG_I2C_CLK);
 }
 
+/**
+ * omap_vc_bypass_send_value() - Send a data using VC Bypass command
+ * @sa:		7 bit I2C slave address of the PMIC
+ * @reg_addr:	I2C register address(8 bit) address in PMIC
+ * @reg_data:	what 8 bit data to write
+ */
+static int omap_vc_bypass_send_value(u8 sa, u8 reg_addr, u8 reg_data)
+{
+	/*
+	 * Unfortunately we need to loop here instead of a defined time
+	 * use arbitary large value
+	 */
+	u32 timeout = 0xFFFF;
+	u32 reg_val;
+
+	sa &= PRM_VC_VAL_BYPASS_SLAVEADDR_MASK;
+	reg_addr &= PRM_VC_VAL_BYPASS_REGADDR_MASK;
+	reg_data &= PRM_VC_VAL_BYPASS_DATA_MASK;
+
+	/* program VC to send data */
+	reg_val = sa << PRM_VC_VAL_BYPASS_SLAVEADDR_SHIFT |
+	    reg_addr << PRM_VC_VAL_BYPASS_REGADDR_SHIFT |
+	    reg_data << PRM_VC_VAL_BYPASS_DATA_SHIFT;
+	writel(reg_val, PRM_VC_VAL_BYPASS);
+
+	/* Signal VC to send data */
+	writel(reg_val | PRM_VC_VAL_BYPASS_VALID_BIT, PRM_VC_VAL_BYPASS);
+
+	/* Wait on VC to complete transmission */
+	do {
+		reg_val = readl(PRM_VC_VAL_BYPASS) &
+		    PRM_VC_VAL_BYPASS_VALID_BIT;
+		if (!reg_val)
+			break;
+
+		ldelay(100);
+	} while (--timeout);
+
+	/* Cleanup PRM int status reg to leave no traces of interrupts */
+	reg_val = readl(PRM_IRQSTATUS_MPU);
+	writel(reg_val, PRM_IRQSTATUS_MPU);
+
+	/* In case we can do something about it in future.. */
+	if (!timeout)
+		return -1;
+
+	/* All good.. */
+	return 0;
+}
+
 void scale_vcores(struct proc_specific_functions *proc_ops)
 {
 	/*
