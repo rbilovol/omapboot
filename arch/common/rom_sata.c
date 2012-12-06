@@ -67,20 +67,6 @@ static u64 sata_get_sector_size(void)
 	return (u64) SATA_SECTOR_SZ;
 }
 
-static void sata_reg_write(u32 reg_offset, u32 val)
-{
-	u32 reg_addr;
-	reg_addr = reg_offset + OMAP_SATA_BASE;
-	writel(val, reg_addr);
-}
-
-static u32 sata_reg_read(u32 reg_offset)
-{
-	u32 reg_addr;
-	reg_addr = reg_offset + OMAP_SATA_BASE;
-	return readl(reg_addr);
-}
-
 static int sata_init(u8 device)
 {
 	struct mem_device *md;
@@ -179,21 +165,11 @@ static int sata_read(u64 start_sec, u64 sectors, void *data)
 
 static int sata_write(u64 start_sec, u64 sectors, void *data)
 {
-	/* TODO: Below are pointers into Embedded RAM
-	 * to the command list and command table
-	 * We only need to do these tricks as OMAP5 1.0 does
-	 * not have native ROM support for sata write.
-	 * This will be fixed in OMAP5 2.0 silicon.
-	 * Also noticed that there is limitation of max
-	 * 8192 sectors write with this API.
-	 * Beyond that, we are stuck in the while loop
-	 * for the OMAP_SATA_PXCI register status to change
-	 */
-	u32 * const cmdlist = (u32 *)0x4031d000;
-	u32 * const cmdtbl = (u32 *)0x4031d800;
-	u32 start = (u32)start_sec;
+	struct write_desc wr;
+	int n;
 	u32 curr_count = 0;
-	u32 to_write = (u32)sectors;
+	u32 start = (u32) start_sec;
+	u32 to_write = (u32) sectors;
 	u32 datap = (u32)data;
 
 	if ((start_sec > 0xFFFFFFFF) ||
@@ -205,27 +181,16 @@ static int sata_write(u64 start_sec, u64 sectors, void *data)
 	while (to_write) {
 		curr_count = (to_write > SATA_RW_SECTOR_LIMIT) ?
 				SATA_RW_SECTOR_LIMIT : to_write;
-		satad.rom_satall_buildreadsectorcmd(0, start,
-						curr_count, datap);
-		/* Set cmdlist[0].dw0.w bit */
-		cmdlist[0] |= 1<<6;
+		wr.sector_start	= start;
+		wr.sector_count	= curr_count;
+		wr.source	= (void *)datap;
 
-		/* Clear cmd field and replace by ATA write */
-		cmdtbl[0] &= ~0xFF0000;
-		cmdtbl[0] |= 0x30<<16;
-
-		/* Enable command list processing */
-		sata_reg_write(OMAP_SATA_PXCMD_OFFSET,
-			sata_reg_read(OMAP_SATA_PXCMD_OFFSET) | 1);
-
-		/* Issue write command */
-		sata_reg_write(OMAP_SATA_PXCI_OFFSET,
-			sata_reg_read(OMAP_SATA_PXCI_OFFSET) | 1);
-
-		/* Wait command completion */
-		while (sata_reg_read(OMAP_SATA_PXCI_OFFSET) & 1)
-			;
-		/* TODO: check write result in controller */
+		n = satad.sata_rom_data.io->write(&satad.sata_rom_data.dread,
+						&wr);
+		if (n) {
+			printf("sata_write failed\n");
+			return n;
+		}
 		to_write -= curr_count;
 		start += curr_count;
 		datap += satad.sector_size * curr_count;
