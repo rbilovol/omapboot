@@ -499,15 +499,42 @@ void prcm_init(struct proc_specific_functions *proc_ops)
 	enable_all_clocks();
 }
 
+static void omap_vc_init(u8 hscll, u8 hsclh, u8 scll, u8 sclh)
+{
+	u32 val;
+
+	val = 0x00 << PRM_VC_CFG_I2C_MODE_HSMCODE_SHIFT;
+	if (hscll || hsclh)
+		val |= PRM_VC_CFG_I2C_MODE_HSMODEEN_BIT;
+
+	writel(val, PRM_VC_CFG_I2C_MODE);
+
+	hscll &= PRM_VC_CFG_I2C_CLK_HSCLL_MASK;
+	hsclh &= PRM_VC_CFG_I2C_CLK_HSCLH_MASK;
+	scll &= PRM_VC_CFG_I2C_CLK_SCLL_MASK;
+	sclh &= PRM_VC_CFG_I2C_CLK_SCLH_MASK;
+
+	val = hscll << PRM_VC_CFG_I2C_CLK_HSCLL_SHIFT |
+	    hsclh << PRM_VC_CFG_I2C_CLK_HSCLH_SHIFT |
+	    scll << PRM_VC_CFG_I2C_CLK_SCLL_SHIFT |
+	    sclh << PRM_VC_CFG_I2C_CLK_SCLH_SHIFT;
+	writel(val, PRM_VC_CFG_I2C_CLK);
+}
+
 void scale_vcores(struct proc_specific_functions *proc_ops)
 {
-	/* For VC bypass only VCOREx_CGF_FORCE  is necessary and
-	 * VCOREx_CFG_VOLTAGE  changes can be discarded
+	/*
+	 * Dont use HSMODE, scll=0x60, sclh=0x26
+	 * Note on HSMODE = 0:
+	 * This allows us to allow a voltage domain to scale while we do i2c
+	 * operation for the next domain - Please verify to ensure
+	 * adequate delays are present in the case of slower ramp time for PMIC.
+	 * This settings allow upto ~100Usec latency covered while i2c operation
+	 * is in progress with the above configuration.
+	 * Note #2: this latency will also depend on i2c_clk configuration as
+	 * well.
 	 */
-	/* PRM_VC_CFG_I2C_MODE */
-	writel(0x0, 0x4A307BA8);
-	/* PRM_VC_CFG_I2C_CLK */
-	writel(0x6026, 0x4A307BAC);
+	omap_vc_init(0x00, 0x00, 0x60, 0x26);
 
 	/* set VCORE1 force VSEL */
 	/* PRM_VC_VAL_BYPASS) */
