@@ -563,6 +563,7 @@ struct storage_specific_functions *init_rom_mmc_funcs(int proc_id, u8 device)
 	} else
 		return NULL;
 
+	mmcd.storage_device = DEVICE_TYPE_NULL;
 	mmcd.mmc_functions.init = mmc_init;
 	mmcd.mmc_functions.get_sector_size = get_mmc_sector_size;
 	mmcd.mmc_functions.read = mmc_read;
