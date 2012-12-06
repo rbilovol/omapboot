@@ -593,8 +593,87 @@ static void do_scale_tps62361(u32 reg, u32 val)
 	writel(l, 0x4A310194);
 }
 
+/**
+ * scale_vcore_omap4430() - Scale for OMAP4430
+ * @rev:	OMAP chip revision
+ *
+ * PMIC assumed to be used is TWL6030
+ */
+static void scale_vcore_omap4430(unsigned int rev)
+{
+	u8 vsel;
+
+	/* vdd_core - VCORE 3 - OPP100 - ES2+: 1.127 */
+	vsel = (rev == OMAP_4430_ES1_DOT_0) ? 0x31 : 0x22;
+	omap_vc_bypass_send_value(TWL6030_SRI2C_SLAVE_ADDR,
+				  TWL6030_SRI2C_REG_ADDR_VCORE3, vsel);
+
+	/* vdd_mpu - VCORE 1 - OPP100 - ES2+: 1.2027 */
+	vsel = (rev == OMAP_4430_ES1_DOT_0) ? 0x3B : 0x28;
+	omap_vc_bypass_send_value(TWL6030_SRI2C_SLAVE_ADDR,
+				  TWL6030_SRI2C_REG_ADDR_VCORE1, vsel);
+
+	/* vdd_iva - VCORE 2 - OPP50 - ES2+: 0.950V */
+	vsel = (rev == OMAP_4430_ES1_DOT_0) ? 0x31 : 0x14;
+	omap_vc_bypass_send_value(TWL6030_SRI2C_SLAVE_ADDR,
+				  TWL6030_SRI2C_REG_ADDR_VCORE2, vsel);
+}
+
+/**
+ * scale_vcore_omap4460() - Scale for OMAP4460
+ * @rev:	OMAP chip revision
+ *
+ * PMIC assumed to be used is TWL6030 + TPS62361
+ */
+static void scale_vcore_omap4460(unsigned int rev)
+{
+	u32 volt;
+
+	/* vdd_core - TWL6030 VCORE 1 - OPP100 - 1.127V */
+	omap_vc_bypass_send_value(TWL6030_SRI2C_SLAVE_ADDR,
+				  TWL6030_SRI2C_REG_ADDR_VCORE1, 0x22);
+
+	/* WKUP clocks */
+	set_modify(CM_WKUP_GPIO1_CLKCTRL, 0x00000000, 0x1);
+	check_loop(BIT17|BIT16, 0, CM_WKUP_GPIO1_CLKCTRL);
+
+	/* vdd_mpu - TPS62361 - OPP100 - 1.210V (roundup from 1.2V) */
+	volt = 1210;
+	volt -= TPS62361_BASE_VOLT_MV;
+	volt /= 10;
+	do_scale_tps62361(TPS62361_REG_ADDR_SET1, volt);
+
+	/* vdd_iva - TWL6030 VCORE 2 - OPP50  - 0.950V */
+	omap_vc_bypass_send_value(TWL6030_SRI2C_SLAVE_ADDR,
+				  TWL6030_SRI2C_REG_ADDR_VCORE2, 0x14);
+}
+
+/**
+ * scale_vcore_omap4470() - Scale for OMAP4470
+ * @rev:	OMAP chip revision
+ *
+ * PMIC assumed to be used is TWL6032
+ */
+static void scale_vcore_omap4470(unsigned int rev)
+{
+	/* vdd_core - SMPS 2 - OPP100-OV - 1.25V */
+	omap_vc_bypass_send_value(TWL6032_SRI2C_SLAVE_ADDR,
+				TWL6032_SRI2C_REG_ADDR_SMPS2, 0x2C);
+
+	/* vdd_mpu - SMPS 1 - OPP100 - 1.2027V */
+	omap_vc_bypass_send_value(TWL6032_SRI2C_SLAVE_ADDR,
+				TWL6032_SRI2C_REG_ADDR_SMPS1, 0x28);
+
+	/* vdd_iva - SMPS 5 - OPP50 - 0.950V */
+	omap_vc_bypass_send_value(TWL6032_SRI2C_SLAVE_ADDR,
+				TWL6032_SRI2C_REG_ADDR_SMPS5, 0x14);
+}
+
 void scale_vcores(struct proc_specific_functions *proc_ops)
 {
+	unsigned int omap_rev;
+
+	omap_rev = proc_ops->proc_get_proc_id();
 	/*
 	 * Dont use HSMODE, scll=0x60, sclh=0x26
 	 * Note on HSMODE = 0:
@@ -608,37 +687,10 @@ void scale_vcores(struct proc_specific_functions *proc_ops)
 	 */
 	omap_vc_init(0x00, 0x00, 0x60, 0x26);
 
-	/* set VCORE1 force VSEL */
-	/* PRM_VC_VAL_BYPASS) */
-	writel(0x3A5512, 0x4A307BA0);
-
-	writel(readl(0x4A307BA0) | 0x1000000, 0x4A307BA0);
-	while (readl(0x4A307BA0) & 0x1000000)
-		;
-
-	/* PRM_IRQSTATUS_MPU */
-	writel(readl(0x4A306010), 0x4A306010);
-
-
-	/* FIXME: set VCORE2 force VSEL, Check the reset value */
-	/* PRM_VC_VAL_BYPASS) */
-	writel(0x295B12, 0x4A307BA0);
-	writel(readl(0x4A307BA0) | 0x1000000, 0x4A307BA0);
-	while (readl(0x4A307BA0) & 0x1000000)
-		;
-
-	/* PRM_IRQSTATUS_MPU */
-	writel(readl(0x4A306010), 0x4A306010);
-
-	/*set VCORE3 force VSEL */
-	/* PRM_VC_VAL_BYPASS */
-	writel(0x2A6112, 0x4A307BA0);
-
-	writel(readl(0x4A307BA0) | 0x1000000, 0x4A307BA0);
-
-	while (readl(0x4A307BA0) & 0x1000000)
-		;
-
-	/* PRM_IRQSTATUS_MPU */
-	writel(readl(0x4A306010), 0x4A306010);
+	if (omap_rev >= OMAP_4470_ES1_DOT_0)
+		scale_vcore_omap4470(omap_rev);
+	else if (omap_rev >= OMAP_4460_ES1_DOT_0)
+		scale_vcore_omap4460(omap_rev);
+	else			/* Default OMAP4430 */
+		scale_vcore_omap4430(omap_rev);
 }
