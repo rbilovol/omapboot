@@ -308,17 +308,17 @@ static struct ddr_regs elpida2G_400_mhz_2cs = {
 	.mr2		= 0x4
 };
 
-static struct ddr_regs elpida4G_400_mhz_1cs = {
-	.tim1		= 0x10eb0662,
-	.tim2		= 0x20370dd2,
-	.tim3		= 0x00b1c33f,
-	.phy_ctrl_1	= 0x449FF408,
-	.ref_ctrl	= 0x00000618,
+static struct ddr_regs elpida4G_466_mhz_1cs = {
+	.tim1		= 0x130F376B,
+	.tim2		= 0x3041105A,
+	.tim3		= 0x00F543CF,
+	.phy_ctrl_1	= 0x449FF37B,
+	.ref_ctrl	= 0x0000071B,
 	.config_init	= 0x80800eb2,
-	.config_final	= 0x80801ab2,
-	.zq_config	= 0xd00b3215,
+	.config_final	= 0x80801EB2,
+	.zq_config	= 0x500b3215,
 	.mr1		= 0x83,
-	.mr2		= 0x4
+	.mr2		= 0x5
 };
 
 static void blaze_ddr_init(struct proc_specific_functions *proc_ops)
@@ -344,7 +344,7 @@ static void blaze_ddr_init(struct proc_specific_functions *proc_ops)
 		break;
 	case OMAP_4470_ES1_DOT_0:
 		writel(0x80640300, MA_BASE + DMM_LISA_MAP_3);
-		ddr_regs = &elpida4G_400_mhz_1cs;
+		ddr_regs = &elpida4G_466_mhz_1cs;
 		break;
 	case OMAP_REV_INVALID:
 	default:
@@ -353,6 +353,41 @@ static void blaze_ddr_init(struct proc_specific_functions *proc_ops)
 	}
 
 	omap4_ddr_init(ddr_regs, ddr_regs, proc_ops);
+	/*
+	 * Pull Dn enabled for "Weak driver control" on LPDDR
+	 * Interface.
+	 */
+	if (omap_rev >= OMAP_4460_ES1_DOT_0) {
+		writel(0x9c9c9c9c, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO1_0);
+		writel(0x9c9c9c9c, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO1_1);
+		writel(0x9c989c00, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO1_2);
+		writel(0xa0888c03, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO1_3);
+		writel(0x9c9c9c9c, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO2_0);
+		writel(0x9c9c9c9c, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO2_1);
+		writel(0x9c989c00, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO2_2);
+		writel(0xa0888c03, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO2_3);
+	}
+	/*
+	 * Slew Rate should be set to "FASTEST" and
+	 * Impedance Control to "Drv12":
+	 * CONTROL_LPDDR2IOx_2[LPDDR2IO1_GR10_SR] = 0
+	 * CONTROL_LPDDR2IOx_2[LPDDR2IO1_GR10_I] = 7
+	 * where x=[1-2]
+	 */
+	if (omap_rev >= OMAP_4470_ES1_DOT_0) {
+		writel(0x9c3c9c00, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO1_2);
+		writel(0x9c3c9c00, OMAP44XX_CTRL_PADCONF_CORE_BASE
+						+ CONTROL_LPDDR2IO2_2);
+	}
 }
 
 static int blaze_check_fastboot(void)

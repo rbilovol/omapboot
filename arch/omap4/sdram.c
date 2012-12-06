@@ -233,6 +233,23 @@ void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 		    const struct ddr_regs *emif2_ddr_regs,
 			  struct proc_specific_functions *proc_ops)
 {
+	int omap_rev;
+
+	omap_rev = proc_ops->proc_get_proc_id();
+
+	/* Configure the Control Module DDRIO device */
+	writel(0x7c7c7c7c, 0x4A100638);
+	writel(0x7c7c7c7c, 0x4A10063c);
+	writel(0x7c787c00, 0x4A100640);
+	writel(0x7c7c7c7c, 0x4A100648);
+	writel(0x7c7c7c7c, 0x4A10064c);
+	writel(0x7c787c00, 0x4A100650);
+	/*
+	 * Adjust Internal Vref controls to reduce leakage
+	 * for chip retention (Core OSWR)
+	 */
+	writel(0xa388bc03, 0x4A100644);
+	writel(0xa388bc03, 0x4A100654);
 	/* DDR needs to be initialised @ 19.2 MHz
 	 * So put core DPLL in bypass mode
 	 * Configure the Core DPLL but don't lock it
@@ -273,8 +290,13 @@ void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 	writel(0x80000000, EMIF1_BASE + EMIF_PWR_MGMT_CTRL);
 	writel(0x80000000, EMIF2_BASE + EMIF_PWR_MGMT_CTRL);
 
-	writel(0x0A300000, EMIF1_BASE + EMIF_L3_CONFIG);
-	writel(0x0A300000, EMIF2_BASE + EMIF_L3_CONFIG);
+	if (omap_rev >= OMAP_4460_ES1_DOT_0) {
+		writel(0x0A300000, EMIF1_BASE + EMIF_L3_CONFIG);
+		writel(0x0A300000, EMIF2_BASE + EMIF_L3_CONFIG);
+	} else {
+		writel(0x0A0000FF, EMIF1_BASE + EMIF_L3_CONFIG);
+		writel(0x0A0000FF, EMIF2_BASE + EMIF_L3_CONFIG);
+	}
 
 	/*
 	 * DMM : DMM_LISA_MAP_0(Section_0)
