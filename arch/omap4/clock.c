@@ -571,6 +571,28 @@ static int omap_vc_bypass_send_value(u8 sa, u8 reg_addr, u8 reg_data)
 	return 0;
 }
 
+static void do_scale_tps62361(u32 reg, u32 val)
+{
+	u32 l = 0;
+
+	/*
+	 * Select SET1 in TPS62361:
+	 * VSEL1 is grounded on board. So the following selects
+	 * VSEL1 = 0 and VSEL0 = 1
+	 */
+
+	/* set GPIO-7 direction as output */
+	l = readl(0x4A310134);
+	l &= ~(1 << TPS62361_VSEL0_GPIO);
+	writel(l, 0x4A310134);
+
+	omap_vc_bypass_send_value(TPS62361_I2C_SLAVE_ADDR, reg, val);
+
+	/* set GPIO-7 data-out */
+	l = 1 << TPS62361_VSEL0_GPIO;
+	writel(l, 0x4A310194);
+}
+
 void scale_vcores(struct proc_specific_functions *proc_ops)
 {
 	/*
