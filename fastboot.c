@@ -975,6 +975,19 @@ static int fastboot_erase(char *cmd, char *response, struct usb *usb)
 	return ret;
 }
 
+#if defined(CONFIG_IS_OMAP4)
+static int fastboot_reboot(char *cmd, char *response, struct usb *usb)
+{
+	strcpy(response, "OKAY");
+	fastboot_tx_status(response, strlen(response), usb);
+
+	disable_irqs();
+	reset_cpu();
+
+	return 0;
+}
+#endif
+
 void do_fastboot(struct bootloader_ops *boot_ops)
 {
 	int ret = 0;
@@ -1071,6 +1084,10 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 			ret = fastboot_erase(cmd + 6, response, usb);
 		} else if (memcmp(cmd, "boot", 4) == 0) {
 			ret = fastboot_boot(boot_ops, cmd + 4, response);
+#if defined(CONFIG_IS_OMAP4)
+		} else if (memcmp(cmd, "reboot", 6) == 0) {
+			ret = fastboot_reboot(cmd + 6, response, usb);
+#endif
 		}
 
 		if (ret < 0)

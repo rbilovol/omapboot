@@ -52,6 +52,8 @@ void memset(void *p, unsigned char c, unsigned len);
 void enable_irqs(void);
 void disable_irqs(void);
 
+void reset_cpu(void);
+
 u32 check_loop(u32 mask, u32 match, u32 addr);
 void ldelay(unsigned long loops);
 void set_modify(u32 reg, u32 mask, u32 value);
