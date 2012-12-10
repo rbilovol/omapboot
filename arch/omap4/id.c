@@ -119,7 +119,7 @@ static char *get_cpu_revision(void)
 
 char *get_cpu_version(void)
 {
-	static char proc_ver[8];
+	static char proc_ver[16];
 	int cpu = get_omap_rev();
 
 	switch (cpu) {
@@ -128,14 +128,14 @@ char *get_cpu_version(void)
 	case OMAP_4430_ES2_DOT_1:
 	case OMAP_4430_ES2_DOT_2:
 	case OMAP_4430_ES2_DOT_3:
-		strcpy(proc_ver, "4430");
+		strcpy(proc_ver, "OMAP4430");
 		break;
 	case OMAP_4460_ES1_DOT_0:
 	case OMAP_4460_ES1_DOT_1:
-		strcpy(proc_ver, "4460");
+		strcpy(proc_ver, "OMAP4460");
 		break;
 	case OMAP_4470_ES1_DOT_0:
-		strcpy(proc_ver, "4470");
+		strcpy(proc_ver, "OMAP4470");
 		break;
 	default:
 		printf("OMAP_REV_INVALID\n");
