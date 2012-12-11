@@ -37,6 +37,8 @@
 #include <mux.h>
 #include <hw.h>
 
+#include <string.h>
+
 static struct partition partitions[] = {
 	{ "-", 128 },
 	{ "xloader", 128 },
@@ -392,6 +394,14 @@ static void blaze_ddr_init(struct proc_specific_functions *proc_ops)
 
 static int blaze_check_fastboot(void)
 {
+	if (readl(PRM_RSTST) & PRM_RSTST_RESET_WARM_BIT)
+		if (!strcmp((const char *)PUBLIC_SAR_RAM_1_FREE,
+							"bootloader")) {
+			printf("\nreboot command [%s]\n",
+					(const char *)PUBLIC_SAR_RAM_1_FREE);
+			return 1;
+		}
+
 	return 0;
 }
 

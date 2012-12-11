@@ -30,6 +30,7 @@
 #include <bootimg.h>
 #include <io.h>
 #include <types.h>
+#include <hw.h>
 
 #include <alloc.h>
 #include <omap_rom.h>
@@ -976,6 +977,22 @@ static int fastboot_erase(char *cmd, char *response, struct usb *usb)
 }
 
 #if defined(CONFIG_IS_OMAP4)
+static int fastboot_reboot_bl(char *cmd, char *response, struct usb *usb)
+{
+	strcpy(response, "OKAY");
+	fastboot_tx_status(response, strlen(response), usb);
+
+	/* clear all reset events */
+	writel(PRM_RSTST_CLR, PRM_RSTST);
+
+	strcpy((char *)PUBLIC_SAR_RAM_1_FREE, "bootloader");
+
+	/* trigger warm reset */
+	writel(PRM_RSTCTRL_RESET_WARM_BIT, PRM_RSTCTRL);
+
+	return 0;
+}
+
 static int fastboot_reboot(char *cmd, char *response, struct usb *usb)
 {
 	strcpy(response, "OKAY");
@@ -1085,6 +1102,8 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 		} else if (memcmp(cmd, "boot", 4) == 0) {
 			ret = fastboot_boot(boot_ops, cmd + 4, response);
 #if defined(CONFIG_IS_OMAP4)
+		} else if (memcmp(cmd, "reboot-bootloader", 17) == 0) {
+			ret = fastboot_reboot_bl(cmd + 17, response, usb);
 		} else if (memcmp(cmd, "reboot", 6) == 0) {
 			ret = fastboot_reboot(cmd + 6, response, usb);
 #endif

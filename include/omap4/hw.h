@@ -224,6 +224,7 @@
 #define PRM_RSTCTRL_RESET_WARM_BIT      (1<<0)
 #define PRM_RSTCTRL_RESET_COLD_BIT      (1<<1)
 #define PRM_RSTST                       (PRM_DEVICE_BASE + 0x4)
+#define PRM_RSTST_CLR			0xfff
 #define PRM_RSTST_RESET_COLD_BIT        (1<<0)
 #define PRM_RSTST_RESET_WARM_BIT        (1<<1)
 
