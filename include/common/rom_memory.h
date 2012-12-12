@@ -77,8 +77,8 @@ struct mem_device {
 struct mem_driver {
 	int (*init)(struct mem_device *md);
 	int (*read)(struct mem_device *md, struct read_desc *rd);
-	int (*write)(struct mem_device *md, struct write_desc *wr);
 	int (*configure)(struct mem_device *md, void *config);
+	int (*write)(struct mem_device *md, struct write_desc *wr);
 };
 
 #endif
