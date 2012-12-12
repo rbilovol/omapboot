@@ -257,7 +257,7 @@ $(OUT)/$(BOARD)_GP_MLO:: $(OUT)/eboot.bin $(OUT)/mkheader
 $(OUT)/$(BOARD)_HS_MLO: $(OUT)/eboot.bin $(OUT)/mkheader
 ifneq ("$(MSHIELD)", "")
 	@echo Signing eboot.bin to generate signed MLO ...Done!
-	$(QUIET)/$(MSHIELD)/generate_MLO OMAP5430 ES1.0 $(OUT)/eboot.bin
+	$(QUIET)/$(MSHIELD)/generate_MLO OMAP5430 ES2.0 $(OUT)/eboot.bin
 	$(QUIET)mv MLO $(OUT)/tmp_mlo
 	$(QUIET)./$(OUT)/mkheader $(EBOOT_TEXT_BASE) `wc -c $(OUT)/tmp_mlo` no_gp_hdr > $@
 	$(QUIET)cat $(OUT)/tmp_mlo >> $@
@@ -291,7 +291,7 @@ ifneq ("$(MSHIELD)", "")
 $(OUT_HOST_OBJ)/iboot_hs.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo generate $@
 	@echo Signing iboot.bin to generate signed ULO ...Done!
-	$(QUIET)/$(MSHIELD)/generate_ULO OMAP5430 ES1.0 $(OUT)/iboot.bin
+	$(QUIET)/$(MSHIELD)/generate_ULO OMAP5430 ES2.0 $(OUT)/iboot.bin
 	$(QUIET)mv ULO $(OUT)/ULO
 	$(QUIET)./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/ULO` no_gp_hdr > $@
 	$(QUIET)cat $(OUT)/ULO >> $@
