@@ -57,7 +57,7 @@ static int do_sboot(struct bootloader_ops *boot_ops, int bootdevice)
 
 	int sector_sz = boot_ops->storage_ops->get_sector_size();
 
-	int num_sectors = SECOND_STAGE_OBJECT_SIZE/sector_sz;
+	int num_sectors = SECOND_STAGE_OBJECT_SIZE/sector_sz + 1;
 
 	u32 addr = CONFIG_ADDR_DOWNLOAD;
 
