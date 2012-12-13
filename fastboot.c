@@ -1020,11 +1020,12 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 
 	/* from omap5 ES2.0 onwards, close the usb connection and reconnect
 	using custom usb descriptors */
+/* HACK :Revisit 
 	if (boot_ops->proc_ops->proc_get_proc_id() >= OMAP_5430_ES2_DOT_0) {
 		usb_close(usb);
 		usb_reopen(usb);
 	}
-
+*/
 	serial_puts("Entering fastboot mode...\n");
 
 	while (1) {
