@@ -51,10 +51,10 @@ static struct dpll_param usb_dpll_params[3] = {
 /* OPP_LOW */
 static struct dpll_param iva_dpll_params[3] = {
 	{182, 2, -1, -1, 10, 12, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
-	{182, 2, -1, -1, 10, 12, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES2.0 */
+	{182, 2, -1, -1, 5, 6, -1, -1, -1, -1, -1, -1},	  /* 19.2 MHz */
 	{91,  1, -1, -1, 10, 12, -1, -1, -1, -1, -1, -1}  /* 38.4MHz ES1.0 */
 };
-#define IVA_VOLTAGE	950000
+#define IVA_VOLTAGE	880000
 #else
 /* OPP_NOM: in the customer specific need of having to go to OPP NOM */
 static struct dpll_param iva_dpll_params[3] = {
@@ -62,7 +62,7 @@ static struct dpll_param iva_dpll_params[3] = {
 	{182, 2, -1, -1,  5,  6,  -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES2.0 */
 	{91,  2, -1, -1,  5,  6,  -1, -1, -1, -1, -1, -1}  /* 38.4MHz ES1.0 */
 };
-#define IVA_VOLTAGE	1040000
+#define IVA_VOLTAGE	950000
 #endif
 
 /* OPP NOM */
@@ -74,15 +74,15 @@ static struct dpll_param abe_dpll_params[2] = {
 /* OPP NOM */
 static struct dpll_param mpu_dpll_params[3] = {
 	{375,  8, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
-	{125,  1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2 MHz ES2.0 */
+	{1375,  23, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2 MHz ES2.0 */
 	{375, 17, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}  /* 38.4MHz ES1.0 */
 };
-#define MPU_VOLTAGE	1040000
+#define MPU_VOLTAGE	1060000
 
 /* OPP NOM */
 static struct dpll_param per_dpll_params[3] = {
 	{20, 0, 4, 3, 6, 4, -1, 2, -1, -1, -1, -1},	/* 19.2 MHz ES1.0 */
-	{20, 0, 4, 3, 3, 4, -1, 2, -1, -1, -1, -1},	/* 19.2 MHz ES2.0 */
+	{20, 0, 4, 4, 3, 4, -1, 4, -1, -1, -1, -1},	/* 19.2 MHz */
 	{10, 0, 4, 3, 6, 4, -1, 4, -1, -1, -1, -1}	/* 38.4 MHz ES1.0 */
 };
 
