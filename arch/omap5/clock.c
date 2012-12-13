@@ -194,10 +194,14 @@ static void configure_core_dpll(dpll_param *dpll_param_p)
 		writel(dpll_param_p->h13, CM_DIV_H13_DPLL_CORE);
 	if (dpll_param_p->h14 >= 0)
 		writel(dpll_param_p->h14, CM_DIV_H14_DPLL_CORE);
+	if (dpll_param_p->h21 >= 0)
+		writel(dpll_param_p->h21, CM_DIV_H21_DPLL_CORE);
 	if (dpll_param_p->h22 >= 0)
 		writel(dpll_param_p->h22, CM_DIV_H22_DPLL_CORE);
 	if (dpll_param_p->h23 >= 0)
 		writel(dpll_param_p->h23, CM_DIV_H23_DPLL_CORE);
+	if (dpll_param_p->h24 >= 0)
+		writel(dpll_param_p->h24, CM_DIV_H24_DPLL_CORE);
 
 	return;
 }
