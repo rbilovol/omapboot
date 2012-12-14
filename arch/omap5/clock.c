@@ -35,7 +35,7 @@ typedef struct dpll_param dpll_param;
 /* OPP NOM */
 static struct dpll_param core_dpll_params[3] = {
 	{277, 4, 2, 5, 8, 4, 62,  4, -1,  5,  7, -1}, /* 19.2MHz ES1.0 */
-	{277, 4, 2, 5, 8, 4, 62, 63,  6,  5,  7,  6}, /* 19.2MHz ES2.0 */
+	{277, 4, 2, 5, 8, 4, 62, 5,  6,  5,  7,  6}, /* 19.2MHz ES2.0 */
 	{277, 9, 2, 5, 8, 8, 62, 10, -1, 10, 14, -1}  /* 38.4MHz ES1.0 */
 };
 #define CORE_VOLTAGE	1040000
