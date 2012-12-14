@@ -80,6 +80,16 @@ static struct usb_custom_desc usb_fastboot_desc = {
 	}
 };
 
+static void usb_desc_unicode(char *pout, char *pin)
+{
+	u32 i = 0;
+
+	while (i++ < 24 && *pin != '\0') {
+		*pout++ = *pin++;
+		*pout++ = '\0';
+	}
+}
+
 static void usb_desc_configure(u8 desc_string)
 {
 	char str[48];
@@ -87,41 +97,48 @@ static void usb_desc_configure(u8 desc_string)
 	switch (desc_string) {
 	case ROM_USB_DESCRIPTOR_MANUFACTURER:
 		usb_fastboot_manufacturer_string_desc.blength =
-						strlen(MANUFACTURER_NAME);
+						2+2*strlen(MANUFACTURER_NAME);
 		usb_fastboot_manufacturer_string_desc.bdescriptortype =
 							HAL_USB_STRING_DESC;
-		sprintf((char *) usb_fastboot_manufacturer_string_desc.bstring,
-							MANUFACTURER_NAME);
+		usb_desc_unicode(
+			(char *)usb_fastboot_manufacturer_string_desc.bstring,
+			MANUFACTURER_NAME);
 		break;
 	case ROM_USB_DESCRIPTOR_PRODUCT:
-		usb_fastboot_product_string_desc.blength = strlen(PRODUCT_NAME);
+		usb_fastboot_product_string_desc.blength =
+					2+2*strlen(PRODUCT_NAME);
 		usb_fastboot_product_string_desc.bdescriptortype =
 							HAL_USB_STRING_DESC;
-		sprintf((char *) usb_fastboot_product_string_desc.bstring,
-								PRODUCT_NAME);
+		usb_desc_unicode(
+			(char *)usb_fastboot_product_string_desc.bstring,
+			PRODUCT_NAME);
 		break;
 	case ROM_USB_DESCRIPTOR_SERIAL:
 		strcpy(str, local_proc_ops->proc_get_serial_num());
-		usb_fastboot_serial_string_desc.blength = strlen(str);
+		usb_fastboot_serial_string_desc.blength = 2+2*strlen(str);
 		usb_fastboot_serial_string_desc.bdescriptortype =
 							HAL_USB_STRING_DESC;
-		sprintf((char *)usb_fastboot_serial_string_desc.bstring, str);
+		usb_desc_unicode(
+			(char *)usb_fastboot_serial_string_desc.bstring, str);
 		break;
 	case ROM_USB_DESCRIPTOR_CONFIGURATION:
 		strcpy(str, "Android Fastboot");
-		usb_fastboot_configuration_string_desc.blength = strlen(str);
+		usb_fastboot_configuration_string_desc.blength =
+						2+2*strlen(str);
 		usb_fastboot_configuration_string_desc.bdescriptortype =
 							HAL_USB_STRING_DESC;
-		sprintf((char *) usb_fastboot_configuration_string_desc.bstring,
-									str);
+		usb_desc_unicode(
+			(char *)usb_fastboot_configuration_string_desc.bstring,
+			str);
 		break;
 	case ROM_USB_DESCRIPTOR_INTERFACE:
 		strcpy(str, "Android Fastboot");
-		usb_fastboot_interface_string_desc.blength = strlen(str);
+		usb_fastboot_interface_string_desc.blength = 2+2*strlen(str);
 		usb_fastboot_interface_string_desc.bdescriptortype =
 							HAL_USB_STRING_DESC;
-		sprintf((char *) usb_fastboot_interface_string_desc.bstring,
-									str);
+		usb_desc_unicode(
+			(char *)usb_fastboot_interface_string_desc.bstring,
+			str);
 		break;
 	}
 
@@ -244,8 +261,7 @@ int usb_queue_read(struct usb *usb, void *data, unsigned len)
 			trbout.trbctl   = HAL_USB_TRB_TRBCTL_TYPE_NORMAL;
 
 		}
-	} else
-		return -1;
+	}
 #endif
 
 	usb->dread.data = data;
@@ -297,8 +313,7 @@ int usb_queue_write(struct usb *usb, void *data, unsigned len)
 			ioconf_write.trb_pool     = 0;
 			usb->dwrite.config_object = &ioconf_write;
 		}
-	} else
-		return -1;
+	}
 #endif
 	usb->dwrite.data = data;
 	usb->dwrite.length = len;
