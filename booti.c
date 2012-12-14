@@ -113,7 +113,7 @@ static void boot_settings(struct bootloader_ops *boot_ops, boot_img_hdr *hdr,
 {
 	char serial_str[64];
 	int serial_len;
-	u32 atag_size, boot_len;
+	u32 boot_len;
 	char aboot_version_string[64];
 	char boot_str[64];
 	char temp_cmdline[512] = EXTENDED_CMDLINE;
@@ -134,7 +134,7 @@ static void boot_settings(struct bootloader_ops *boot_ops, boot_img_hdr *hdr,
 			strlen((const char *)hdr->cmdline) + 1))
 		strcat((char *)hdr->cmdline, boot_str);
 
-	atag_size = setup_atag(boot_ops, hdr, (u32 *)atag);
+	setup_atag(boot_ops, hdr, (u32 *)atag);
 
 	return;
 }

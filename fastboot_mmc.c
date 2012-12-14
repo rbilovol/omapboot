@@ -50,7 +50,6 @@ static struct partition *partitions;
 
 static void init_mbr(u8 *mbr, u64 blocks)
 {
-	u32 blocks_32;
 	DBG("init_mbr\n");
 
 	mbr[0x1be] = 0x00; /* nonbootable */
@@ -68,7 +67,7 @@ static void init_mbr(u8 *mbr, u64 blocks)
 	mbr[0x1c8] = 0x00;
 	mbr[0x1c9] = 0x00;
 
-	blocks_32 = (blocks > 0xFFFFFFFF) ? 0xFFFFFFFF : (u32)blocks;
+	blocks = (blocks > 0xFFFFFFFF) ? 0xFFFFFFFF : blocks;
 	memcpy(mbr + 0x1ca, &blocks, sizeof(u32));
 
 	mbr[0x1fe] = 0x55;
