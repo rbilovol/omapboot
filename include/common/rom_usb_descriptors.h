@@ -34,7 +34,7 @@
 #endif
 
 #ifndef PRODUCT_ID
-#define PRODUCT_ID	0x1234
+#define PRODUCT_ID	0xd022
 #endif
 
 #define ROM_USB_DESCRIPTOR_MANUFACTURER		0x2c
