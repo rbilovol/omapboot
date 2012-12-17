@@ -215,10 +215,16 @@ void usb_reopen(struct usb *usb)
 	usb_desc_configure(ROM_USB_DESCRIPTOR_CONFIGURATION);
 	usb_desc_configure(ROM_USB_DESCRIPTOR_INTERFACE);
 
-	ioconf_read.usr_desc     = &usb_fastboot_desc;
+	ioconf_read.mode          = 0;
+	ioconf_read.conf_timeout  = 0;
+	ioconf_read.trb_pool      = NULL;
+	ioconf_read.usr_desc      = &usb_fastboot_desc;
+	ioconf_write.mode         = 0;
+	ioconf_write.conf_timeout = 0;
+	ioconf_write.trb_pool     = NULL;
 	ioconf_write.usr_desc     = &usb_fastboot_desc;
 
-	usb->dread.config_object = &ioconf_read;
+	usb->dread.config_object  = &ioconf_read;
 	usb->dwrite.config_object = &ioconf_write;
 #endif
 	usb_init(usb);
