@@ -458,8 +458,8 @@ void scale_vcores(void)
 	/* Configure SR I2C Mode - FS mode */
 	writel(0x00000000, PRM_VC_CFG_I2C_MODE);
 
-	/* Configure SR I2C Clock - TOBEFIXED! */
-	writel(0xfffffffb, PRM_VC_CFG_I2C_CLK);
+	/* Configure SR I2C Clock */
+	writel(0x0000150E, PRM_VC_CFG_I2C_CLK);
 
 	/* Configure Palmas TWL6035 */
 	slaveaddr = 0x12;
