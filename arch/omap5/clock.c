@@ -80,7 +80,7 @@ static struct dpll_param abe_dpll_params[2] = {
 /* OPP NOM */
 static struct dpll_param mpu_dpll_params[3] = {
 	{375,  8, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
-	{1375,  23, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2 MHz ES2.0 */
+	{401,  6, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2 MHz ES2.0 */
 	{375, 17, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}  /* 38.4MHz ES1.0 */
 };
 #define MPU_VOLTAGE	1060000
