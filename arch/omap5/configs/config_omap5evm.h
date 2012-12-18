@@ -81,4 +81,6 @@
 #define EXTENDED_CMDLINE        " earlyprintk ";
 
 #define USER_FASTBOOT_RQ	(KEY_VOLUME_UP | KEY_VOLUME_DOWN)
+
+#define ABE_SYSCLK	1
 #endif

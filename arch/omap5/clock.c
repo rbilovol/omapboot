@@ -32,6 +32,8 @@
 #include <hw.h>
 #include <clock.h>
 typedef struct dpll_param dpll_param;
+
+
 /* OPP NOM */
 static struct dpll_param core_dpll_params[3] = {
 	{277, 4, 2, 5, 8, 4, 62,  4, -1,  5,  7, -1}, /* 19.2MHz ES1.0 */
@@ -68,7 +70,11 @@ static struct dpll_param iva_dpll_params[3] = {
 /* OPP NOM */
 static struct dpll_param abe_dpll_params[2] = {
 	{750, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
+#ifndef ABE_SYSCLK
 	{750, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1} /* 19.2MHz ES2.0 */
+#else
+        {46, 8, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1},  /* 19.2 MHz */
+#endif
 };
 
 /* OPP NOM */
@@ -319,6 +325,7 @@ static void configure_abe_dpll(dpll_param *dpll_param_p)
 {
 	u32 value;
 
+#ifndef ABE_SYSCLK
 	/*
 	* We need to enable some additional options to achieve
 	* 196.608MHz from 32768 Hz
@@ -329,11 +336,14 @@ static void configure_abe_dpll(dpll_param *dpll_param_p)
 	/* Spend 4 REFCLK cycles at each stage */
 	value = readl(CM_CLKMODE_DPLL_ABE);
 	writel((value & ~(0x7 << 5)) | (0x1 << 5), CM_CLKMODE_DPLL_ABE);
-
+#endif
 	/* Select the right reference clk */
 	value = readl(CM_CLKSEL_ABE_PLL_REF);
+#ifndef ABE_SYSCLK
 	writel((value & ~(0x1)) | (0x1 << 0), CM_CLKSEL_ABE_PLL_REF);
-
+#else
+	writel(value & ~(0x1), CM_CLKSEL_ABE_PLL_REF);
+#endif
 	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, IDLE_BYPASS_FAST_RELOCK_MODE);
 	if (!check_loop(BIT(1), 0, CM_IDLEST_DPLL_ABE)) {
 		/* do nothing */
