@@ -230,13 +230,14 @@ static void emif_config(unsigned int base, const struct ddr_regs *ddr_regs)
  * EMIF2 -- CS0 -- DDR2 (256 MB)
  *****************************************/
 void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
-		    const struct ddr_regs *emif2_ddr_regs)
+		    const struct ddr_regs *emif2_ddr_regs,
+			  struct proc_specific_functions *proc_ops)
 {
 	/* DDR needs to be initialised @ 19.2 MHz
 	 * So put core DPLL in bypass mode
 	 * Configure the Core DPLL but don't lock it
 	 */
-	configure_core_dpll_no_lock();
+	configure_core_dpll_no_lock(proc_ops);
 
 	/* No IDLE: BUG in SDC */
 	writel(0x0, EMIF1_BASE + EMIF_PWR_MGMT_CTRL);
@@ -248,7 +249,7 @@ void omap4_ddr_init(const struct ddr_regs *emif1_ddr_regs,
 	/* Configure EMIF2 */
 	emif_config(EMIF2_BASE, emif2_ddr_regs);
 	/* Lock Core using shadow CM_SHADOW_FREQ_CONFIG1 */
-	lock_core_dpll_shadow();
+	lock_core_dpll_shadow(proc_ops);
 	/* TODO: SDC needs few hacks to get DDR freq update working */
 
 	/* Set DLL_OVERRIDE = 0 */

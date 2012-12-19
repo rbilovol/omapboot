@@ -91,7 +91,7 @@ struct usb_specific_functions {
 /* Use these functions to override the
  * default configuration for the processor */
 struct board_specific_functions {
-	void (*board_scale_vcores)(void);
+	void (*board_scale_vcores)(struct proc_specific_functions *proc_ops);
 	struct partition *(*board_get_part_tbl)(void);
 	void (*board_prcm_init)(struct proc_specific_functions *proc_ops);
 	void (*board_gpmc_init)(void);

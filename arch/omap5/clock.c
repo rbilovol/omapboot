@@ -450,7 +450,7 @@ static void set_vcore(u8 regaddr, u8 slaveaddr, u32 voltage)
 	set_modify(PRM_IRQSTATUS_MPU, 0x00000000, 0x00000000);
 }
 
-void scale_vcores(void)
+void scale_vcores(struct proc_specific_functions *proc_ops)
 {
 	u32 regaddr;
 	u32 slaveaddr;

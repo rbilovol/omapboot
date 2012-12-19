@@ -28,10 +28,10 @@
 
 #include <types.h>
 #include <io.h>
-#include <hw.h>
 #include <omap_rom.h>
 #include <string.h>
 #include <usbboot_common.h>
+#include <hw.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)

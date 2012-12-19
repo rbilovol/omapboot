@@ -624,10 +624,11 @@ struct dpll_param {
 };
 
 void omap4_ddr_init(const struct ddr_regs *ddr1,
-		    const struct ddr_regs *ddr2);
+		    const struct ddr_regs *ddr2,
+			  struct proc_specific_functions *proc_ops);
 
-void configure_core_dpll_no_lock(void);
-void lock_core_dpll_shadow(void);
+void configure_core_dpll_no_lock(struct proc_specific_functions *proc_ops);
+void lock_core_dpll_shadow(struct proc_specific_functions *proc_ops);
 
 #endif
 #endif

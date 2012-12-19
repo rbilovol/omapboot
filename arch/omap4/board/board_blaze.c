@@ -352,7 +352,7 @@ static void blaze_ddr_init(struct proc_specific_functions *proc_ops)
 					__func__, omap_rev);
 	}
 
-	omap4_ddr_init(ddr_regs, ddr_regs);
+	omap4_ddr_init(ddr_regs, ddr_regs, proc_ops);
 }
 
 static int blaze_check_fastboot(void)
@@ -365,10 +365,10 @@ static u8 blaze_get_flash_slot(void)
 	return device;
 }
 
-static void blaze_scale_cores(void)
+static void blaze_scale_cores(struct proc_specific_functions *proc_ops)
 {
 	/* Use default OMAP voltage */
-	scale_vcores();
+	scale_vcores(proc_ops);
 }
 
 static void blaze_gpmc_init(void)

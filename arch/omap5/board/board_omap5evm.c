@@ -373,10 +373,10 @@ static u8 omap5evm_get_flash_slot(void)
 	return device;
 }
 
-static void omap5evm_scale_cores(void)
+static void omap5evm_scale_cores(struct proc_specific_functions *proc_ops)
 {
 	/* Use default OMAP voltage */
-	scale_vcores();
+	scale_vcores(proc_ops);
 }
 
 static void omap5evm_prcm_init(struct proc_specific_functions *proc_ops)

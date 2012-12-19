@@ -105,7 +105,8 @@ struct dpll_param usb_dpll_param = {
 
 typedef struct dpll_param dpll_param;
 
-static void configure_mpu_dpll(dpll_param *dpll_param_p)
+static void configure_mpu_dpll(dpll_param *dpll_param_p,
+			struct proc_specific_functions *proc_ops)
 {
 	/* Unlock the MPU dpll */
 	set_modify(CM_CLKMODE_DPLL_MPU, 0x00000007, PLL_MN_POWER_BYPASS);
@@ -240,7 +241,7 @@ static void configure_usb_dpll(dpll_param *dpll_param_p)
 
 }
 
-void configure_core_dpll_no_lock(void)
+void configure_core_dpll_no_lock(struct proc_specific_functions *proc_ops)
 {
 	dpll_param *dpll_param_p = &core_dpll_param_ddr400mhz;
 
@@ -275,7 +276,7 @@ void lock_core_dpll(void)
 	check_loop(BIT0, 1, CM_IDLEST_DPLL_CORE);
 }
 
-void lock_core_dpll_shadow(void)
+void lock_core_dpll_shadow(struct proc_specific_functions *proc_ops)
 {
 	dpll_param *dpll_param_p = &core_dpll_param_ddr400mhz;
 	u32 temp;
@@ -475,7 +476,7 @@ void prcm_init(struct proc_specific_functions *proc_ops)
 		return;
 
 	/* Configure all DPLL's at 100% OPP */
-	configure_mpu_dpll(&mpu_dpll_param);
+	configure_mpu_dpll(&mpu_dpll_param, proc_ops);
 	configure_iva_dpll(&iva_dpll_param);
 	configure_per_dpll(&per_dpll_param);
 	configure_abe_dpll(&abe_dpll_param);
@@ -484,7 +485,7 @@ void prcm_init(struct proc_specific_functions *proc_ops)
 	enable_all_clocks();
 }
 
-void scale_vcores(void)
+void scale_vcores(struct proc_specific_functions *proc_ops)
 {
 	/* For VC bypass only VCOREx_CGF_FORCE  is necessary and
 	 * VCOREx_CFG_VOLTAGE  changes can be discarded

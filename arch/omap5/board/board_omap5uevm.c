@@ -120,10 +120,10 @@ static void omap5uevm_late_init(void)
 	writel(2, 0x4A009550);
 }
 
-static void omap5uevm_scale_cores(void)
+static void omap5uevm_scale_cores(struct proc_specific_functions *proc_ops)
 {
 	/* Use default OMAP voltage */
-	scale_vcores();
+	scale_vcores(proc_ops);
 }
 
 static int omap5uevm_check_fastboot(void)

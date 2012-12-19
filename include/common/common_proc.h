@@ -30,7 +30,7 @@
 #define __COMMON_PROC_H_
 
 /* OMAP default configuration functions */
-void scale_vcores(void);
+void scale_vcores(struct proc_specific_functions *proc_ops);
 void prcm_init(struct proc_specific_functions *proc_ops);
 void gpmc_init(void);
 int mmc_init(u8 device);

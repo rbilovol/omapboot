@@ -105,7 +105,7 @@ struct bootloader_ops *boot_common(unsigned bootdevice)
 	ldelay(100);
 
 	if (boot_ops->board_ops->board_scale_vcores)
-		boot_ops->board_ops->board_scale_vcores();
+		boot_ops->board_ops->board_scale_vcores(boot_ops->proc_ops);
 
 	if (boot_ops->board_ops->board_prcm_init)
 		boot_ops->board_ops->board_prcm_init(boot_ops->proc_ops);

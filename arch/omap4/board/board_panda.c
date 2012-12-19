@@ -350,7 +350,7 @@ static void panda_ddr_init(struct proc_specific_functions *proc_ops)
 					__func__, omap_rev);
 	}
 
-	omap4_ddr_init(ddr_regs, ddr_regs);
+	omap4_ddr_init(ddr_regs, ddr_regs, proc_ops);
 }
 
 static int panda_check_fastboot(void)
@@ -400,10 +400,10 @@ struct storage_specific_functions *panda_set_flash_slot(u8 dev,
 	return storage_ops;
 }
 
-static void panda_scale_cores(void)
+static void panda_scale_cores(struct proc_specific_functions *proc_ops)
 {
 	/* Use default OMAP voltage */
-	scale_vcores();
+	scale_vcores(proc_ops);
 }
 
 static void panda_gpmc_init(void)
