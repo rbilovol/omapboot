@@ -476,6 +476,45 @@ struct storage_specific_functions *blaze_set_flash_slot(u8 dev,
 	return storage_ops;
 }
 
+static u32 blaze_get_board_rev(void)
+{
+	u32 ret, clk32;
+	hal_i2c i2c_id = HAL_I2C2;
+	u16 slave, reg_addr;
+	int i, j = 0, length = 12;
+	u8 cmd[length + 1], mod_linebuf[length];
+
+	ret = i2c_init(i2c_id);
+	if (ret != 0) {
+		printf("Failed to init I2C-%d\n", i2c_id);
+		return ret;
+	}
+
+	slave = 0x50; reg_addr = 0x8;
+	cmd[0] = (reg_addr & 0xFF);
+	clk32 = readl(CLK32K_COUNTER_REGISTER);
+	ret = i2c_read(i2c_id, slave, length, cmd, clk32, 0xFF);
+	if (ret != 0) {
+		printf("I2C read failed, ret = %d\n", ret);
+		return ret;
+	}
+
+	ret = i2c_close(i2c_id);
+	if (ret != 0) {
+		printf("i2c close for bus %d failed, ret = %d\n",
+							i2c_id, ret);
+		return ret;
+	}
+
+	/* Take the read version and remove the hyphen */
+	for (i = 4; i < length; i++)
+		if (cmd[i] != '-')
+			mod_linebuf[j++] = cmd[i];
+	mod_linebuf[j] = 0;
+
+	return strtoul((const char *)mod_linebuf, NULL, 10);
+}
+
 int blaze_usb_len_request(struct usb_specific_functions *usb_ops,
 				void *data, unsigned len)
 {
@@ -493,7 +532,8 @@ static struct board_specific_functions blaze_funcs = {
 	.board_gpmc_init = blaze_gpmc_init,
 	.board_prcm_init = blaze_prcm_init,
 	.board_storage_init = blaze_storage_init,
-	.board_fastboot_size_request = blaze_usb_len_request
+	.board_fastboot_size_request = blaze_usb_len_request,
+	.board_get_board_rev = blaze_get_board_rev,
 };
 
 void* init_board_funcs(void)
