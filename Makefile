@@ -160,6 +160,7 @@ COMMON_OBJS := 	crc32.o \
 		libc/printf.o \
 		libc/raise.o \
 		libc/string.o \
+		libc/ctype.o \
 		trusted.o \
 		arch/common/misc.o
 

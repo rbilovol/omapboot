@@ -173,4 +173,6 @@ int sprintf(char *buf, const char *fmt, ...);
 
 void raise(void);
 
+unsigned long strtoul(const char *cp, char **endp, unsigned int base);
+
 #endif  /* __STRING_H_ */

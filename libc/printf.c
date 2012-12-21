@@ -25,6 +25,7 @@
 #include <types.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 
 int printf(const char *fmt, ...)
 {
@@ -347,4 +348,30 @@ int sprintf(char *buf, const char *fmt, ...)
 	va_end(args);
 
 	return i;
+}
+
+unsigned long strtoul(const char *cp, char **endp, unsigned int base)
+{
+	unsigned long long result = 0, value;
+
+	if (*cp == '0') {
+		cp++;
+		if ((*cp == 'x') && isxdigit(cp[1])) {
+			base = 16;
+			cp++;
+		}
+		if (!base)
+			base = 8;
+	}
+	if (!base)
+		base = 10;
+
+	while (isxdigit(*cp) && (value = isdigit(*cp) ? *cp-'0' : (islower(*cp)
+	    ? toupper(*cp) : *cp)-'A'+10) < base) {
+		result = result*base + value;
+		cp++;
+	}
+	if (endp)
+		*endp = (char *)cp;
+	return result;
 }
