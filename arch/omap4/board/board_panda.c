@@ -463,6 +463,12 @@ static void panda_prcm_init(struct proc_specific_functions *proc_ops)
 	prcm_init(proc_ops);
 }
 
+static u32 panda_get_board_rev(void)
+{
+	/* default = 750-2170-002 (4460 ES1.1) PandaBoard ES Rev. Bx */
+	return 2170002;
+}
+
 int panda_usb_len_request(struct usb_specific_functions *usb_ops,
 				void *data, unsigned len)
 {
@@ -480,7 +486,8 @@ static struct board_specific_functions panda_funcs = {
 	.board_gpmc_init = panda_gpmc_init,
 	.board_prcm_init = panda_prcm_init,
 	.board_storage_init = panda_storage_init,
-	.board_fastboot_size_request = panda_usb_len_request
+	.board_fastboot_size_request = panda_usb_len_request,
+	.board_get_board_rev = panda_get_board_rev,
 };
 
 void* init_board_funcs(void)
