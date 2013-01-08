@@ -342,9 +342,9 @@ tags:
 		xargs ctags
 
 user_params:
+	$(QUIET)rm -rf out/$(BOARD)
 ifeq ($(DUAL_STAGE), 1)
 	@echo "defining TWO_STAGE_OMAPBOOT"
-	$(QUIET)rm -rf out/$(BOARD)
 	$(QUIET)echo -n "#define TWO_STAGE_OMAPBOOT  1" > $(USER_PARAMS_FILE)
 	$(QUIET)echo "" >> $(USER_PARAMS_FILE)
 endif
