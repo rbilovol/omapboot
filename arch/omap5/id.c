@@ -61,8 +61,7 @@ static int get_omap_rev(void)
 	u8 i;
 	u32 id_code;
 
-/*	id_code = readl(CONTROL_ID_CODE); */
-	id_code = 0x1B94202F;
+	id_code = readl(CONTROL_ID_CODE);
 	for (i = 0; map[i].rev_num != OMAP_REV_INVALID; i++) {
 		if (map[i].rev_reg_val == id_code)
 			return map[i].rev_num;
