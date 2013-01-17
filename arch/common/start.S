@@ -58,6 +58,18 @@ copy:
 		cmp r9, r8
 		bne copy
 
+clear_bss:
+		ldr r7, =__bss_start
+		ldr r8, =__bss_end
+		mov r9, #0
+
+clrbss_loop:
+		str r9, [r7]
+		cmp r7, r8
+		add r7, r7, #4
+		bne clrbss_loop
+
+start_aboot:
 		ldr r8, =aboot
 		bx r8
 		b .
