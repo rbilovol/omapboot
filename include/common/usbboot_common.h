@@ -85,6 +85,7 @@ struct usb_specific_functions {
 	int (*usb_read)(struct usb *usb, void *data, unsigned len);
 	int (*usb_write)(struct usb *usb, void *data, unsigned len);
 	struct usb* (*usb_enable)();
+	void (*usb_configure)(struct usb *usb, unsigned mode);
 	struct usb *usb;
 };
 

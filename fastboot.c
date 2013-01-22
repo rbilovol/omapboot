@@ -1064,22 +1064,10 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 		memset(&cmd, 0, 64);
 		memset(&response, 0, 64);
 
-		/* omap4 rom_usb required an extra step in the exchange:
-			a request for the size to transfer.
-			Without this step, the rom code will hang.
-			This requires to use an older fastboot host
-			utility were this ws implemented (DB72) */
-
-		if (boot_ops->board_ops->board_fastboot_size_request) {
-			ret = boot_ops->board_ops->
-			board_fastboot_size_request(boot_ops->usb_ops,
-							&cmdsize, 4);
-			if (ret < 0) {
-				printf("failed to get fastboot command size\n");
-				strcpy(response, "FAIL");
-				goto fail;
-			}
-		}
+#if defined(CONFIG_IS_OMAP4)
+		/* Use CPU mode while receiving the fastboot command*/
+		fb_data->usb_ops->usb_configure(usb, XFER_MODE_CPU);
+#endif
 
 		/* receive the fastboot command from host */
 		ret = fb_data->usb_ops->usb_read(usb, &cmd, cmdsize);
@@ -1088,6 +1076,11 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 			strcpy(response, "FAIL");
 			goto fail;
 		}
+
+#if defined(CONFIG_IS_OMAP4)
+		/* Switch back to DMA mode for subsequent transfers */
+		fb_data->usb_ops->usb_configure(usb, XFER_MODE_DMA);
+#endif
 
 		if (memcmp(cmd, "getvar:", 7) == 0) {
 			ret = fastboot_getvar(cmd + 7, response, usb);

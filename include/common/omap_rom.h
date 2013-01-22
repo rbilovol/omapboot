@@ -110,6 +110,7 @@ int usb_wait_write(struct usb *usb);
 
 int usb_read(struct usb *usb, void *data, unsigned len);
 int usb_write(struct usb *usb, void *data, unsigned len);
+void usb_configure(struct usb *usb, unsigned mode);
 
 /* I2C */
 typedef enum {

@@ -55,6 +55,7 @@ struct usb_specific_functions usb_funcs = {
 	.usb_write = usb_write,
 	.usb_read = usb_read,
 	.usb_enable = usb_enable,
+	.usb_configure = usb_configure
 };
 
 void *init_usb_funcs(void)

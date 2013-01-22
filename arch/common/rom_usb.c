@@ -170,6 +170,7 @@ int usb_open(struct usb *usb, int init,
 		usb->dwrite.device_type = DEVICE_USB;
 
 #if defined(CONFIG_IS_OMAP4)
+		/* Bulk transfers default to DMA mode */
 		usb->dread.xfer_mode = XFER_MODE_DMA;
 		usb->dwrite.xfer_mode = XFER_MODE_DMA;
 #endif
@@ -232,14 +233,6 @@ void usb_reopen(struct usb *usb)
 	return;
 }
 
-static struct usb *local_read_usb;
-static void rom_read_callback(struct per_handle *rh)
-{
-
-	local_read_usb->dread.status = rh->status;
-	return;
-}
-
 int usb_queue_read(struct usb *usb, void *data, unsigned len)
 {
 	int n;
@@ -274,15 +267,8 @@ int usb_queue_read(struct usb *usb, void *data, unsigned len)
 	usb->dread.length = len;
 	usb->dread.status = -1;
 	usb->dread.device_type = DEVICE_USB;
-#if defined(CONFIG_IS_OMAP4)
-	usb->dread.xfer_mode = XFER_MODE_DMA;
-#endif
-	usb->dread.callback = rom_read_callback;
-	local_read_usb = usb;
-
+	usb->dread.callback = NULL;
 	n = usb->io->read(&usb->dread);
-	if (n)
-		usb->dread.status = n;
 
 	return n;
 }
@@ -290,19 +276,26 @@ int usb_queue_read(struct usb *usb, void *data, unsigned len)
 int usb_wait_read(struct usb *usb)
 {
 	for (;;) {
+#if defined(CONFIG_IS_OMAP4)
+		/* Below code works around an issue with omap4 rom driver for */
+		/* handling transfer completion on short packet. It is quite  */
+		/* tricky to fix the regular DMA mode. By using CPU mode, the */
+		/* rom handler properly copies the received data but lacks    */
+		/* signaling transfer completion in status field. We then     */
+		/* detect it by inspecting the receive buffer and checking if */
+		/* it has been filled up with the received data.              */
+		if ((usb->dread.xfer_mode == XFER_MODE_CPU)
+			&& (readl((u32)usb->dread.data) != 0x0))
+			usb->dread.status = STATUS_OKAY;
+#endif
+
 		if (usb->dread.status == -1)
 			continue;
 		if (usb->dread.status == STATUS_WAITING)
 			continue;
+
 		return usb->dread.status;
 	}
-}
-
-static struct usb *local_write_usb;
-static void rom_write_callback(struct per_handle *rh)
-{
-	local_write_usb->dwrite.status = rh->status;
-	return;
 }
 
 int usb_queue_write(struct usb *usb, void *data, unsigned len)
@@ -324,15 +317,10 @@ int usb_queue_write(struct usb *usb, void *data, unsigned len)
 	usb->dwrite.data = data;
 	usb->dwrite.length = len;
 	usb->dwrite.status = -1;
-#if defined(CONFIG_IS_OMAP4)
-	usb->dwrite.xfer_mode = XFER_MODE_DMA;
-#endif
 	usb->dwrite.device_type = DEVICE_USB;
-	usb->dwrite.callback = rom_write_callback;
-	local_write_usb = usb;
+	usb->dwrite.callback = NULL;
+
 	n = usb->io->write(&usb->dwrite);
-	if (n)
-		usb->dwrite.status = n;
 
 	return n;
 }
@@ -391,4 +379,15 @@ void usb_init(struct usb *usb)
 void usb_close(struct usb *usb)
 {
 	usb->io->close(&usb->dread);
+}
+
+void usb_configure(struct usb *usb, unsigned mode)
+{
+#if defined(CONFIG_IS_OMAP4)
+    /* On OMAP4, this function adds ability to configure    */
+	/* bulk transfers to operate either in DMA or CPU mode. */
+	/* It is not applicable to OMAP5 (use DMA always).      */
+	usb->dread.xfer_mode = mode;
+	usb->dwrite.xfer_mode = mode;
+#endif
 }
