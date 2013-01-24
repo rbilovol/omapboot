@@ -104,6 +104,15 @@ static void omap5uevm_mux_init(void)
 	setup_core(CONTROL_PADCONF_UART3_RX_IRRX, (PTU | IEN | M0));
 	setup_core(CONTROL_PADCONF_UART3_TX_IRTX, (M0));
 
+	setup_core(CONTROL_PADCONF_HDMI_CEC, (IEN | M0));
+	setup_core(CONTROL_PADCONF_HDMI_HPD, (PTD | IEN | M0));
+	setup_core(CONTROL_PADCONF_HDMI_DDC_SCL, (IEN | M0));
+	setup_core(CONTROL_PADCONF_HDMI_DDC_SDA, (IEN | M0));
+	setup_core(CONTROL_PADCONF_I2C5_SCL, (IEN | M0));
+	setup_core(CONTROL_PADCONF_I2C5_SDA, (IEN | M0));
+	setup_core(CONTROL_PADCONF_I2C1_PMIC_SCL, (PTU | IEN | M0));
+	setup_core(CONTROL_PADCONF_I2C1_PMIC_SDA, (PTU | IEN | M0));
+
 	/* wakeup padconf essential */
 	setup_wakeup(CONTROL_WAKEUP_SR_PMIC_SCL, (PTU | IEN | M0));
 	setup_wakeup(CONTROL_WAKEUP_SR_PMIC_SDA, (PTU | IEN | M0));
