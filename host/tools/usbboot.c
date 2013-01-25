@@ -33,12 +33,9 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <string.h>
-#include <arpa/inet.h>
 #include "../../include/common/user_params.h"
 #include "usb.h"
 #include "usbboot.h"
-
-static struct chip_info chip;
 
 static char *usb_boot_read_chip_info(usb_handle *usb)
 {
@@ -53,14 +50,6 @@ static char *usb_boot_read_chip_info(usb_handle *usb)
 	fprintf(stderr,"reading ASIC ID\n");
 	usb_write(usb, &msg_getid, sizeof(msg_getid));
 	usb_read(usb, id, sizeof(id));
-
-	memcpy(&chip.chip, &id[OFF_CHIP+0], 2);
-	chip.chip = ntohs(chip.chip);
-	chip.rom_rev = id[OFF_ROM_REV];
-	memcpy(chip.IDEN, &id[OFF_ID], 20);
-	memcpy(chip.MPKH, &id[OFF_MPKH], 32);
-	chip.crc0 = ntohl(*(uint32_t *)&id[73]);
-	chip.crc1 = ntohl(*(uint32_t *)&id[77]);
 
 	fprintf(stderr,"CHIP: %02x%02x\n", id[OFF_CHIP+0], id[OFF_CHIP+1]);
 	fprintf(stderr, "rom minor version: %02X\n", id[OFF_ROM_REV]);
@@ -84,7 +73,6 @@ static char *usb_boot_read_chip_info(usb_handle *usb)
 		strcpy(proc_type, "GP");
 	}
 
-	strcpy(chip.proc_type, proc_type);
 	return proc_type;
 }
 
@@ -228,43 +216,6 @@ static int *load_data_file(void *file, unsigned *size)
 		return file;
 }
 
-static void *get_iboot_hs(unsigned int *sz)
-{
-	void *data = NULL;
-	uint32_t cpu = chip.chip << 8 | chip.rom_rev;
-
-	switch (cpu) {
-#if defined(CONFIG_IS_OMAP4)
-	case 0x443003:
-	case 0x443004:
-		data = iboot_hs_4430_ES2_data;
-		*sz  = iboot_hs_4430_ES2_size;
-		break;
-	case 0x444001:
-		data = iboot_hs_4460_ES1_data;
-		*sz  = iboot_hs_4460_ES1_size;
-		break;
-	case 0x447001:
-		data = iboot_hs_4470_ES1_data;
-		*sz  = iboot_hs_4470_ES1_size;
-		break;
-#elif defined(CONFIG_IS_OMAP5)
-	case 0x543001:
-		data = iboot_hs_5430_ES1_data;
-		*sz  = iboot_hs_5430_ES1_size;
-		break;
-	case 0x543002:
-		data = iboot_hs_5430_ES2_data;
-		*sz  = iboot_hs_5430_ES2_size;
-		break;
-#endif
-	default:
-		fprintf(stderr, "Unknown cpu type\n");
-	}
-
-	return data;
-}
-
 int main(int argc, char **argv)
 {
 	void *data = NULL, *data2 = NULL;
@@ -295,12 +246,14 @@ int main(int argc, char **argv)
 						data = load_data_file(NULL,
 							&sz);
 #ifdef EMBED_IBOOT_HS
-					if (!data)
-						data = get_iboot_hs(&sz);
-					if (data)
+					if (!data) {
 						fprintf(stderr, "using built-in"
 						" HS iboot of size %d-KB\n",
-								sz/1024);
+							iboot_hs_size/1024);
+
+						data = iboot_hs_data;
+						sz = iboot_hs_size;
+					}
 #else
 					if (!data) {
 						fprintf(stderr, "No embedded HS"

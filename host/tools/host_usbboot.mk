@@ -33,14 +33,7 @@ M_OBJS += host/tools/usb_linux.o
 M_OBJS += 2ndstage.o
 M_OBJS += iboot_gp.o
 ifneq ("$(MSHIELD)", "")
-ifeq ("$(MACH)", "omap4")
-M_OBJS += iboot_hs_4430_ES2.o
-M_OBJS += iboot_hs_4460_ES1.o
-M_OBJS += iboot_hs_4470_ES1.o
-else ifeq ("$(MACH)", "omap5")
-M_OBJS += iboot_hs_5430_ES1.o
-M_OBJS += iboot_hs_5430_ES2.o
-endif
+M_OBJS += iboot_hs.o
 endif
 ifeq ($(DUAL_STAGE), 1)
 M_OBJS += sboot-bin.o

@@ -60,20 +60,10 @@ BOARD ?= panda
 ARCH ?= arm
 MACH ?= omap4
 EXTRAOPTS ?= -m32
-GENERATE_ULO = generate_ULO
-ULO = ULO
-BOARD_MLO = $(BOARD)
+
 DUAL_STAGE :=
 ifeq ("$(MACH)", "omap4")
 	DUAL_STAGE := 1
-	GENERATE_ULO := generate_2ND
-	ULO := 2ND
-# Need to specify right board name to generate MLO files with correct names
-ifeq ("$(BOARD)", "blaze_tablet")
-	BOARD_MLO := Blaze_Tablet
-else ifeq ("$(BOARD)", "blaze")
-	BOARD_MLO := Blaze
-endif
 else
 ifeq ("$(SPLIT)", "1")
 	DUAL_STAGE := 1
@@ -255,25 +245,6 @@ include build/target-executable.mk
 # Failures - default behavior is to quit on detecting error
 MAKEALL_LENIENT ?= 0
 
-SIGN_MLO_OMAP4_FORMAT = \
-echo "Signing eboot.bin to generate signed $(BOARD_MLO)_OMAP$1_HS_$2_MLO..." ;\
-$(MSHIELD)/generate_MLO OMAP$1 $2 $(OUT)/eboot.bin ;\
-cat MLO >> $(OUT)/$(BOARD_MLO)_OMAP$1_HS_$2_MLO ; rm MLO ; echo "Done!"
-
-SIGN_MLO_OMAP5_FORMAT = \
-echo "Signing eboot.bin to generate signed $(BOARD_MLO)_HS_$2_MLO..." ;\
-$(MSHIELD)/generate_MLO OMAP$1 $2 $(OUT)/eboot.bin ;\
-cat MLO >> $(OUT)/$(BOARD_MLO)_HS_$2_MLO ; rm MLO ; echo "Done!"
-
-SIGN_ULO = \
-echo "generate $@" ;\
-echo "Signing iboot.bin to generate signed $(BOARD_MLO)_OMAP$1_HS_$2.$3_ULO..." ;\
-$(MSHIELD)/$(GENERATE_ULO) OMAP$1 $2.$3 $(OUT)/iboot.bin ;\
-./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(ULO)` no_gp_hdr > $@ ;\
-cat $(ULO) >> $@ ; rm $(ULO) ;\
-./$(OUT)/bin2c iboot_hs_$1_$2 < $@ > $(OUT)/iboot_hs_$1_$2.c ;\
-gcc -c $(EXTRAOPTS) -o $@ $(OUT)/iboot_hs_$1_$2.c ; echo "Done!"
-
 .EXPORT_ALL_VARIABLES:
 
 $(OUT)/$(BOARD)_GP_MLO:: $(OUT)/eboot.bin $(OUT)/mkheader
@@ -281,33 +252,16 @@ $(OUT)/$(BOARD)_GP_MLO:: $(OUT)/eboot.bin $(OUT)/mkheader
 	$(QUIET)./$(OUT)/mkheader $(EBOOT_TEXT_BASE) `wc -c $(OUT)/eboot.bin` add_gp_hdr > $@
 	$(QUIET)cat $(OUT)/eboot.bin >> $@
 	@echo ...Done!
-ifeq ("$(MACH)", "omap4")
-	cp $@ $(OUT)/$(BOARD_MLO)_OMAP4430_GP_ES2.2_MLO
-	cp $@ $(OUT)/$(BOARD_MLO)_OMAP4430_GP_ES2.3_MLO
-	cp $@ $(OUT)/$(BOARD_MLO)_OMAP4460_GP_ES1.0_MLO
-	cp $@ $(OUT)/$(BOARD_MLO)_OMAP4460_GP_ES1.1_MLO
-	cp $@ $(OUT)/$(BOARD_MLO)_OMAP4470_GP_ES1.0_MLO
-	rm $@
-endif
-ifeq ("$(MACH)", "omap5")
-	cp $@ $(OUT)/$(BOARD_MLO)_GP_ES1.0_MLO
-	cp $@ $(OUT)/$(BOARD_MLO)_GP_ES2.0_MLO
-	rm $@
-endif
 
 $(OUT)/$(BOARD)_HS_MLO: $(OUT)/eboot.bin $(OUT)/mkheader
 ifneq ("$(MSHIELD)", "")
-ifeq ("$(MACH)", "omap4")
-	$(call SIGN_MLO_OMAP4_FORMAT,4430,ES2.2)
-	$(call SIGN_MLO_OMAP4_FORMAT,4430,ES2.3)
-	$(call SIGN_MLO_OMAP4_FORMAT,4460,ES1.0)
-	$(call SIGN_MLO_OMAP4_FORMAT,4460,ES1.1)
-	$(call SIGN_MLO_OMAP4_FORMAT,4470,ES1.0)
-endif
-ifeq ("$(MACH)", "omap5")
-	$(call SIGN_MLO_OMAP5_FORMAT,5430,ES1.0)
-	$(call SIGN_MLO_OMAP5_FORMAT,5430,ES2.0)
-endif
+	@echo Signing eboot.bin to generate signed MLO ...Done!
+	$(QUIET)/$(MSHIELD)/generate_MLO OMAP5430 ES2.0 $(OUT)/eboot.bin
+	$(QUIET)mv MLO $(OUT)/tmp_mlo
+	$(QUIET)./$(OUT)/mkheader $(EBOOT_TEXT_BASE) `wc -c $(OUT)/tmp_mlo` no_gp_hdr > $@
+	$(QUIET)cat $(OUT)/tmp_mlo >> $@
+	$(QUIET)rm $(OUT)/tmp_mlo
+	@echo ...Done!
 endif
 
 $(OUT)/aboot.ift: $(OUT)/aboot.bin $(OUT)/mkheader
@@ -333,20 +287,16 @@ $(OUT_HOST_OBJ)/iboot_gp.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
 	@echo ...Done!
 
 ifneq ("$(MSHIELD)", "")
-ifeq ("$(MACH)", "omap4")
-$(OUT_HOST_OBJ)/iboot_hs_4430_ES2.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
-	$(call SIGN_ULO,4430,ES2,3)
-$(OUT_HOST_OBJ)/iboot_hs_4460_ES1.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
-	$(call SIGN_ULO,4460,ES1,0)
-$(OUT_HOST_OBJ)/iboot_hs_4470_ES1.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
-	$(call SIGN_ULO,4470,ES1,0)
-endif
-ifeq ("$(MACH)", "omap5")
-$(OUT_HOST_OBJ)/iboot_hs_5430_ES1.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
-	$(call SIGN_ULO,5430,ES1,0)
-$(OUT_HOST_OBJ)/iboot_hs_5430_ES2.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
-	$(call SIGN_ULO,5430,ES2,0)
-endif
+$(OUT_HOST_OBJ)/iboot_hs.o: $(OUT)/iboot.bin $(OUT)/bin2c $(OUT)/mkheader
+	@echo generate $@
+	@echo Signing iboot.bin to generate signed ULO ...Done!
+	$(QUIET)/$(MSHIELD)/generate_ULO OMAP5430 ES2.0 $(OUT)/iboot.bin
+	$(QUIET)mv ULO $(OUT)/ULO
+	$(QUIET)./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(OUT)/ULO` no_gp_hdr > $@
+	$(QUIET)cat $(OUT)/ULO >> $@
+	$(QUIET)rm $(OUT)/ULO
+	$(QUIET)./$(OUT)/bin2c iboot_hs < $@ > $(OUT)/iboot_hs.c
+	$(QUIET)gcc -c $(EXTRAOPTS) -o $@ $(OUT)/iboot_hs.c
 endif
 
 ifeq ($(DUAL_STAGE), 1)
