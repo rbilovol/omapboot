@@ -34,6 +34,7 @@
 #include <fastboot.h>
 #include <boot_settings.h>
 #include <device_tree.h>
+#include <user_params.h>
 
 #ifdef DEBUG
 #define DBG(x...) printf(x)
@@ -292,6 +293,13 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 #if defined CONFIG_OMAP4_ANDROID_CMD_LINE || \
 	defined CONFIG_OMAP5_ANDROID_CMD_LINE
 	boot_settings(boot_ops, &hdr[0], CONFIG_ADDR_ATAGS);
+#endif
+
+#if defined START_HYPERVISOR_MODE && defined CONFIG_IS_OMAP5
+	if (!(strcmp(boot_ops->proc_ops->proc_get_type(), "GP"))) {
+		printf("Starting ARM Hyp mode\n");
+		start_hyp_mode(MONITOR_API_START_HYPERVISOR);
+	}
 #endif
 
 	theKernel = (void (*)(int, int, void *))(hdr->kernel_addr);

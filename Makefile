@@ -55,6 +55,7 @@ else
 	CROSS_COMPILE ?= arm-eabi-
 endif
 
+HYP_MODE := $(HYP_MODE)
 MSHIELD := $(MSHIELD)
 BOARD ?= panda
 ARCH ?= arm
@@ -400,6 +401,11 @@ endif
 ifneq ("$(MSHIELD)", "")
 	@echo "defining EMBED_IBOOT_HS"
 	$(QUIET)echo -n "#define EMBED_IBOOT_HS 1" >> $(USER_PARAMS_FILE)
+	$(QUIET)echo "" >> $(USER_PARAMS_FILE)
+endif
+ifneq ("$(HYP_MODE)", "")
+	@echo "defining START_HYPERVISOR_MODE"
+	$(QUIET)echo -n "#define START_HYPERVISOR_MODE 1" >> $(USER_PARAMS_FILE)
 	$(QUIET)echo "" >> $(USER_PARAMS_FILE)
 endif
 
