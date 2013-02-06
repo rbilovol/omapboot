@@ -70,10 +70,10 @@ static struct dpll_param iva_dpll_params[3] = {
 /* OPP NOM */
 static struct dpll_param abe_dpll_params[2] = {
 	{750, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1}, /* 19.2MHz ES1.0 */
-#ifndef ABE_SYSCLK
-	{750, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1} /* 19.2MHz ES2.0 */
+#ifdef ABE_SYSCLK /* Selection of the ABE_DPLL reference clock */
+        {46, 8, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1},  /* 19.2 MHz ES2.0 */
 #else
-        {46, 8, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1},  /* 19.2 MHz */
+	{750, 0, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1}  /* 32KHz ES2.0 */
 #endif
 };
 
@@ -323,41 +323,52 @@ static void configure_iva_dpll(dpll_param *dpll_param_p)
 API */
 static void configure_abe_dpll(dpll_param *dpll_param_p)
 {
-	u32 value;
+	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007,
+				IDLE_BYPASS_FAST_RELOCK_MODE);
+	check_loop(BIT(1), 0, CM_IDLEST_DPLL_ABE);
+
+#ifdef ABE_SYSCLK
+	set_modify(CM_CLKSEL_ABE_PLL_REF, 0x1, 0);
+	set_modify(CM_CLKSEL_WKUPAON, 0x1, 0);
+#else
+	set_modify(CM_CLKSEL_ABE_PLL_REF, 0x1, 1);
+	set_modify(CM_CLKSEL_WKUPAON, 0x1, 1);
+#endif
+	/* Disable DPLL autoidle */
+	set_modify(CM_AUTOIDLE_DPLL_ABE, 0x7, 0x0);
+
+	/* Set SW_WKUP explicitly */
+	set_modify(CM_ABE_CLKSTCTRL, CLKTRCTRL_FIELD_MASK, CLKTRCTRL_SW_WKUP);
+
+	/* Wait for the powerdomain to be up */
+	check_loop(0x3, 0x3, PM_ABE_PWRSTST);
 
 #ifndef ABE_SYSCLK
 	/*
-	* We need to enable some additional options to achieve
-	* 196.608MHz from 32768 Hz
+	* Enable higher frequencies when fed from 32KHz clk.
+	*
+	* BIT(5) - DPLL_RAMP_RATE == 4 REFCLKs
+	* BIT(8) - DPLL_DRIFTGUARD_EN is enabled
+	* BIT(9) - DPLL_RELOCK_RAMP_EN is enabled
+	* BIT(10) - DPLL_LPMODE_EN is enabled
+	* BIT(11) - REGM4XEN is enabled
+	*
+	* The DPLL_REGM4XEN bit provides a magic 4x multplier to existing MN
+	* dividers.  This is how a DPLL driven from 32KHz clock can achieve
+	* 196.608MHz.
 	*/
-	value = readl(CM_CLKMODE_DPLL_ABE);
-	writel(value | 0x00000f00, CM_CLKMODE_DPLL_ABE);
-
-	/* Spend 4 REFCLK cycles at each stage */
-	value = readl(CM_CLKMODE_DPLL_ABE);
-	writel((value & ~(0x7 << 5)) | (0x1 << 5), CM_CLKMODE_DPLL_ABE);
+	set_modify(CM_CLKMODE_DPLL_ABE, 0x1fff,
+		(BIT(5) | BIT(8) | BIT(9) | BIT(10) | BIT(11)));
 #endif
-	/* Select the right reference clk */
-	value = readl(CM_CLKSEL_ABE_PLL_REF);
-#ifndef ABE_SYSCLK
-	writel((value & ~(0x1)) | (0x1 << 0), CM_CLKSEL_ABE_PLL_REF);
-#else
-	writel(value & ~(0x1), CM_CLKSEL_ABE_PLL_REF);
-#endif
-	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, IDLE_BYPASS_FAST_RELOCK_MODE);
-	if (!check_loop(BIT(1), 0, CM_IDLEST_DPLL_ABE)) {
-		/* do nothing */
-	}
 
 	set_modify(CM_CLKSEL_DPLL_ABE, 0x0007ff00, dpll_param_p->m << 8);
 	set_modify(CM_CLKSEL_DPLL_ABE, 0x0000007f, dpll_param_p->n);
-	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, PLL_LOCK);
-	if (!check_loop(BIT(0), 1, CM_IDLEST_DPLL_ABE)) {
-		/* do nothing */
-	}
+	set_modify(CM_DIV_M2_DPLL_ABE, 0x0000001f, dpll_param_p->m2);
+	set_modify(CM_DIV_M3_DPLL_ABE, 0x0000001f, dpll_param_p->m3);
 
-	writel(dpll_param_p->m2, CM_DIV_M2_DPLL_ABE);
-	writel(dpll_param_p->m3, CM_DIV_M3_DPLL_ABE);
+	set_modify(CM_CLKMODE_DPLL_ABE, 0x00000007, PLL_LOCK);
+
+	check_loop(BIT(0), 1, CM_IDLEST_DPLL_ABE);
 
 	return;
 }
