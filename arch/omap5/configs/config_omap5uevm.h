@@ -81,4 +81,6 @@
 
 #define EXTENDED_CMDLINE        " earlyprintk " ;
 
+#define ABE_SYSCLK	1
+
 #endif /* _CONFIG_OMAPU5EVM_H_ */
