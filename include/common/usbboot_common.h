@@ -112,6 +112,7 @@ struct board_specific_functions {
 	int (*board_fastboot_size_request)(
 					struct usb_specific_functions *usb_ops,
 					void *data, unsigned len);
+	void (*board_led_blink)(unsigned times);
 };
 
 struct pmic_specific_functions {
