@@ -34,7 +34,7 @@
 #define  _OMAP54XX_GPIO_H
 
 static unsigned gpio_base[8] = {
-	0x4A310000,
+	0x4AE10000,
 	0x48055000,
 	0x48057000,
 	0x48059000,
