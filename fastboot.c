@@ -1069,6 +1069,8 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 	 */
 	console_disable();
 #endif
+	if (fb_data->board_ops->board_led_blink)
+		fb_data->board_ops->board_led_blink(5);
 
 	while (1) {
 
@@ -1088,6 +1090,9 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 			strcpy(response, "FAIL");
 			goto fail;
 		}
+
+		if (fb_data->board_ops->board_led_blink)
+			fb_data->board_ops->board_led_blink(1);
 
 #if defined(CONFIG_IS_OMAP4)
 		/* Switch back to DMA mode for subsequent transfers */
