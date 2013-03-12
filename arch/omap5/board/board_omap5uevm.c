@@ -40,6 +40,8 @@
 #include <string.h>
 
 #define FASTBOOT_BUTTON_GPIO	83
+#define FASTBOOT_BLINK_GPIO1	4
+#define FASTBOOT_BLINK_GPIO2	153
 
 static struct partition partitions[] = {
 	{ "-", 128 },
@@ -121,6 +123,10 @@ static void omap5uevm_mux_init(void)
 
 	/* push button (GPIO 83) for fastboot mode */
 	setup_core(CONTROL_PADCONF_HSI2_ACDATA, (IEN | M6));
+
+	/* Blue leds (GPIO1_4 and GPIO5_153) for blinking */
+	setup_core(CONTROL_PADCONF_UART3_CTS_RCTX, (M6));
+	setup_wakeup(CONTROL_WAKEUP_SYS_BOOT4, (M6));
 }
 
 /* Use CH (configuration header) to do the settings */
@@ -128,6 +134,10 @@ static void omap5uevm_late_init(void)
 {
 	/* enable uart3 console */
 	writel(2, 0x4A009550);
+
+	gpio_write(FASTBOOT_BLINK_GPIO1, 0);
+	gpio_write(FASTBOOT_BLINK_GPIO2, 0);
+
 }
 
 static void omap5uevm_scale_cores(struct proc_specific_functions *proc_ops)
@@ -260,6 +270,28 @@ static u32 omap5uevm_get_board_rev(void)
 	return strtoul((const char *)mod_linebuf, NULL, 10);
 }
 
+/*
+ *  omap5uevm_led_blink:
+ *  @times - how many times to blink, if '0' - just change led's state
+ *
+ */
+void omap5uevm_led_blink(unsigned times)
+{
+	static unsigned on = 1;
+
+	if (times)
+		times = (times << 1) - 1;
+
+	do {
+		gpio_write(FASTBOOT_BLINK_GPIO1, on);
+		gpio_write(FASTBOOT_BLINK_GPIO2, on);
+
+		on = !on;
+		if (times)
+			ldelay(15000000);
+	} while (times--);
+}
+
 static struct board_specific_functions omap5uevm_funcs = {
 	.board_get_flash_slot = omap5uevm_get_flash_slot,
 	.board_set_flash_slot = omap5uevm_set_flash_slot,
@@ -272,6 +304,7 @@ static struct board_specific_functions omap5uevm_funcs = {
 	.board_scale_vcores = omap5uevm_scale_cores,
 	.board_storage_init = omap5uevm_storage_init,
 	.board_get_board_rev = omap5uevm_get_board_rev,
+	.board_led_blink = omap5uevm_led_blink,
 };
 
 void* init_board_funcs(void)
