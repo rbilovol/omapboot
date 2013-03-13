@@ -203,7 +203,7 @@ u32 load_dev_tree(struct bootloader_ops *boot_ops, u32 atag_load_addr)
 	}
 
 	sector_sz = boot_ops->storage_ops->get_sector_size();
-	sector = dt_data->pte->start + (dt_data->page_size / sector_sz);
+	sector = dt_data->pte->start;
 
 	num_sectors = CEIL(dt_data->dev_tree_sz, sector_sz);
 	if (num_sectors <= (dt_data->dev_tree_sz / sector_sz))
