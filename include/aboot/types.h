@@ -43,5 +43,15 @@ typedef int ssize_t;
 
 #define NULL ((void *)0)
 
+/* endianness conversion */
+#define swap32(n) \
+	( ((((u32) n) << 24) & 0xFF000000) | \
+	((((u32) n) <<  8) & 0x00FF0000) | \
+	((((u32) n) >>  8) & 0x0000FF00) | \
+	((((u32) n) >> 24) & 0x000000FF) )
+
+#define __be32_to_cpu(n)	swap32(n)
+#define __cpu_to_be32(n)	swap32(n)
+
 #endif
 
