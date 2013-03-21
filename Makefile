@@ -82,6 +82,7 @@ else
 BOOT_DS_OBJS := booti.o \
 		fastboot.o \
 		fastboot_mmc.o \
+		device_tree_utils.o \
 		device_tree.o
 endif
 endif
@@ -187,6 +188,7 @@ M_OBJS += booti.o
 M_OBJS += fastboot_common.o
 M_OBJS += fastboot.o
 M_OBJS += fastboot_mmc.o
+M_OBJS += device_tree_utils.o
 M_OBJS += device_tree.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
@@ -217,6 +219,7 @@ M_OBJS += booti.o
 M_OBJS += fastboot_common.o
 M_OBJS += fastboot.o
 M_OBJS += fastboot_mmc.o
+M_OBJS += device_tree_utils.o
 M_OBJS += device_tree.o
 M_LIBS := $(TARGET_LIBGCC)
 include build/target-executable.mk
