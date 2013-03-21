@@ -33,6 +33,7 @@
 #include <omap_rom.h>
 #include <fastboot.h>
 #include <boot_settings.h>
+#include <device_tree_utils.h>
 #include <device_tree.h>
 #include <user_params.h>
 
@@ -289,6 +290,11 @@ int do_booti(struct bootloader_ops *boot_ops, char *info, void *download_addr)
 
 	printf("kernel   @ %08x (%d)\n", hdr->kernel_addr, hdr->kernel_size);
 	printf("ramdisk  @ %08x (%d)\n", hdr->ramdisk_addr, hdr->ramdisk_size);
+
+#if defined CONFIG_DEVICE_TREE
+	dt_find_and_replace((void *)dbt_addr, "/chosen/linux,initrd-start", hdr->ramdisk_addr);
+	dt_find_and_replace((void *)dbt_addr, "/chosen/linux,initrd-end", hdr->ramdisk_addr + hdr->ramdisk_size);
+#endif
 
 #if defined CONFIG_OMAP4_ANDROID_CMD_LINE || \
 	defined CONFIG_OMAP5_ANDROID_CMD_LINE
