@@ -58,7 +58,9 @@ struct per_handle {
 	volatile u32 status;
 	u16 hs_toc_mask;
 	u16 gp_toc_mask;
+#if !defined(CONFIG_IS_OMAP4)
 	u32 *device_data;
+#endif
 };
 
 /* Peripheral Driver */

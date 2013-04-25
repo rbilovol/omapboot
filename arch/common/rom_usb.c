@@ -175,11 +175,14 @@ int usb_open(struct usb *usb, int init,
 		usb->dwrite.xfer_mode = XFER_MODE_DMA;
 #endif
 
+#if !defined(CONFIG_IS_OMAP4)
+		/* only applicable to omap5*/
 		n = rom_get_device_data((void *)&usb->dread.device_data);
 		if (n)
 			return n;
 
 		usb->dwrite.device_data = usb->dread.device_data;
+#endif
 	} else {
 		/* get peripheral device descriptor
 		that was used during rom usb boot */
