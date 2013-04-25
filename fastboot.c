@@ -948,6 +948,9 @@ static int fastboot_boot(struct bootloader_ops *boot_ops, char *cmd,
 
 	fb_data->usb_ops->usb_close(usb);
 
+#if defined(CONFIG_IS_OMAP4)
+	console_enable();
+#endif
 	printf("booting kernel...\n");
 	do_booti(boot_ops, "ram", transfer_buffer);
 
@@ -1058,6 +1061,15 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 
 	serial_puts("Entering fastboot mode...\n");
 
+#if defined(CONFIG_IS_OMAP4)
+	/*
+	 * Disable console on omap4 boards in fastboot mode
+	 * so delays are as minimal as possible and ROM code
+	 * doesn't miss USB packets
+	 */
+	console_disable();
+#endif
+
 	while (1) {
 
 		cmdsize = 64;
@@ -1110,6 +1122,10 @@ void do_fastboot(struct bootloader_ops *boot_ops)
 fail:
 	/* send response back to host */
 	fastboot_tx_status(response, strlen(response), usb);
+
+#if defined(CONFIG_IS_OMAP4)
+	console_enable();
+#endif
 	printf("\nsomething bad happened\n");
 	while (1)	/* stay here */
 		;
