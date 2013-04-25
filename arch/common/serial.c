@@ -31,6 +31,18 @@
 
 #include <serial.h>
 
+static volatile unsigned console_enabled = 1;
+
+void console_enable(void)
+{
+	console_enabled = 1;
+}
+
+void console_disable(void)
+{
+	console_enabled = 0;
+}
+
 void serial_init(void)
 {
 	unsigned divisor = CONFIG_SERIAL_CLK_HZ / 16 / CONFIG_BAUDRATE;
@@ -48,6 +60,9 @@ void serial_init(void)
 
 static inline void _serial_putc(char c)
 {
+	if (!console_enabled)
+		return;
+
 	while (!(RD(LSR) & 0x20))
 		;
 	WR(c, THR);

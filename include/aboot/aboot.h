@@ -41,6 +41,9 @@ void serial_init(void);
 void serial_putc(char c);
 void serial_puts(const char *s);
 
+void console_disable(void);
+void console_enable(void);
+
 int printf(const char *fmt, ...);
 int snprintf(char *str, size_t len, const char *fmt, ...);
 int vsprintf(char *str, const char *fmt, va_list ap);
