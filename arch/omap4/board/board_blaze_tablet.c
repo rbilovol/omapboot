@@ -39,6 +39,9 @@
 
 #include <string.h>
 
+/* "HOME" button */
+#define FASTBOOT_BUTTON_GPIO	46
+
 static struct partition partitions[] = {
 	{ "-", 128 },
 	{ "xloader", 128 },
@@ -392,6 +395,14 @@ static void blaze_tablet_ddr_init(struct proc_specific_functions *proc_ops)
 
 static int blaze_tablet_check_fastboot(void)
 {
+	if (!gpio_read(FASTBOOT_BUTTON_GPIO)) {
+		/* small debounce to make sure the button is really pressed */
+		ldelay(200000);
+		if (!gpio_read(FASTBOOT_BUTTON_GPIO)) {
+			printf("Button press detected: go to fastboot mode\n");
+			return 1;
+		}
+	}
 	if (readl(PRM_RSTST) & PRM_RSTST_RESET_WARM_BIT)
 		if (!strcmp((const char *)PUBLIC_SAR_RAM_1_FREE,
 							"bootloader")) {
