@@ -258,23 +258,24 @@ include build/target-executable.mk
 MAKEALL_LENIENT ?= 0
 
 SIGN_MLO_OMAP4_FORMAT = \
-echo "Signing eboot.bin to generate signed $(BOARD_MLO)_OMAP$1_HS_$2_MLO..." ;\
+flock $(OUT)/.lock -c  "echo \"Signing eboot.bin to generate signed $(BOARD_MLO)_OMAP$1_HS_$2_MLO...\" ;\
 $(MSHIELD)/generate_MLO OMAP$1 $2 $(OUT)/eboot.bin ;\
-cat MLO >> $(OUT)/$(BOARD_MLO)_OMAP$1_HS_$2_MLO ; rm MLO ; echo "Done!"
+cat MLO >> $(OUT)/$(BOARD_MLO)_OMAP$1_HS_$2_MLO ; rm MLO ; echo \"Done!\" "
+
 
 SIGN_MLO_OMAP5_FORMAT = \
-echo "Signing eboot.bin to generate signed $(BOARD_MLO)_HS_$2_MLO..." ;\
+flock $(OUT)/.lock -c "echo \"Signing eboot.bin to generate signed $(BOARD_MLO)_HS_$2_MLO...\" ;\
 $(MSHIELD)/generate_MLO OMAP$1 $2 $(OUT)/eboot.bin ;\
-cat MLO >> $(OUT)/$(BOARD_MLO)_HS_$2_MLO ; rm MLO ; echo "Done!"
+cat MLO >> $(OUT)/$(BOARD_MLO)_HS_$2_MLO ; rm MLO ; echo \"Done!\" "
 
 SIGN_ULO = \
-echo "generate $@" ;\
-echo "Signing iboot.bin to generate signed $(BOARD_MLO)_OMAP$1_HS_$2.$3_ULO..." ;\
+flock $(OUT)/.lock -c "echo \"generate $@\" ;\
+echo \"Signing iboot.bin to generate signed $(BOARD_MLO)_OMAP$1_HS_$2.$3_ULO...\" ;\
 $(MSHIELD)/$(GENERATE_ULO) OMAP$1 $2.$3 $(OUT)/iboot.bin ;\
 ./$(OUT)/mkheader $(IBOOT_TEXT_BASE) `wc -c $(ULO)` no_gp_hdr > $@ ;\
 cat $(ULO) >> $@ ; rm $(ULO) ;\
 ./$(OUT)/bin2c iboot_hs_$1_$2 < $@ > $(OUT)/iboot_hs_$1_$2.c ;\
-gcc -c $(EXTRAOPTS) -o $@ $(OUT)/iboot_hs_$1_$2.c ; echo "Done!"
+gcc -c $(EXTRAOPTS) -o $@ $(OUT)/iboot_hs_$1_$2.c ; echo \"Done!\" "
 
 .EXPORT_ALL_VARIABLES:
 
