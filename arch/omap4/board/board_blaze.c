@@ -49,6 +49,9 @@ static struct partition partitions[] = {
 	{ "efs", 16384 },
 	{ "crypto", 16 },
 	{ "recovery", 8*1024 },
+#ifdef CONFIG_DEVICE_TREE
+	{ "device_tree", 1024 },
+#endif
 	{ "boot", 8*1024 },
 	{ "system", 512*1024 },
 	{ "cache", 256*1024 },
